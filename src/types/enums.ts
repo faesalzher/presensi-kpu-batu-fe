@@ -1,0 +1,23 @@
+// src/types/enums.ts
+export enum UserRole {
+  ADMIN = "admin",
+  STAF = "staf",
+  KASUBAG = "kasubag",
+}
+
+export enum WorkingStatus {
+  PRESENT = "present",
+  ABSENT = "absent",
+  LATE = "late",
+  EARLY_DEPARTURE = "early_departure",
+  REMOTE_WORKING = "remote_working",
+  ON_LEAVE = "on_leave",
+  OFFICIAL_TRAVEL = "official_travel",
+}
+
+export enum FileCategory {
+  ATTENDANCE = "ATTENDANCE",
+  PERMISSION = "PERMISSION",
+  PROFILE = "PROFILE",
+  OTHER = "OTHER",
+}
