@@ -80,12 +80,12 @@ const BottomNav: React.FC = () => {
         <IconButton
           onClick={() => goTo("/presensi")}
           sx={{
-            backgroundColor: "#0073e6",
+            backgroundColor: "primary.main",
             color: "white",
             borderRadius: "50%",
             p: 1,
             transform: "scale(1.2)",
-            "&:hover": { backgroundColor: "#0066cc" },
+            "&:hover": { backgroundColor: "primary.dark" },
           }}
         >
           <FingerprintIcon />

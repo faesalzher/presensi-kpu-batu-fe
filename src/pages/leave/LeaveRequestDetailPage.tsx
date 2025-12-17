@@ -240,7 +240,7 @@ const LeaveRequestDetailPage: React.FC = () => {
     <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", width: "100%", pb: 7 }}>
       <Box
         sx={{
-          bgcolor: "#1976d2",
+          bgcolor: "primary.main",
           height: "5vh",
           p: 2,
           color: "white",
@@ -449,7 +449,7 @@ const LeaveRequestDetailPage: React.FC = () => {
                   }
                 >
                   <Avatar
-                    sx={{ width: 36, height: 36, bgcolor: "#0073e6", mr: 1.5 }}
+                    sx={{ width: 36, height: 36, bgcolor: "primary.main", mr: 1.5 }}
                   >
                     <InsertDriveFileIcon fontSize="small" />
                   </Avatar>

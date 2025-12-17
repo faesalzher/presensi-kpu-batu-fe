@@ -33,7 +33,8 @@ import PersetujuanKoreksiPage from "./pages/correction/PersetujuanKoreksiPage";
 import PersetujuanKoreksiDetailPage from "./pages/correction/PersetujuanKoreksiDetail";
 import EditProfilePage from "./pages/profile/EditProfilePage";
 import KasubagDashboardPage from "./pages/dashboard/KasubagDashboardPage";
-import SubbagianPage from "./pages/department/SubBagianPage";
+import SubbagianPage from "./pages/department/SubbagianPage";
+import TukinPage from "./pages/tukin/TukinPage";
 
 function App() {
   return (
@@ -123,6 +124,10 @@ function App() {
                           <Route
                             path="/persetujuan-koreksi-detail/:guid"
                             element={<PersetujuanKoreksiDetailPage />}
+                          />
+                          <Route
+                            path="/daftar-tukin"
+                            element={<TukinPage />}
                           />
                           <Route
                             path="/edit-profile"

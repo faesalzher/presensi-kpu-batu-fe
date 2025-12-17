@@ -154,7 +154,7 @@ const CorrectionDetailPage: React.FC = () => {
       {/* Header */}
       <Box
         sx={{
-          bgcolor: "#1976d2",
+          bgcolor: "primary.main",
           height: "5vh",
           p: 2,
           color: "white",

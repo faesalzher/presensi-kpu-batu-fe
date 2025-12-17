@@ -135,9 +135,9 @@ export const AuthService = {
   },
 
 
-  logoutV2: async () => {
+  logoutV2: () => {
 
-    await supabase.auth.signOut();
+    supabase.auth.signOut();
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("user");

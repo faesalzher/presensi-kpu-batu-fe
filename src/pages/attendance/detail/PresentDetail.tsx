@@ -117,7 +117,7 @@ const AttendanceDetailPresent: React.FC = () => {
     >
       <Box
         sx={{
-          bgcolor: "#4CAF50",
+          bgcolor: "success.main",
           height: "4vh",
           p: 2,
           color: "white",
@@ -139,7 +139,7 @@ const AttendanceDetailPresent: React.FC = () => {
         <Paper
           elevation={2}
           sx={{
-            bgcolor: "#4CAF50",
+            bgcolor: "success.main",
             color: "white",
             p: 3,
             borderRadius: 2,
@@ -160,7 +160,7 @@ const AttendanceDetailPresent: React.FC = () => {
               mr: 3,
             }}
           >
-            <CheckCircleIcon sx={{ color: "#4CAF50", fontSize: 40 }} />
+            <CheckCircleIcon sx={{ color: "success.main", fontSize: 40 }} />
           </Box>
           <Box>
             <Typography variant="h6" fontWeight="bold">

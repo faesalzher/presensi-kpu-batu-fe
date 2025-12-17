@@ -133,14 +133,14 @@ const ReportGenerator: React.FC = () => {
           borderRadius: 1,
           boxShadow: 2,
           mb: 1,
-          bgcolor: "#1976D2",
+          bgcolor: "primary.main",
         }}
       >
         Generate & Download Laporan
       </Button>
 
       <Dialog open={open} onClose={handleClose} fullWidth>
-        <DialogTitle sx={{ bgcolor: "#1976D2", color: "white" }}>
+        <DialogTitle sx={{ bgcolor: "primary.main", color: "white" }}>
           Laporan Kehadiran
         </DialogTitle>
 

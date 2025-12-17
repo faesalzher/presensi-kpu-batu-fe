@@ -94,7 +94,7 @@ const LeaveRequestItem: React.FC<LeaveRequestItemProps> = ({
               alignItems: "center",
             }}
           >
-            <CheckCircleIcon sx={{ color: "#4CAF50" }} />
+            <CheckCircleIcon sx={{ color: "success.main" }} />
           </Box>
         )}
         {status === LeaveRequestStatus.REJECTED && (
@@ -147,7 +147,7 @@ const LeaveRequestPage: React.FC = () => {
       {/* Header */}
       <Box
         sx={{
-          bgcolor: "#1976d2",
+          bgcolor: "primary.main",
           color: "white",
           py: 2,
           textAlign: "center",

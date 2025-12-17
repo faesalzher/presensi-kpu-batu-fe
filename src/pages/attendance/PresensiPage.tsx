@@ -435,7 +435,7 @@ const PresensiPage: React.FC = () => {
     >
       <Box
         sx={{
-          bgcolor: "#1976d2",
+          bgcolor: "primary.main",
           height: "5vh",
           p: 2,
           color: "white",
@@ -563,7 +563,7 @@ const PresensiPage: React.FC = () => {
                 pathOptions={{
                   fillColor: "blue",
                   fillOpacity: 0.2,
-                  color: "#0066cc",
+                  color: "primary.dark",
                 }}
               />
               <Marker position={userLocation}>
@@ -614,7 +614,7 @@ const PresensiPage: React.FC = () => {
                 right: 16,
                 zIndex: 1000,
                 bgcolor: "white",
-                color: isGettingLocation ? "#1976d2" : "#666",
+                color: isGettingLocation ? "primary.main" : "#666",
                 "&:hover": { bgcolor: "#f5f5f5" },
                 boxShadow: 2,
               }}
@@ -685,11 +685,11 @@ const PresensiPage: React.FC = () => {
             (actionButtonDisabled || isWithinRadius === false)
           }
           sx={{
-            bgcolor: isCheckOut ? "#ff9800" : "#0073e6",
+            bgcolor: isCheckOut ? "#ff9800" : "primary.main",
             borderRadius: 6,
             py: 1.5,
             textTransform: "none",
-            "&:hover": { bgcolor: isCheckOut ? "#f57c00" : "#0066cc" },
+            "&:hover": { bgcolor: isCheckOut ? "#f57c00" : "primary.dark" },
             "&.Mui-disabled": { bgcolor: "#ccc", color: "#666" },
           }}
         >
@@ -782,7 +782,7 @@ const PresensiPage: React.FC = () => {
               borderRadius: 2,
               textTransform: "none",
               justifyContent: "center",
-              bgcolor: "#1976d2",
+              bgcolor: "primary.main",
               "&:hover": { bgcolor: "#1565c0" },
             }}
           >

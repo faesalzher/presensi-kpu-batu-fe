@@ -22,6 +22,7 @@ import {
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import loginSvg from "../../assets/images/login-logo.png";
+import bg from '../../assets/images/bg.png'
 
 // Define types for login
 interface LoginCredentials {
@@ -158,21 +159,22 @@ const LoginPage: React.FC = () => {
   return (
     <Box
       sx={{
-        bgcolor: "#0073e6",
-        minHeight: "100vh",
-        width: "100%",
+        bgcolor: 'primary.main',
+        minHeight: '100vh',
+        width: '100%',
         margin: 0,
         padding: 0,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        overflow: "hidden",
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+
+        // FULLSCREEN BACKGROUND
+        backgroundImage: `url(${bg})`,
+        backgroundSize: 'cover',
+        backgroundPosition: '20% center',
+        backgroundRepeat: 'no-repeat',
       }}
     >
       <CssBaseline />
@@ -198,6 +200,22 @@ const LoginPage: React.FC = () => {
             flex: { md: "1" },
           }}
         >
+          <Typography
+            sx={{
+              color: '#fff',
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              textAlign: 'center',
+              fontSize: {
+                xs: '0.85rem',
+                sm: '1rem',
+                md: '1.1rem',
+              },
+            }}
+          >
+            e-PRESENSI
+          </Typography>
           <Box
             component="img"
             src={loginSvg}
@@ -220,12 +238,12 @@ const LoginPage: React.FC = () => {
           sx={{
             p: { xs: 3, md: 4 },
             borderRadius: 4,
-            borderBottomLeftRadius: { xs: "0%", md: 15 },
-            borderBottomRightRadius: { xs: "0%", md: 15 },
+            borderBottomLeftRadius: { xs: 15, md: 15 },
+            borderBottomRightRadius: { xs: 15, md: 15 },
             boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
             width: { xs: "calc(100% - 10px)", md: "400px" },
             flex: { md: "1" },
-            height: { xs: "100vh", md: "auto" },
+            height: { xs: "auto", md: "auto" },
           }}
         >
           <Box
@@ -293,7 +311,7 @@ const LoginPage: React.FC = () => {
                       sx={{
                         color: "#666",
                         "&:hover": {
-                          color: "#0073e6",
+                          color: "primary.main",
                         },
                       }}
                     >
@@ -336,12 +354,12 @@ const LoginPage: React.FC = () => {
                 mt: 2,
                 mb: 2,
                 py: 1.5,
-                bgcolor: "#0073e6",
+                bgcolor: "primary.main",
                 borderRadius: 6,
                 textTransform: "none",
                 fontSize: "1rem",
                 "&:hover": {
-                  bgcolor: "#0066cc",
+                  bgcolor: "primary.dark",
                 },
               }}
             >

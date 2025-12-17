@@ -15,6 +15,7 @@ import {
   ListItemIcon,
   ListItemText,
   CircularProgress,
+  useTheme,
 } from "@mui/material";
 import {
   Check as CheckIcon,
@@ -109,6 +110,7 @@ const HistoryPage: React.FC = () => {
     }
   };
 
+  const theme = useTheme()
   const renderStatusIcon = (status: string) => {
     const normalizedStatus = status ? status.toLowerCase().trim() : "";
     switch (normalizedStatus) {
@@ -116,7 +118,7 @@ const HistoryPage: React.FC = () => {
       case "on_leave":
       case "official_travel":
       case "remote_working":
-        return <CheckIcon style={{ color: "#4CAF50" }} />;
+        return <CheckIcon style={{ color: theme.palette.success.main }} />;
       case "absent":
         return <CloseIcon style={{ color: "#F44336" }} />;
       case "late":
@@ -158,7 +160,7 @@ const HistoryPage: React.FC = () => {
     >
       <Box
         sx={{
-          bgcolor: "#1976D2",
+          bgcolor: "primary.main",
           p: 1.5,
           color: "white",
           display: "flex",
@@ -189,7 +191,7 @@ const HistoryPage: React.FC = () => {
             value={month}
             onChange={handleMonthChange}
             sx={{
-              bgcolor: "#1976D2",
+              bgcolor: "primary.main",
               color: "white",
               borderRadius: 2,
               ".MuiOutlinedInput-notchedOutline": {

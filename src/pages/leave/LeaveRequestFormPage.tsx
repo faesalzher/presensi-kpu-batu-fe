@@ -300,7 +300,7 @@ const LeaveRequestFormPage: React.FC = () => {
     <Box sx={{ bgcolor: "#fff", minHeight: "100vh", width: "100%", pb: 6 }}>
       <Box
         sx={{
-          bgcolor: "#1976d2",
+          bgcolor: "primary.main",
           height: "4vh",
           color: "white",
           py: 2,

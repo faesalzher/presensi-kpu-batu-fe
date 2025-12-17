@@ -80,15 +80,15 @@ const PersetujuanPage: React.FC = () => {
   const getStatusColor = (type: LeaveRequestType) => {
     switch (type) {
       case LeaveRequestType.LEAVE:
-        return "#0073e6"; // Blue for Cuti
+        return "primary.main"; // Blue for Cuti
       case LeaveRequestType.WFH:
-        return "#4CAF50"; // Green for Work From Home
+        return "success.main"; // Green for Work From Home
       case LeaveRequestType.DL:
         return "#F44336"; // Red for Dinas Luar
       case LeaveRequestType.WFA:
         return "#FFC107"; // Yellow/Amber for Work From Anywhere
       default:
-        return "#0073e6"; // Default blue
+        return "primary.main"; // Default blue
     }
   };
 
@@ -122,7 +122,7 @@ const PersetujuanPage: React.FC = () => {
   return (
     <Box sx={{ bgcolor: "#f5f5f5", width: "100%", minHeight: "100vh", pb: 7 }}>
       {/* Header */}
-      <AppBar position="static" sx={{ bgcolor: "#0073e6" }}>
+      <AppBar position="static" sx={{ bgcolor: "primary.main" }}>
         <Toolbar>
           <IconButton edge="start" color="inherit" onClick={handleBack}>
             <ArrowBackIcon />

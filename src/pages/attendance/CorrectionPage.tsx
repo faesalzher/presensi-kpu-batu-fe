@@ -139,7 +139,7 @@ const AttendanceCorrectionPage: React.FC = () => {
       {/* Header */}
       <Box
         sx={{
-          bgcolor: "#0073e6",
+          bgcolor: "primary.main",
           height: "4vh",
           p: 2,
           color: "white",
@@ -300,7 +300,7 @@ const AttendanceCorrectionPage: React.FC = () => {
                 position: "absolute",
                 right: 8,
                 bottom: 8,
-                color: "#0073e6",
+                color: "primary.main",
                 padding: "4px",
               }}
             >
@@ -315,7 +315,7 @@ const AttendanceCorrectionPage: React.FC = () => {
           variant="contained"
           disabled={loading}
           sx={{
-            bgcolor: "#0073e6",
+            bgcolor: "primary.main",
             color: "white",
             py: { xs: 1.5, sm: 2 },
             borderRadius: 1,
@@ -324,7 +324,7 @@ const AttendanceCorrectionPage: React.FC = () => {
             boxShadow: "0px 4px 8px rgba(0,115,230,0.3)",
             fontSize: "1rem",
             "&:hover": {
-              bgcolor: "#0066cc",
+              bgcolor: "primary.dark",
             },
             mt: "auto",
           }}

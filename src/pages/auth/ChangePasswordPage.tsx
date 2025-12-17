@@ -123,7 +123,7 @@ const ChangePasswordPage: React.FC = () => {
         sx={{
           width: "100%",
           height: 64,
-          bgcolor: "#1976D2",
+          bgcolor: "primary.main",
           color: "white",
           display: "flex",
           alignItems: "center",
@@ -157,7 +157,7 @@ const ChangePasswordPage: React.FC = () => {
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <PersonIcon sx={{ color: "#1976D2" }} />
+                <PersonIcon sx={{ color: "primary.main" }} />
               </InputAdornment>
             ),
           }}
@@ -186,7 +186,7 @@ const ChangePasswordPage: React.FC = () => {
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <PersonIcon sx={{ color: "#1976D2" }} />
+                <PersonIcon sx={{ color: "primary.main" }} />
               </InputAdornment>
             ),
           }}
@@ -215,7 +215,7 @@ const ChangePasswordPage: React.FC = () => {
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <PersonIcon sx={{ color: "#1976D2" }} />
+                <PersonIcon sx={{ color: "primary.main" }} />
               </InputAdornment>
             ),
           }}
@@ -236,7 +236,7 @@ const ChangePasswordPage: React.FC = () => {
           onClick={handleSave}
           disabled={loading}
           sx={{
-            bgcolor: "#1976D2",
+            bgcolor: "primary.main",
             color: "white",
             py: 1.5,
             borderRadius: 4,

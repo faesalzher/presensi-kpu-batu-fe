@@ -284,7 +284,7 @@ const EditProfilePage: React.FC = () => {
       {/* Header */}
       <Box
         sx={{
-          bgcolor: "#1976D2",
+          bgcolor: "primary.main",
           p: 2,
           color: "white",
           display: "flex",
@@ -342,7 +342,7 @@ const EditProfilePage: React.FC = () => {
                   onClick={handlePhotoButtonClick}
                   disabled={uploadingPhoto}
                   sx={{
-                    bgcolor: "#1976D2",
+                    bgcolor: "primary.main",
                     color: "white",
                     "&:hover": { bgcolor: "#0d5ca9" },
                   }}

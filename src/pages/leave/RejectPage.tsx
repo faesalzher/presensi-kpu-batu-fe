@@ -90,7 +90,7 @@ const RejectApplicationForm: React.FC = () => {
   return (
     <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", pb: 7 }}>
       {/* Header */}
-      <AppBar position="static" sx={{ bgcolor: "#0073e6" }}>
+      <AppBar position="static" sx={{ bgcolor: "primary.main" }}>
         <Toolbar>
           <IconButton
             edge="start"

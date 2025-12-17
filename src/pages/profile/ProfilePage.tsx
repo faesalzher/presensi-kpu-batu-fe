@@ -294,7 +294,7 @@ const ProfilePage: React.FC = () => {
     >
       {/* Header */}
       <Box
-        sx={{ bgcolor: "#1976D2", p: 2, color: "white", textAlign: "center" }}
+        sx={{ bgcolor: "primary.main", p: 2, color: "white", textAlign: "center" }}
       >
         <Typography variant="h6">Profile</Typography>
       </Box>
@@ -327,7 +327,7 @@ const ProfilePage: React.FC = () => {
                   onClick={handlePhotoButtonClick}
                   disabled={uploadingPhoto}
                   sx={{
-                    bgcolor: "#1976D2",
+                    bgcolor: "primary.main",
                     color: "white",
                     "&:hover": { bgcolor: "#1565C0" },
                   }}
@@ -428,13 +428,13 @@ const ProfilePage: React.FC = () => {
           spacing={1}
           sx={{ mb: 2, justifyContent: "center", alignItems: "center" }}
         >
-          <Grid>
+          <Grid size={{ xs: 6, sm: 12 }}>
             <Card
               sx={{
-                bgcolor: "#4CAF50",
+                bgcolor: "success.main",
                 color: "white",
-                height: "12vh",
-                width: { xs: "44vw", sm: "40vw" },
+                height: 120,
+                width: '100%',
                 pb: { xs: 0, sm: 1 },
               }}
             >
@@ -449,13 +449,13 @@ const ProfilePage: React.FC = () => {
             </Card>
           </Grid>
 
-          <Grid>
+          <Grid size={{ xs: 6, sm: 12 }}>
             <Card
               sx={{
                 bgcolor: "#FFC107",
                 color: "white",
-                height: "12vh",
-                width: { xs: "44vw", sm: "40vw" },
+                height: 120,
+                width: '100%',
                 pb: { sm: 1 },
               }}
             >
@@ -470,13 +470,13 @@ const ProfilePage: React.FC = () => {
             </Card>
           </Grid>
 
-          <Grid>
+          <Grid size={{ xs: 6, sm: 12 }}>
             <Card
               sx={{
                 bgcolor: "#F44336",
                 color: "white",
-                height: "12vh",
-                width: { xs: "44vw", sm: "40vw" },
+                height: 120,
+                width: '100%',
                 pb: { sm: 1 },
               }}
             >
@@ -491,13 +491,13 @@ const ProfilePage: React.FC = () => {
             </Card>
           </Grid>
 
-          <Grid>
+          <Grid size={{ xs: 6, sm: 12 }}>
             <Card
               sx={{
                 bgcolor: "#00BCD4",
                 color: "white",
-                height: "12vh",
-                width: { xs: "44vw", sm: "40vw" },
+                height: 120,
+                width: '100%',
                 pb: { sm: 1 },
               }}
             >

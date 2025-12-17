@@ -114,7 +114,7 @@ const CorrectionItem: React.FC<CorrectionItemProps> = ({
               flexShrink: 0,
             }}
           >
-            <CheckCircleIcon sx={{ color: "#4CAF50" }} />
+            <CheckCircleIcon sx={{ color: "success.main" }} />
           </Box>
         )}
         {status === CorrectionStatus.REJECTED && (
@@ -175,7 +175,7 @@ const StatusCorrectionPage: React.FC = () => {
       {/* Header */}
       <Box
         sx={{
-          bgcolor: "#1976d2",
+          bgcolor: "primary.main",
           height: "5vh",
           p: 2,
           color: "white",

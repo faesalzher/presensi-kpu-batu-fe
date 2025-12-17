@@ -12,6 +12,7 @@ import {
   Theme,
   CircularProgress,
   Alert,
+  useTheme,
 } from "@mui/material";
 import {
   CalendarToday,
@@ -231,13 +232,14 @@ const KasubagDashboardPage: React.FC = () => {
   const currentMonth = currentDateTime.toLocaleString("id-ID", {
     month: "long",
   });
+  const theme = useTheme()
 
   // Updated function to include Remote Working as a separate category
   const getAttendanceChartData = () => {
     if (!statistics) {
       // Default data when statistics are not available
       return [
-        { name: "Hadir", value: 0, color: "#4CAF50" },
+        { name: "Hadir", value: 0, color: theme.palette.success.main },
         { name: "Cuti", value: 0, color: "#FFC107" },
         { name: "Remote", value: 0, color: "#ff7043" },
         { name: "DL", value: 0, color: "#03A9F4" },
@@ -259,7 +261,7 @@ const KasubagDashboardPage: React.FC = () => {
     // Jika totalAttendance adalah 0, gunakan data default untuk menghindari pembagian dengan nol
     if (totalAttendance === 0) {
       return [
-        { name: "Hadir", value: 0, color: "#4CAF50" },
+        { name: "Hadir", value: 0, color: theme.palette.success.main },
         { name: "Cuti", value: 0, color: "#FFC107" },
         { name: "Remote", value: 0, color: "#ff7043" },
         { name: "DL", value: 0, color: "#03A9F4" },
@@ -286,7 +288,7 @@ const KasubagDashboardPage: React.FC = () => {
       {
         name: "Hadir",
         value: parseFloat(presentPercentage.toFixed(1)),
-        color: "#4CAF50",
+        color: theme.palette.success.main,
       },
       {
         name: "Cuti",
@@ -402,7 +404,7 @@ const KasubagDashboardPage: React.FC = () => {
       {/* Header with user info */}
       <Box
         sx={{
-          bgcolor: "#0073e6",
+          bgcolor: "primary.main",
           width: "100%",
           color: "white",
           px: { xs: 2, sm: 3, md: 4 },
@@ -572,14 +574,14 @@ const KasubagDashboardPage: React.FC = () => {
               disabled={hasCheckedIn || hasCheckedOut}
               sx={{
                 width: "43vw",
-                bgcolor: hasCheckedIn ? "#9E9E9E" : "#4CAF50",
+                bgcolor: hasCheckedIn ? "#9E9E9E" : theme.palette.success.main,
                 color: "white",
                 p: 2,
                 borderRadius: 2,
                 textTransform: "none",
                 justifyContent: "flex-start",
                 "&:hover": {
-                  bgcolor: hasCheckedIn ? "#9E9E9E" : "#388E3C",
+                  bgcolor: hasCheckedIn ? "#9E9E9E" : "success.dark",
                 },
                 "&.Mui-disabled": {
                   bgcolor: "#9E9E9E",
