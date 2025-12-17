@@ -159,6 +159,7 @@ class FileService {
     }
 
     const response = await apiClient.get(`/files?${queryParams}`);
+    
     return response.data;
   }
 
