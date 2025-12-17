@@ -2,7 +2,6 @@
 import axios from "axios";
 import { CreateUserDto, UpdateUserDto, User } from "../types/users";
 import AuthService from "./AuthService";
-import { dummyUser, isDemoMode } from "../mocks/demoData";
 
 // Reuse the API instance from AuthService to make use of the already
 // configured interceptors for authentication and token refresh

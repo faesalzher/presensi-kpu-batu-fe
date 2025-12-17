@@ -193,12 +193,12 @@ function randomTime(baseHour: number, varianceMinutes: number) {
   return `${h}:${m}`;
 }
 
-function randomLocation(): GeoLocation {
-  return {
-    latitude: -7.9797 + Math.random() * 0.001,
-    longitude: 112.6304 + Math.random() * 0.001,
-  };
-}
+// function randomLocation(): GeoLocation {
+//   return {
+//     latitude: -7.9797 + Math.random() * 0.001,
+//     longitude: 112.6304 + Math.random() * 0.001,
+//   };
+// }
 
 export const dummyAttendances: Attendance[] = Array.from({ length: 30 }).map(
   (_, i) => {

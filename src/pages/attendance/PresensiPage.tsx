@@ -18,10 +18,6 @@ import {
 } from "@mui/material";
 import {
   ArrowBack,
-  CameraAlt,
-  SendRounded,
-  RestartAlt,
-  LogoutRounded,
   LocationOff,
   Assignment,
   MyLocation,
@@ -53,13 +49,12 @@ const PresensiPage: React.FC = () => {
     todayAttendance,
     loading: attendanceLoading,
     error: attendanceError,
-    fetchTodayAttendance,
   } = useAttendance();
 
   const [userLocation, setUserLocation] = useState<[number, number] | null>(
     null
   );
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  // const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const [alertSeverity, setAlertSeverity] = useState<"success" | "error">(
@@ -69,7 +64,7 @@ const PresensiPage: React.FC = () => {
   const [isWithinRadius, setIsWithinRadius] = useState<boolean | null>(null);
   const [distanceToOffice, setDistanceToOffice] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  // const [imageFile, setImageFile] = useState<File | null>(null);
   const [isCheckOut, setIsCheckOut] = useState<boolean>(false);
   const [showOutsideRadiusDialog, setShowOutsideRadiusDialog] = useState(false);
   const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
@@ -78,7 +73,7 @@ const PresensiPage: React.FC = () => {
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const isMounted = useRef<boolean>(true);
-  const isInitializing = useRef<boolean>(false);
+  // const isInitializing = useRef<boolean>(false);
   const mapRef = useRef<L.Map | null>(null);
 
   const officeLocation: [number, number] = [
@@ -233,24 +228,24 @@ const PresensiPage: React.FC = () => {
     getUserLocation(true); // Always use high accuracy when manually requested
   };
 
-  // Consolidated useEffect for initialization and cleanup
-  useEffect(() => {
-    isMounted.current = true;
+  // // Consolidated useEffect for initialization and cleanup
+  // useEffect(() => {
+  //   isMounted.current = true;
 
-    // Fetch attendance and get initial location
-    fetchTodayAttendance();
-    // getUserLocation(false); // Start with normal accuracy
+  //   // Fetch attendance and get initial location
+  //   fetchTodayAttendance();
+  //   // getUserLocation(false); // Start with normal accuracy
 
-    // // Initialize camera only if no captured image
-    // if (!capturedImage) {
-    //   initializeCamera();
-    // }
+  //   // // Initialize camera only if no captured image
+  //   // if (!capturedImage) {
+  //   //   initializeCamera();
+  //   // }
 
-    return () => {
-      isMounted.current = false;
-      stopCameraStream();
-    };
-  }, [capturedImage]);
+  //   return () => {
+  //     isMounted.current = false;
+  //     stopCameraStream();
+  //   };
+  // }, [capturedImage]);
 
   // Check if user has already checked in and set the mode
   useEffect(() => {
@@ -268,12 +263,12 @@ const PresensiPage: React.FC = () => {
     }
   }, [attendanceError]);
 
-  // Show dialog when user is outside radius and has captured image
-  useEffect(() => {
-    if (capturedImage && isWithinRadius === false) {
-      setShowOutsideRadiusDialog(true);
-    }
-  }, [capturedImage, isWithinRadius]);
+  // // Show dialog when user is outside radius and has captured image
+  // useEffect(() => {
+  //   if (capturedImage && isWithinRadius === false) {
+  //     setShowOutsideRadiusDialog(true);
+  //   }
+  // }, [capturedImage, isWithinRadius]);
 
   // Calculate distance between two points using the Haversine formula
   const calculateDistance = (
@@ -305,47 +300,47 @@ const PresensiPage: React.FC = () => {
     navigate("/dashboard");
   };
 
-  const handleCameraCapture = () => {
-    if (!videoStream || !videoRef.current) {
-      showNotification("No camera stream available.", "error");
-      return;
-    }
+  // const handleCameraCapture = () => {
+  //   if (!videoStream || !videoRef.current) {
+  //     showNotification("No camera stream available.", "error");
+  //     return;
+  //   }
 
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-    if (!context) {
-      showNotification("Failed to capture image.", "error");
-      return;
-    }
+  //   const canvas = document.createElement("canvas");
+  //   const context = canvas.getContext("2d");
+  //   if (!context) {
+  //     showNotification("Failed to capture image.", "error");
+  //     return;
+  //   }
 
-    const videoElement = videoRef.current;
-    canvas.width = videoElement.videoWidth;
-    canvas.height = videoElement.videoHeight;
+  //   const videoElement = videoRef.current;
+  //   canvas.width = videoElement.videoWidth;
+  //   canvas.height = videoElement.videoHeight;
 
-    // Flip the image horizontally to correct the mirror effect
-    context.translate(canvas.width, 0);
-    context.scale(-1, 1);
+  //   // Flip the image horizontally to correct the mirror effect
+  //   context.translate(canvas.width, 0);
+  //   context.scale(-1, 1);
 
-    context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+  //   context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
 
-    const imageURL = canvas.toDataURL("image/jpeg");
-    setCapturedImage(imageURL);
+  //   const imageURL = canvas.toDataURL("image/jpeg");
+  //   setCapturedImage(imageURL);
 
-    canvas.toBlob(
-      (blob) => {
-        if (blob) {
-          const file = new File([blob], "check-in-photo.jpg", {
-            type: "image/jpeg",
-          });
-          setImageFile(file);
-        }
-      },
-      "image/jpeg",
-      0.8
-    );
+  //   canvas.toBlob(
+  //     (blob) => {
+  //       if (blob) {
+  //         const file = new File([blob], "check-in-photo.jpg", {
+  //           type: "image/jpeg",
+  //         });
+  //         setImageFile(file);
+  //       }
+  //     },
+  //     "image/jpeg",
+  //     0.8
+  //   );
 
-    stopCameraStream();
-  };
+  //   stopCameraStream();
+  // };
 
   // const resetCamera = () => {
   //   setCapturedImage(null);
@@ -370,7 +365,7 @@ const PresensiPage: React.FC = () => {
   };
 
   const submitAttendance = async () => {
-    if (!userLocation || !imageFile) {
+    if (!userLocation) {
       // showNotification("Location or image data not available", "error");
       return;
     }
@@ -384,7 +379,7 @@ const PresensiPage: React.FC = () => {
           longitude: userLocation[1],
           notes: "", // Empty string instead of notes
         };
-        await checkOut(checkOutData, imageFile);
+        await checkOut(checkOutData);
         showNotification("Check-out successful!", "success");
       } else {
         const checkInData: CheckInDto = {
@@ -392,7 +387,7 @@ const PresensiPage: React.FC = () => {
           longitude: userLocation[1],
           notes: "", // Empty string instead of notes
         };
-        await checkIn(checkInData, imageFile);
+        await checkIn(checkInData);
         showNotification("Check-in successful!", "success");
       }
 
@@ -418,7 +413,7 @@ const PresensiPage: React.FC = () => {
     isWithinRadius !== null;
   const actionButtonDisabled =
     attendanceLoading ||
-    !capturedImage ||
+    // !capturedImage ||
     isSubmitting ||
     (isCheckOut ? !canCheckOut : !canCheckIn) ||
     (!canCheckIn && !canCheckOut);
@@ -668,20 +663,19 @@ const PresensiPage: React.FC = () => {
         {/* Main action button */}
         <Button
           variant="contained"
-          startIcon={
-            capturedImage ? (
-              isCheckOut ? (
-                <LogoutRounded />
-              ) : (
-                <SendRounded />
-              )
-            ) : (
-              <CameraAlt />
-            )
-          }
+          // startIcon={
+          //   capturedImage ? (
+          //     isCheckOut ? (
+          //       <LogoutRounded />
+          //     ) : (
+          //       <SendRounded />
+          //     )
+          //   ) : (
+          //     <CameraAlt />
+          //   )
+          // }
           onClick={submitAttendance}
           disabled={
-            !!capturedImage &&
             (actionButtonDisabled || isWithinRadius === false)
           }
           sx={{

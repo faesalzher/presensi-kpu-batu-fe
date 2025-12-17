@@ -5,12 +5,10 @@ import {
   CreateLeaveRequestDto,
   UpdateLeaveRequestDto,
   ReviewLeaveRequestDto,
-  QueryLeaveRequestsDto,
-  LeaveRequestType,
-  LeaveRequestStatus,
+  QueryLeaveRequestsDto
 } from "../types/leave-requests";
 import AuthService from "./AuthService";
-import { dummyCorrections, dummyLeaveRequest, dummyLeaveRequests, isDemoMode } from "../mocks/demoData";
+import { dummyLeaveRequest, dummyLeaveRequests, isDemoMode } from "../mocks/demoData";
 
 // Reuse the API instance with the same configuration as other services
 const API = axios.create({

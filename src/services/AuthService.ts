@@ -17,16 +17,6 @@ interface LoginResponse {
   };
 }
 
-interface LoginResponseSupabase {
-  access_token: string;
-  refresh_token: string;
-  user: {
-    id: string;
-    email: string;
-    aud: string;
-  };
-}
-
 interface RefreshTokenResponse {
   access_token: string;
   refresh_token: string;
