@@ -76,38 +76,76 @@ const ForgotPasswordPage: React.FC = () => {
           gap: { md: 6 },
         }}
       >
-        {/* Logo section */}
         <Box
           sx={{
             mb: { xs: 4, md: 0 },
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            flex: 1,
-          }}
-        >
-          <Typography
-            sx={{
-              color: "#fff",
-              fontWeight: 700,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-            }}
-          >
-            e-PRESENSI
-          </Typography>
+            flex: { md: "1" },
+          }}        >
 
           <Box
             component="img"
             src={loginSvg}
-            alt="Forgot Password"
+            alt="Login Illustration"
             sx={{
-              width: { xs: "80%", md: "80%" },
-              maxWidth: 320,
+              width: { xs: "30%", sm: "20%", md: "30%" },
+              maxWidth: { xs: 320, md: 320 },
+              height: "auto",
               mt: 8,
+              mb: 4,
             }}
           />
-        </Box>
+          <Typography
+            sx={{
+              color: '#fff',
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              textAlign: 'center',
+              fontSize: {
+                xs: '1rem',
+                sm: '2rem',
+                md: '1rem',
+              },
+            }}
+          >
+            PRESENSI
+          </Typography>
+          <Typography
+            sx={{
+              color: '#fff',
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              textAlign: 'center',
+              fontSize: {
+                xs: '1rem',
+                sm: '2rem',
+                md: '1rem',
+              },
+            }}
+          >
+            KOMISI PEMILIHAN UMUM
+          </Typography>
+          <Typography
+            sx={{
+              color: '#fff',
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              textAlign: 'center',
+              fontSize: {
+                xs: '1rem',
+                sm: '2rem',
+                md: '1rem',
+              },
+            }}
+          >
+            KOTA BATU
+          </Typography>
+        </Box>  
 
         {/* Form */}
         <Container

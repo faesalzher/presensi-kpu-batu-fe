@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect, useRef } from "r
 import AuthService from "../services/AuthService";
 import { ChangePasswordDto } from "../types/auth";
 import { supabase } from "../lib/supabase";
-import { SESSION_DURATION_NORMAL, STORAGE_KEYS } from "../constant/auth.constant";
+import { SESSION_DURATION_LONG, SESSION_DURATION_SHORT, STORAGE_KEYS } from "../constant/auth.constant";
 
 export interface User {
   guid: string;
@@ -56,33 +56,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }, ms);
   };
 
-  // 🔥 restore auth saat app load
   useEffect(() => {
     let mounted = true;
 
     const restoreAuth = async () => {
       try {
         const { data } = await supabase.auth.getSession();
-        const keepLoggedIn = localStorage.getItem(STORAGE_KEYS.KEEP_LOGGED_IN) === "true";
+        const keepLoggedIn =
+          localStorage.getItem(STORAGE_KEYS.KEEP_LOGGED_IN) === "true";
 
         if (data.session) {
           const storedUser = localStorage.getItem(STORAGE_KEYS.USER);
-          const parsedUser = storedUser ? JSON.parse(storedUser) : null;
-
-          if (mounted) {
-            setUser(parsedUser);
+          if (mounted && storedUser) {
+            setUser(JSON.parse(storedUser));
             setIsAuthenticated(true);
 
-            // 🔥 aturan logout
-            if (!keepLoggedIn) {
-              scheduleAutoLogout(SESSION_DURATION_NORMAL); 
-            }
+            const ttl = keepLoggedIn
+              ? SESSION_DURATION_LONG
+              : SESSION_DURATION_SHORT;
+
+            scheduleAutoLogout(ttl);
           }
         } else {
-          if (mounted) {
-            setUser(null);
-            setIsAuthenticated(false);
-          }
+          setUser(null);
+          setIsAuthenticated(false);
         }
       } finally {
         if (mounted) setLoading(false);
@@ -90,27 +87,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     restoreAuth();
-
-    return () => {
-      mounted = false;
-      clearLogoutTimer();
-    };
+    return () => { mounted = false; clearLogoutTimer(); };
   }, []);
+
 
 
   // 🔥 login
   const login = async (email: string, password: string, keepLoggedIn: boolean) => {
     const response = await AuthService.loginV2(email, password);
 
-    localStorage.setItem("user", JSON.stringify(response.user));
+    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(response.user));
     localStorage.setItem(STORAGE_KEYS.KEEP_LOGGED_IN, String(keepLoggedIn));
 
     setUser(response.user);
     setIsAuthenticated(true);
 
-    if (!keepLoggedIn) {
-      scheduleAutoLogout(SESSION_DURATION_NORMAL);
-    }
+    const ttl = keepLoggedIn
+      ? SESSION_DURATION_LONG
+      : SESSION_DURATION_SHORT;
+
+    scheduleAutoLogout(ttl);
   };
 
   // 🔥 logout (SATU PINTU)

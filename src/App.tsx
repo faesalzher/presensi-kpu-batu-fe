@@ -37,6 +37,7 @@ import SubbagianPage from "./pages/department/SubbagianPage";
 import TukinPage from "./pages/tukin/TukinPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
+import PublicRoute from "./components/PublicRoute";
 
 function App() {
   return (
@@ -51,7 +52,8 @@ function App() {
                     <Router>
                       <Routes>
                         {/* Public route */}
-                        <Route path="/" element={<LoginPage />} />
+                        <Route path="/" element={<PublicRoute><LoginPage /></PublicRoute> }/>
+
                         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                         <Route path="/reset-password" element={<ResetPasswordPage />} />
 
