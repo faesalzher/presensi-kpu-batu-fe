@@ -100,7 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // 🔥 login
   const login = async (email: string, password: string, keepLoggedIn: boolean) => {
-    const response = await AuthService.loginV2(email, password, keepLoggedIn);
+    const response = await AuthService.loginV2(email, password);
 
     localStorage.setItem("user", JSON.stringify(response.user));
     localStorage.setItem(STORAGE_KEYS.KEEP_LOGGED_IN, String(keepLoggedIn));

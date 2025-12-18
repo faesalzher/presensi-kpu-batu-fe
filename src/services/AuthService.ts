@@ -67,7 +67,7 @@ API.interceptors.response.use(
 
 // Auth service methods
 export const AuthService = {
-  loginV2: async (email: string, password: string, keepLoggedIn: boolean): Promise<LoginResponseV2> => {
+  loginV2: async (email: string, password: string): Promise<LoginResponseV2> => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
