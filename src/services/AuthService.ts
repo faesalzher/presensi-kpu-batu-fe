@@ -17,20 +17,31 @@ interface LoginResponse {
   };
 }
 
-interface RefreshTokenResponse {
-  access_token: string;
-  refresh_token: string;
+interface LoginResponseV2 {
+  user: {
+    guid: string;
+    fullName: string;
+    email: string;
+    role: string;
+    profileImage?: string;
+    department?: string;
+  };
 }
+
+// interface RefreshTokenResponse {
+//   access_token: string;
+//   refresh_token: string;
+// }
 
 // Create API instance with base configuration
 const API: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });
-
 // Set up request interceptor to include auth token
 API.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("access_token");
+  async (config) => {
+    const { data } = await supabase.auth.getSession();
+    const token = data?.session?.access_token;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -41,75 +52,47 @@ API.interceptors.request.use(
 
 // Set up response interceptor to handle token refresh
 API.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
-    // If error is 401 and we haven't already tried to refresh
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        // Try to refresh the token
-        const refreshToken = localStorage.getItem("refresh_token");
-        if (!refreshToken) {
-          // No refresh token available, redirect to login
-          AuthService.logoutV2();
-          return Promise.reject(error);
-        }
-
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/auth/refresh`,
-          {
-            refresh_token: refreshToken,
-          }
-        );
-
-        const data: RefreshTokenResponse = response.data;
-
-        // Store new tokens
-        localStorage.setItem("access_token", data.access_token);
-        localStorage.setItem("refresh_token", data.refresh_token);
-
-        // Update authorization header and retry
-        originalRequest.headers.Authorization = `Bearer ${data.access_token}`;
-        return API(originalRequest);
-      } catch (refreshError) {
-        // If refresh fails, clear tokens and redirect to login
+  (res) => res,
+  async (err) => {
+    if (err.response?.status === 401) {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
         AuthService.logoutV2();
-        return Promise.reject(refreshError);
       }
     }
-
-    return Promise.reject(error);
+    return Promise.reject(err);
   }
 );
 
-// Auth service methods
 
+// Auth service methods
 export const AuthService = {
-  loginV2: async (email: string, password: string): Promise<LoginResponse> => {
-    const response = await supabase.auth.signInWithPassword({
+  loginV2: async (email: string, password: string, keepLoggedIn: boolean): Promise<LoginResponseV2> => {
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    const guid = response.data.user?.id
+ if (error) throw error;
+
+    // 2️⃣ Ambil profile dari backend (role, department, dll)
+    const guid = data.user?.id;
+    if (!guid) {
+      throw new Error("User ID not found from Supabase");
+    }
+
     const responseUser = await API.get<User>(`api/Auth/${guid}`);
 
-    const res: LoginResponse = {
-      access_token: response.data.session?.access_token ?? "",
-      refresh_token: response.data.session?.refresh_token ?? "",
+    // 3️⃣ Return user ke AuthContext
+    return {
       user: {
-        guid: response.data.user?.id ?? "",
+        guid,
         fullName: responseUser.data.fullName,
-        email: response.data.user?.email ?? "",
+        email: data.user?.email ?? "",
         role: responseUser.data.role,
-        department: responseUser.data.department
+        department: responseUser.data.department,
       },
     };
-
-    return res;
   },
 
 
@@ -125,12 +108,10 @@ export const AuthService = {
   },
 
 
-  logoutV2: () => {
-
-    supabase.auth.signOut();
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
+  logoutV2: async () => {
+    await supabase.auth.signOut();
     localStorage.removeItem("user");
+    localStorage.removeItem("keep_logged_in");
   },
 
   logout: () => {
@@ -144,6 +125,7 @@ export const AuthService = {
       window.location.href = "/";
     }
   },
+
 
   getProfile: async () => {
     const response = await API.get("/auth/profile");
@@ -165,15 +147,16 @@ export const AuthService = {
     return response.data;
   },
 
-  refreshToken: async (refreshToken: string): Promise<RefreshTokenResponse> => {
-    const response = await API.post<RefreshTokenResponse>("/auth/refresh", {
-      refresh_token: refreshToken,
-    });
-    return response.data;
-  },
+  // refreshToken: async (refreshToken: string): Promise<RefreshTokenResponse> => {
+  //   const response = await API.post<RefreshTokenResponse>("/auth/refresh", {
+  //     refresh_token: refreshToken,
+  //   });
+  //   return response.data;
+  // },
 
   isAuthenticated: (): boolean => {
-    return !!localStorage.getItem("access_token");
+    const session = supabase.auth.getSession?.();
+    return !!session;
   },
 
   getUser: () => {

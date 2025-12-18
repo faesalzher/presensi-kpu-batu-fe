@@ -38,4 +38,4 @@ export interface LoginResponse extends AuthTokens {
   user: User;
 }
 
-export interface RefreshTokenResponse extends AuthTokens {}
+// export interface RefreshTokenResponse extends AuthTokens {}

@@ -114,7 +114,7 @@ const UnderDevelopmentPage: React.FC = () => {
             Estimasi penyelesaian: Mei 2025
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            © {new Date().getFullYear()} e-Presensi KPU Kota Batu
+            © {new Date().getFullYear()} Presensi KPU Kota Batu
           </Typography>
         </Box>
       </Container>

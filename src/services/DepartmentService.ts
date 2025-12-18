@@ -2,6 +2,7 @@
 import axios from "axios";
 import { Department } from "../types/departments";
 import { dummyDepartment, isDemoMode } from "../mocks/demoData";
+import { supabase } from "../lib/supabase";
 
 // Create API instance with base configuration
 const API = axios.create({
@@ -10,8 +11,10 @@ const API = axios.create({
 
 // Set up request interceptor to include auth token
 API.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("access_token");
+  async (config) => {
+    const { data } = await supabase.auth.getSession();
+    const token = data?.session?.access_token;
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

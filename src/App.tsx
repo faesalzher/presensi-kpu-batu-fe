@@ -35,6 +35,8 @@ import EditProfilePage from "./pages/profile/EditProfilePage";
 import KasubagDashboardPage from "./pages/dashboard/KasubagDashboardPage";
 import SubbagianPage from "./pages/department/SubbagianPage";
 import TukinPage from "./pages/tukin/TukinPage";
+import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 
 function App() {
   return (
@@ -50,6 +52,8 @@ function App() {
                       <Routes>
                         {/* Public route */}
                         <Route path="/" element={<LoginPage />} />
+                        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
                         {/* Protected routes for all authenticated users */}
                         <Route element={<ProtectedRoute />}>

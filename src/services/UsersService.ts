@@ -2,6 +2,7 @@
 import axios from "axios";
 import { CreateUserDto, UpdateUserDto, User } from "../types/users";
 import AuthService from "./AuthService";
+import { supabase } from "../lib/supabase";
 
 // Reuse the API instance from AuthService to make use of the already
 // configured interceptors for authentication and token refresh
@@ -11,8 +12,9 @@ const API = axios.create({
 
 // Set up request interceptor to include auth token
 API.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("access_token");
+  async (config) => {
+    const { data } = await supabase.auth.getSession();
+    const token = data?.session?.access_token;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -25,34 +27,12 @@ API.interceptors.request.use(
 API.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
+    if (error.response?.status === 401) {
+      const { data } = await supabase.auth.getSession();
 
-    // If error is 401 and we haven't already tried to refresh
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        // Try to refresh the token
-        const refreshToken = localStorage.getItem("refresh_token");
-        if (!refreshToken) {
-          // No refresh token available, redirect to login
-          AuthService.logoutV2();
-          return Promise.reject(error);
-        }
-
-        const response = await AuthService.refreshToken(refreshToken);
-
-        // Store new tokens
-        localStorage.setItem("access_token", response.access_token);
-        localStorage.setItem("refresh_token", response.refresh_token);
-
-        // Update authorization header and retry
-        originalRequest.headers.Authorization = `Bearer ${response.access_token}`;
-        return API(originalRequest);
-      } catch (refreshError) {
-        // If refresh fails, clear tokens and redirect to login
+      // Kalau session sudah benar-benar habis
+      if (!data.session) {
         AuthService.logoutV2();
-        return Promise.reject(refreshError);
       }
     }
 

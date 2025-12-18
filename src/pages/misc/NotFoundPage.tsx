@@ -96,7 +96,7 @@ const NotFoundPage: React.FC = () => {
           align="center"
           sx={{ mt: 4 }}
         >
-          © {new Date().getFullYear()} e-Presensi KPU Kota Batu
+          © {new Date().getFullYear()} Presensi KPU Kota Batu
         </Typography>
       </Container>
     </Box>

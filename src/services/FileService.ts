@@ -6,6 +6,7 @@ import {
   FileUploadResponse,
 } from "../types/files";
 import { FileCategory } from "../types/enums";
+import { supabase } from "../lib/supabase";
 
 // Create a base axios instance with the API URL
 const API_URL = import.meta.env.VITE_API_URL;
@@ -18,17 +19,18 @@ const apiClient = axios.create({
 
 // Add a request interceptor to include the auth token from localStorage
 apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("access_token");
+  async (config) => {
+    const { data } = await supabase.auth.getSession();
+    const token = data?.session?.access_token;
+
     if (token) {
-      config.headers["Authorization"] = `Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
+
 
 class FileService {
   /**
@@ -159,7 +161,7 @@ class FileService {
     }
 
     const response = await apiClient.get(`/files?${queryParams}`);
-    
+
     return response.data;
   }
 
@@ -209,14 +211,15 @@ class FileService {
   static async downloadFile(guid: string, filename?: string): Promise<void> {
     try {
       // Get token from localStorage directly for this specific request
-      const token = localStorage.getItem("access_token");
+      const { data } = await supabase.auth.getSession();
+      const token = data?.session?.access_token;
 
       const response = await apiClient.get(`/files/${guid}/download`, {
         responseType: "blob",
         headers: token
           ? {
-              Authorization: `Bearer ${token}`,
-            }
+            Authorization: `Bearer ${token}`,
+          }
           : undefined,
       });
 

@@ -1,7 +1,9 @@
 // src/contexts/AuthContext.tsx
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import AuthService from "../services/AuthService";
 import { ChangePasswordDto } from "../types/auth";
+import { supabase } from "../lib/supabase";
+import { SESSION_DURATION_NORMAL, STORAGE_KEYS } from "../constant/auth.constant";
 
 export interface User {
   guid: string;
@@ -17,7 +19,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, keepLoggedIn: boolean) => Promise<void>;
   logout: () => void;
   changePassword: (
     currentPassword: string,
@@ -37,64 +39,90 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const logoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    // Check if user is already logged in
-    const checkAuth = async () => {
-
-      console.log(AuthService.isAuthenticated);
-          console.log('check auth');
-
-      if (AuthService.isAuthenticated()) {
-        try {
-          const userData = AuthService.getUser();
-
-          console.log('masuuk auth')
-
-          //sementara diclose nanti dikembalikan
-          // // Validate stored user data by fetching fresh profile
-          // await AuthService.getProfile(); // This will trigger token refresh if needed
-
-          setUser(userData);
-          setIsAuthenticated(true);
-        } catch (error) {
-          console.log('masuk err')
-          console.error("Error restoring auth state:", error);
-          // AuthService.logoutV2();
-        }
-      }
-      setLoading(false);
-    };
-
-    checkAuth();
-  }, []);
-
-  const login = async (email: string, password: string) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await AuthService.loginV2(email, password);
-      localStorage.setItem("access_token", response.access_token);
-      localStorage.setItem("refresh_token", response.refresh_token);
-      localStorage.setItem("user", JSON.stringify(response.user));
-
-      setUser(response.user);
-      setIsAuthenticated(true);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Login failed";
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setLoading(false);
+  // 🔥 helper
+  const clearLogoutTimer = () => {
+    if (logoutTimerRef.current) {
+      clearTimeout(logoutTimerRef.current);
+      logoutTimerRef.current = null;
     }
   };
 
-  const logout = () => {
-    AuthService.logoutV2();
+  const scheduleAutoLogout = (ms: number) => {
+    clearLogoutTimer();
+    logoutTimerRef.current = setTimeout(() => {
+      logout();
+    }, ms);
+  };
+
+  // 🔥 restore auth saat app load
+  useEffect(() => {
+    let mounted = true;
+
+    const restoreAuth = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const keepLoggedIn = localStorage.getItem(STORAGE_KEYS.KEEP_LOGGED_IN) === "true";
+
+        if (data.session) {
+          const storedUser = localStorage.getItem(STORAGE_KEYS.USER);
+          const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+
+          if (mounted) {
+            setUser(parsedUser);
+            setIsAuthenticated(true);
+
+            // 🔥 aturan logout
+            if (!keepLoggedIn) {
+              scheduleAutoLogout(SESSION_DURATION_NORMAL); 
+            }
+          }
+        } else {
+          if (mounted) {
+            setUser(null);
+            setIsAuthenticated(false);
+          }
+        }
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    restoreAuth();
+
+    return () => {
+      mounted = false;
+      clearLogoutTimer();
+    };
+  }, []);
+
+
+  // 🔥 login
+  const login = async (email: string, password: string, keepLoggedIn: boolean) => {
+    const response = await AuthService.loginV2(email, password, keepLoggedIn);
+
+    localStorage.setItem("user", JSON.stringify(response.user));
+    localStorage.setItem(STORAGE_KEYS.KEEP_LOGGED_IN, String(keepLoggedIn));
+
+    setUser(response.user);
+    setIsAuthenticated(true);
+
+    if (!keepLoggedIn) {
+      scheduleAutoLogout(SESSION_DURATION_NORMAL);
+    }
+  };
+
+  // 🔥 logout (SATU PINTU)
+  const logout = async () => {
+    clearLogoutTimer();
+    await supabase.auth.signOut();
+
+    localStorage.removeItem(STORAGE_KEYS.USER);
+    localStorage.removeItem(STORAGE_KEYS.KEEP_LOGGED_IN);
+
     setUser(null);
     setIsAuthenticated(false);
-    setError(null);
   };
 
   const changePassword = async (

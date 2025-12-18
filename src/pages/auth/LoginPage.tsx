@@ -12,6 +12,8 @@ import {
   Theme,
   Alert,
   IconButton,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 import {
   AccountCircle,
@@ -28,6 +30,7 @@ import bg from '../../assets/images/bg.png'
 interface LoginCredentials {
   email: string;
   password: string;
+  keepLoggedIn: boolean;
 }
 
 const LoginPage: React.FC = () => {
@@ -45,6 +48,7 @@ const LoginPage: React.FC = () => {
   const [credentials, setCredentials] = useState<LoginCredentials>({
     email: "",
     password: "",
+    keepLoggedIn: false
   });
 
   // State for error handling
@@ -54,46 +58,7 @@ const LoginPage: React.FC = () => {
   // State for password visibility
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
-  // Check if user is already logged in
-  useEffect(() => {
-    const checkAuthStatus = () => {
-      const accessToken = localStorage.getItem("access_token");
-      const user = localStorage.getItem("user");
 
-      if (accessToken && user) {
-        try {
-          const userData = JSON.parse(user);
-
-          // Check if token is still valid (not expired)
-          const tokenPayload = JSON.parse(atob(accessToken.split(".")[1]));
-          const currentTime = Math.floor(Date.now() / 1000);
-
-          if (tokenPayload.exp > currentTime) {
-            // Token is still valid, redirect to appropriate dashboard
-            if (userData.role === "kasubag") {
-              navigate("/kasubag-dashboard", { replace: true });
-            } else {
-              // Default for "staf" or any other role
-              navigate("/dashboard", { replace: true });
-            }
-          } else {
-            // Token expired, clear localStorage
-            localStorage.removeItem("access_token");
-            localStorage.removeItem("refresh_token");
-            localStorage.removeItem("user");
-          }
-        } catch (error) {
-          console.error("Error parsing token or user data:", error);
-          // Clear invalid data
-          localStorage.removeItem("access_token");
-          localStorage.removeItem("refresh_token");
-          localStorage.removeItem("user");
-        }
-      }
-    };
-
-    checkAuthStatus();
-  }, [navigate]);
 
   // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -128,7 +93,7 @@ const LoginPage: React.FC = () => {
 
     try {
       // Use the login function from AuthContext
-      await login(credentials.email, credentials.password);
+      await login(credentials.email, credentials.password, credentials.keepLoggedIn);
 
       // Get user from localStorage to determine redirect
       const userStr = localStorage.getItem("user");
@@ -152,8 +117,7 @@ const LoginPage: React.FC = () => {
 
   // Handle password reset
   const handleForgotPassword = () => {
-    // Implement password reset logic or navigation
-    console.log("Forgot password clicked");
+    navigate("/forgot-password");
   };
 
   return (
@@ -198,8 +162,20 @@ const LoginPage: React.FC = () => {
             flexDirection: "column",
             alignItems: "center",
             flex: { md: "1" },
-          }}
-        >
+          }}        >
+
+          <Box
+            component="img"
+            src={loginSvg}
+            alt="Login Illustration"
+            sx={{
+              width: { xs: "30%", sm: "20%", md: "30%" },
+              maxWidth: { xs: 320, md: 320 },
+              height: "auto",
+              mt: 8,
+              mb: 4,
+            }}
+          />
           <Typography
             sx={{
               color: '#fff',
@@ -208,26 +184,46 @@ const LoginPage: React.FC = () => {
               textTransform: 'uppercase',
               textAlign: 'center',
               fontSize: {
-                xs: '0.85rem',
-                sm: '1rem',
-                md: '1.1rem',
+                xs: '1rem',
+                sm: '2rem',
+                md: '1rem',
               },
             }}
           >
-            e-PRESENSI
+            PRESENSI
           </Typography>
-          <Box
-            component="img"
-            src={loginSvg}
-            alt="Login Illustration"
+          <Typography
             sx={{
-              width: { xs: "80%", sm: "60%", md: "80%" },
-              maxWidth: { xs: 320, md: 320 },
-              height: "auto",
-              mt: 8,
-              mb: 4,
+              color: '#fff',
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              textAlign: 'center',
+              fontSize: {
+                xs: '1rem',
+                sm: '2rem',
+                md: '1rem',
+              },
             }}
-          />
+          >
+            KOMISI PEMILIHAN UMUM
+          </Typography>
+          <Typography
+            sx={{
+              color: '#fff',
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              textAlign: 'center',
+              fontSize: {
+                xs: '1rem',
+                sm: '2rem',
+                md: '1rem',
+              },
+            }}
+          >
+            KOTA BATU
+          </Typography>
         </Box>
 
         {/* Login form container */}
@@ -330,18 +326,46 @@ const LoginPage: React.FC = () => {
             />
 
             {/* Forgot password link */}
-            <Typography
-              variant="body2"
-              align="left"
-              sx={{
-                color: "#666",
-                cursor: "pointer",
-                mb: 2,
-              }}
-              onClick={handleForgotPassword}
-            >
-              Forget Password?
-            </Typography>
+            <div>
+
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={credentials.keepLoggedIn}
+                    onChange={(e) =>
+                      setCredentials((prev) => ({
+                        ...prev,
+                        keepLoggedIn: e.target.checked,
+                      }))
+                    }
+                  />
+                }
+                label={
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ userSelect: "none" }}
+                  >
+                    Keep me logged in
+                  </Typography>
+                }
+                sx={{
+                  alignItems: "center",
+                }}
+              />
+              <Typography
+                variant="body2"
+                align="left"
+                sx={{
+                  color: "#666",
+                  cursor: "pointer",
+                }}
+                onClick={handleForgotPassword}
+              >
+                Forget Password?
+              </Typography>
+
+            </div>
 
             {/* Login button */}
             <Button

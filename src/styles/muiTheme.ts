@@ -15,8 +15,14 @@ export const muiTheme = createTheme({
     },
     success: {
       main: '#4CAF50',
-      dark : "#3f7741ff"
-    }
+      dark: "#3f7741ff"
+    },
+    text: {
+      primary: "#1f2937",   // abu tua (teks utama)
+      secondary: "#6b7280", // abu medium (helper, label, caption)
+      disabled: "#9ca3af",  // teks non-aktif
+    },
+
   },
   shape: {
     // borderRadius: 4
@@ -29,6 +35,18 @@ export const muiTheme = createTheme({
       'Helvetica',
       'Arial',
       'sans-serif'
-    ].join(',')
+    ].join(','),
+    body1: {
+      fontSize: "0.95rem",
+      lineHeight: 1.6,
+    },
+    body2: {
+      fontSize: "0.85rem",
+      lineHeight: 1.5,
+    },
+    caption: {
+      fontSize: "0.75rem",
+      color: "#6b7280",
+    },
   },
 })
