@@ -4,7 +4,6 @@ import {
   CircularProgress,
   Alert,
   Grid,
-  useTheme,
   Box,
 } from "@mui/material";
 import {
@@ -158,7 +157,6 @@ const DashboardPage: React.FC = () => {
 
   const loading = loadingUser || loadingAttendance || loadingStatistics;
   const error = userError || attendanceError || statisticsError;
-  const theme = useTheme();
 
   const clearError = () => {
     clearUserError();
