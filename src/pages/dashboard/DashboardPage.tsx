@@ -5,6 +5,7 @@ import {
   Alert,
   Grid,
   Box,
+  Typography,
 } from "@mui/material";
 import {
   Person,
@@ -147,12 +148,12 @@ const DashboardPage: React.FC = () => {
 
   const attendanceChartData = statistics
     ? [
-        { name: "Hadir", value: statistics.present, color: "#4CAF50" },
-        { name: "Cuti", value: statistics.onLeave, color: "#FFC107" },
-        { name: "Remote", value: statistics.remoteWorking, color: "#FF7043" },
-        { name: "DL", value: statistics.officialTravel, color: "#03A9F4" },
-        { name: "Alpha", value: statistics.absent, color: "#F44336" },
-      ]
+      { name: "Hadir", value: statistics.present, color: "#4CAF50" },
+      { name: "Cuti", value: statistics.onLeave, color: "#FFC107" },
+      { name: "Remote", value: statistics.remoteWorking, color: "#FF7043" },
+      { name: "DL", value: statistics.officialTravel, color: "#03A9F4" },
+      { name: "Alpha", value: statistics.absent, color: "#F44336" },
+    ]
     : [];
 
   const loading = loadingUser || loadingAttendance || loadingStatistics;
@@ -216,12 +217,22 @@ const DashboardPage: React.FC = () => {
           </Grid>
 
           <Grid size={12}>
-            <AttendanceChart
-              title={`Rekap Kehadiran ${now.toLocaleString("id-ID", {
-                month: "long",
-              })}`}
-              data={attendanceChartData}
-            />
+            {
+              loadingStatistics ? (<Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
+                <CircularProgress />
+              </Box>) : (
+                statistics ? (
+                  <AttendanceChart
+                    title={`Rekap Kehadiran ${now.toLocaleString("id-ID", {
+                      month: "long",
+                    })}`}
+                    data={attendanceChartData}
+                  />
+                ) : (<Typography variant="body1" color="text.secondary" align="center">
+                  Tidak ada data kehadiran untuk ditampilkan
+                </Typography>)
+              )
+            }
           </Grid>
         </Grid>
       </Container>

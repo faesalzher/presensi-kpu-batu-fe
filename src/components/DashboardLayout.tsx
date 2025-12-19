@@ -4,7 +4,7 @@ import BottomNav from "./BottomNav";
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh" }}>
+    <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", pb:2}}>
       {children}
       <BottomNav />
     </Box>

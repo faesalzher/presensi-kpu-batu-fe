@@ -1,5 +1,5 @@
 // components/AttendanceChart.tsx
-import { Paper, Typography, Box } from "@mui/material";
+import { Paper, Typography, Box, Divider, Card } from "@mui/material";
 import {
   PieChart,
   Pie,
@@ -11,11 +11,12 @@ import {
 
 const AttendanceChart = ({ data, title }: any) => {
   return (
-    <Paper sx={{ p: 3, borderRadius: 2 }}>
-      <Typography align="center" fontWeight="medium" gutterBottom>
+    <Card sx={{ borderRadius: 3 , mb:1}} elevation={1}>
+      <Typography sx={{p:1}} align="center" fontWeight="medium" gutterBottom>
         {title}
       </Typography>
-      <Box height={300}>
+      <Divider />
+      <Box height={300} sx={{p:2, pt:0}}>
         <ResponsiveContainer>
           <PieChart>
             <Pie
@@ -26,7 +27,7 @@ const AttendanceChart = ({ data, title }: any) => {
               paddingAngle={2}
               innerRadius={60}
               outerRadius={90}
-                label={({ value }) => `${value}%`}
+              label={({ value }) => `${value}%`}
             >
               {data.map((d: any, i: number) => (
                 <Cell key={i} fill={d.color} />
@@ -37,7 +38,7 @@ const AttendanceChart = ({ data, title }: any) => {
           </PieChart>
         </ResponsiveContainer>
       </Box>
-    </Paper>
+    </Card>
   );
 };
 

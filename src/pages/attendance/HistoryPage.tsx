@@ -168,7 +168,7 @@ const HistoryPage: React.FC = () => {
           alignItems: "center",
         }}
       >
-        <Typography variant="h6">Riwayat Presensi</Typography>
+        <Typography variant="h6" fontWeight="bold">Riwayat Presensi</Typography>
         <Box
           component="button"
           sx={{

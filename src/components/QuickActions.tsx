@@ -1,4 +1,4 @@
-import { Grid, Paper, Typography, Box } from "@mui/material";
+import { Grid, Paper, Typography, Box, Badge } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 
 interface Action {
@@ -36,29 +36,6 @@ const QuickActions = ({ actions }: { actions: Action[] }) => {
                 },
               }}
             >
-              {/* Badge */}
-              {a.badge && a.badge > 0 && (
-                <Box
-                  sx={{
-                    position: "absolute",
-                    top: 6,
-                    right: 8,
-                    bgcolor: "error.main",
-                    color: "white",
-                    fontSize: 10,
-                    minWidth: 18,
-                    height: 18,
-                    borderRadius: "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  {a.badge > 99 ? "99+" : a.badge}
-                </Box>
-              )}
-
-              {/* Icon */}
               <Box
                 sx={{
                   mb: 0.5,
@@ -67,9 +44,10 @@ const QuickActions = ({ actions }: { actions: Action[] }) => {
                   justifyContent: "center",
                 }}
               >
-                {a.icon}
+                <Badge badgeContent={a.badge} color="secondary" max={99}>
+                  {a.icon}
+                </Badge>
               </Box>
-
               {/* Label */}
               <Typography
                 variant="caption"

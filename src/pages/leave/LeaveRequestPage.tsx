@@ -153,7 +153,7 @@ const LeaveRequestPage: React.FC = () => {
           textAlign: "center",
         }}
       >
-        <Typography variant="h6">Pengajuan</Typography>
+        <Typography variant="h6" fontWeight="bold">Pengajuan</Typography>
       </Box>
 
       {/* Content */}

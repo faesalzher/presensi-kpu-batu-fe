@@ -130,7 +130,7 @@ const ReportGenerator: React.FC = () => {
           width:  "100%",
           py: 1.5,
           textTransform: "none",
-          borderRadius: 1,
+          borderRadius: 2,
           boxShadow: 2,
           mb: 1,
           bgcolor: "primary.main",

@@ -296,7 +296,7 @@ const ProfilePage: React.FC = () => {
       <Box
         sx={{ bgcolor: "primary.main", p: 2, color: "white", textAlign: "center" }}
       >
-        <Typography variant="h6">Profile</Typography>
+        <Typography variant="h6" fontWeight="bold">Profile</Typography>
       </Box>
 
       <Container maxWidth="sm" sx={{ px: { xs: 2, sm: 3 } }}>
@@ -435,7 +435,7 @@ const ProfilePage: React.FC = () => {
                 color: "white",
                 height: 120,
                 width: '100%',
-                pb: { xs: 0, sm: 1 },
+                pb: { xs: 0, sm: 1 }
               }}
             >
               <CardContent sx={{ textAlign: "center", py: 2 }}>
@@ -537,7 +537,7 @@ const ProfilePage: React.FC = () => {
               width: "100%",
               py: 1.5,
               textTransform: "none",
-              borderRadius: 1,
+              borderRadius: 2,
               boxShadow: 2,
             }}
           >
@@ -558,7 +558,7 @@ const ProfilePage: React.FC = () => {
               width: "100%",
               py: 1.5,
               textTransform: "none",
-              borderRadius: 1,
+              borderRadius: 2,
               boxShadow: 2,
             }}
           >
@@ -578,7 +578,7 @@ const ProfilePage: React.FC = () => {
               bgcolor: "#F44336",
               py: 1.5,
               textTransform: "none",
-              borderRadius: 1,
+              borderRadius: 2,
               boxShadow: 2,
             }}
           >

@@ -14,7 +14,7 @@ export const muiTheme = createTheme({
       main: '#ef4444'
     },
     success: {
-      main: '#4CAF50',
+      main: '#308b33ff',
       dark: "#3f7741ff"
     },
     text: {
@@ -25,7 +25,7 @@ export const muiTheme = createTheme({
 
   },
   shape: {
-    // borderRadius: 4
+    // borderRadius: 3
   },
   typography: {
     fontFamily: [
