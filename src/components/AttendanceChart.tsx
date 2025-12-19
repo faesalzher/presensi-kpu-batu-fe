@@ -1,5 +1,5 @@
 // components/AttendanceChart.tsx
-import { Paper, Typography, Box, Divider, Card } from "@mui/material";
+import { Typography, Box, Divider, Card } from "@mui/material";
 import {
   PieChart,
   Pie,
