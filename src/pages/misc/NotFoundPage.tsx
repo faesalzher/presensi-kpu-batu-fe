@@ -12,6 +12,7 @@ import {
   ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import { getNow } from "../../constant/time.constant";
 
 const NotFoundPage: React.FC = () => {
   const theme = useTheme();
@@ -96,7 +97,7 @@ const NotFoundPage: React.FC = () => {
           align="center"
           sx={{ mt: 4 }}
         >
-          © {new Date().getFullYear()} Presensi KPU Kota Batu
+          © {getNow().getFullYear()} Presensi KPU Kota Batu
         </Typography>
       </Container>
     </Box>

@@ -3,6 +3,10 @@ export enum UserRole {
   ADMIN = "admin",
   STAF = "staf",
   KASUBAG = "kasubag",
+  KASUBAG_SDM = "kasubag sdm",
+  STAF_SPIP = "staf spip",
+  STAF_KUL = "staf kul",
+  SEKRETARIS = "sekretaris",
 }
 
 export enum WorkingStatus {

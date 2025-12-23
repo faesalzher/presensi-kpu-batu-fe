@@ -47,8 +47,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // If roles are specified and user doesn't have an allowed role
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {
     // Redirect to appropriate dashboard based on role
-    const dashboardRoute =
-      user.role === "kasubag" ? "/kasubag-dashboard" : "/dashboard";
+    const dashboardRoute = "/dashboard";
     return <Navigate to={dashboardRoute} replace />;
   }
 

@@ -23,6 +23,9 @@ const AttendanceActions = ({
       <ButtonGroup variant="contained" fullWidth sx={{
         minHeight: 90,
         borderRadius: 3,
+       "& .MuiButtonGroup-grouped:not(:last-of-type)": {
+          borderRight: "1px solid #fff", // garis tengah putih
+        },
         overflow: "hidden", // penting biar radius kepake
         "& .MuiButton-root": {
           borderRadius: 0, // biar nyatu rapi

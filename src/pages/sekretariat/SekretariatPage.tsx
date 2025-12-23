@@ -28,6 +28,7 @@ import {
   Checkbox,
   Avatar,
   Divider,
+  useTheme,
 } from "@mui/material";
 import {
   ArrowBack,
@@ -36,6 +37,7 @@ import {
   Settings,
   CheckCircle,
   Group,
+  RequestQuote,
 } from "@mui/icons-material";
 import BottomNav from "../../components/BottomNav";
 import { useNavigate } from "react-router-dom";
@@ -50,8 +52,9 @@ import {
   GenerateBulkReportParams,
 } from "../../types/statistics";
 import Swal from "sweetalert2";
+import { getNow } from "../../constant/time.constant";
 
-const SubbagianPage: React.FC = () => {
+const SekretariatPage: React.FC = () => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const {
@@ -102,7 +105,7 @@ const SubbagianPage: React.FC = () => {
     }
 
     // Set default date range (current month)
-    const now = new Date();
+    const now = getNow();
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
@@ -110,15 +113,14 @@ const SubbagianPage: React.FC = () => {
       ...prev,
       startDate: firstDay.toISOString().split("T")[0],
       endDate: lastDay.toISOString().split("T")[0],
-      title: `Laporan Kehadiran ${
-        currentUser?.department || "Subbagian"
-      } - ${now.toLocaleString("id-ID", { month: "long", year: "numeric" })}`,
+      title: `Laporan Kehadiran ${"Sekretariat"
+        } - ${now.toLocaleString("id-ID", { month: "long", year: "numeric" })}`,
       departmentName: currentUser?.department,
     }));
   }, [currentUser]);
 
   const handleBack = () => {
-    navigate("/kasubag-dashboard");
+    navigate("/dashboard");
   };
 
   const handleParamChange = (
@@ -139,7 +141,7 @@ const SubbagianPage: React.FC = () => {
 
     // Update date range when period changes
     if (field === "period") {
-      const now = new Date();
+      const now = getNow();
       let startDate = "";
       let endDate = "";
 
@@ -196,7 +198,7 @@ const SubbagianPage: React.FC = () => {
             title: "Perhatian!",
             text: "Pilih minimal satu pengguna untuk laporan",
             confirmButtonText: "OK",
-            confirmButtonColor: "#4285f4",
+            confirmButtonColor: theme.palette.primary.main,
           });
           return;
         }
@@ -226,7 +228,7 @@ const SubbagianPage: React.FC = () => {
           title: "Berhasil!",
           text: "Laporan berhasil dibuat dan sedang diunduh!",
           confirmButtonText: "OK",
-          confirmButtonColor: "#4285f4",
+          confirmButtonColor: theme.palette.primary.main,
         });
       }
     } catch (error) {
@@ -237,7 +239,7 @@ const SubbagianPage: React.FC = () => {
         title: "Gagal!",
         text: "Terjadi kesalahan saat membuat laporan. Silakan coba lagi.",
         confirmButtonText: "OK",
-        confirmButtonColor: "#4285f4",
+        confirmButtonColor: theme.palette.primary.main,
       });
     }
   };
@@ -249,10 +251,11 @@ const SubbagianPage: React.FC = () => {
   const loading = usersLoading || statsLoading;
   const error = usersError || statsError;
 
+  const theme = useTheme();
   return (
     <Box sx={{ bgcolor: "#f5f5f5", width: "100%", minHeight: "100vh", pb: 7 }}>
       {/* Header */}
-      <AppBar position="static" sx={{ bgcolor: "#4285f4" }}>
+      <AppBar position="static" sx={{ bgcolor: theme.palette.primary.main }}>
         <Toolbar>
           <IconButton edge="start" color="inherit" onClick={handleBack}>
             <ArrowBack />
@@ -261,7 +264,7 @@ const SubbagianPage: React.FC = () => {
             variant="h6"
             sx={{ flexGrow: 1, textAlign: "center", mr: 4 }}
           >
-            Laporan Subbagian
+            Laporan Sekretariat
           </Typography>
         </Toolbar>
       </AppBar>
@@ -283,11 +286,10 @@ const SubbagianPage: React.FC = () => {
 
         {/* Department Info */}
         {currentUser?.department && (
-          <Card sx={{ mb: 2, bgcolor: "#4285F4", color: "white" }}>
+          <Card sx={{ mb: 2, bgcolor: theme.palette.primary.main, color: "white" }}>
             <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Group sx={{ fontSize: 35 }} />
               <Box>
-                <Typography variant="h6">{currentUser.department}</Typography>
                 <Typography variant="body2" sx={{ opacity: 0.9 }}>
                   {departmentMembers.length} anggota terdaftar
                 </Typography>
@@ -304,7 +306,7 @@ const SubbagianPage: React.FC = () => {
               sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}
             >
               <Assessment />
-              Generate Laporan Kehadiran
+              Generate Laporan
             </Typography>
 
             <Grid>
@@ -395,7 +397,7 @@ const SubbagianPage: React.FC = () => {
                     onChange={(e) => handleParamChange("scope", e.target.value)}
                   >
                     <MenuItem value={BulkReportScope.DEPARTMENT}>
-                      Seluruh Subbagian ({departmentMembers.length} orang)
+                      Seluruh Sekretariat ({departmentMembers.length} orang)
                     </MenuItem>
                     <MenuItem value={BulkReportScope.SPECIFIC_USERS}>
                       Pilih Pengguna Tertentu
@@ -477,7 +479,7 @@ const SubbagianPage: React.FC = () => {
               </Grid>
 
               {/* Generate Button */}
-              <Grid>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
                 <Button
                   fullWidth
                   variant="contained"
@@ -489,9 +491,24 @@ const SubbagianPage: React.FC = () => {
                   disabled={loading}
                   sx={{ py: 1.5 }}
                 >
-                  {loading ? "Generating..." : "Generate Laporan"}
+                  {loading ? "Generating..." : "Generate Laporan Kehadiran"}
                 </Button>
-              </Grid>
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  size="large"
+                  startIcon={
+                    loading ? <CircularProgress size={20} /> : <RequestQuote />
+                  }
+                  onClick={handleGenerateReport}
+                  disabled={loading}
+                  sx={{ py: 1.5 }}
+                >
+                  {loading ? "Generating..." : "Generate Laporan Tukin"}
+                </Button>
+              </Box>
             </Grid>
           </CardContent>
         </Card>
@@ -606,7 +623,7 @@ const SubbagianPage: React.FC = () => {
             onClick={() => setUserSelectionDialog(false)}
             startIcon={<CheckCircle />}
             sx={{
-              color: "#4285F4",
+              color: theme.palette.primary.main,
               px: { xs: 2, sm: 4 },
               py: 1,
               fontSize: { xs: "0.875rem", sm: "1rem" },
@@ -623,4 +640,4 @@ const SubbagianPage: React.FC = () => {
   );
 };
 
-export default SubbagianPage;
+export default SekretariatPage;

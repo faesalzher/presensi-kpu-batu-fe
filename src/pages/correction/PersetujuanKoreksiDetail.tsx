@@ -148,7 +148,7 @@ const PersetujuanKoreksiDetailPage: React.FC = () => {
         status: CorrectionStatus.REJECTED,
         rejectionReason: rejectionReason.trim(),
       });
-      navigate("/kasubag-dashboard");
+      navigate("/dashboard");
     } catch (err: any) {
       setError(err.message || "Failed to reject correction");
     } finally {
@@ -166,7 +166,7 @@ const PersetujuanKoreksiDetailPage: React.FC = () => {
       await reviewCorrection(guid, {
         status: CorrectionStatus.APPROVED,
       });
-      navigate("/kasubag-dashboard");
+      navigate("/dashboard");
     } catch (err: any) {
       setError(err.message || "Failed to approve correction");
     } finally {

@@ -12,6 +12,9 @@ import {
   CalendarToday,
   Description,
   RequestQuote,
+  CheckBox,
+  Groups,
+  ExitToApp
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 
@@ -27,6 +30,10 @@ import DashboardHeader from "../../components/DashboardHeader";
 import DashboardLayout from "../../components/DashboardLayout";
 import DateTimeBar from "../../components/DateTimeBar";
 import QuickActions from "../../components/QuickActions";
+import { formatDate, formatShortTime, formatTime, getNow } from "../../constant/time.constant";
+import { useLeaveRequests } from "../../contexts/LeaveRequestsContext";
+import { useCorrections } from "../../contexts/CorrectionsContext";
+import { UserRole } from "../../types/enums";
 
 /* ===================================================== */
 
@@ -57,7 +64,17 @@ const DashboardPage: React.FC = () => {
     clearError: clearStatisticsError,
   } = useStatistics();
 
-  const [now, setNow] = useState(new Date());
+  const {
+    pendingRequests,
+    fetchPendingRequests,
+  } = useLeaveRequests();
+
+  const {
+    // pendingCorrections,
+    fetchPendingCorrections,
+  } = useCorrections();
+
+  const [now, setNow] = useState(getNow());
   const [photoURL, setPhotoURL] = useState<string | null>(null);
 
   /* ================= EFFECTS ================= */
@@ -67,8 +84,10 @@ const DashboardPage: React.FC = () => {
 
     fetchUserByGuid(authUser.guid);
     fetchTodayAttendance();
+    fetchPendingRequests();
+    fetchPendingCorrections();
 
-    const d = new Date();
+    const d = getNow();
     fetchMyStatistics({
       startDate: new Date(d.getFullYear(), d.getMonth(), 1)
         .toISOString()
@@ -89,49 +108,25 @@ const DashboardPage: React.FC = () => {
   }, [selectedUser?.profileImage]);
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 1000);
+    const timer = setInterval(() => setNow(getNow), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  /* ================= HELPERS ================= */
-
-  const formatDate = (date: Date) =>
-    date.toLocaleDateString("id-ID", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-
-  const formatTime = (date: Date) =>
-    date.toLocaleTimeString("id-ID", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
-
-  const formatShortTime = (value?: Date | string) => {
-    if (!value) return "--:--";
-    return new Date(value).toLocaleTimeString("id-ID", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
 
   const hasCheckedIn = !!todayAttendance?.checkInTime;
   const hasCheckedOut = !!todayAttendance?.checkOutTime;
 
   /* ================= DATA ================= */
 
-  const quickActions = [
+  const stafQuickActions = [
     {
-      label: "Profil",
+      label: "Sekretariat",
       icon: <Person />,
       onClick: () => navigate("/profile"),
     },
     {
       label: "Cuti",
-      icon: <CalendarToday />,
+      icon: <ExitToApp />,
       onClick: () => navigate("/leave-request"),
     },
     {
@@ -145,6 +140,107 @@ const DashboardPage: React.FC = () => {
       onClick: () => navigate("/daftar-tukin"),
     },
   ];
+  
+
+  const kasubagQuickActions = [
+    {
+      label: "Sekretariat",
+      icon: <Groups />,
+      onClick: () => navigate("/sekretariat"),
+    },
+    {
+      label: "Cuti",
+      icon: <ExitToApp />,
+      onClick: () => navigate("/leave-request"),
+    },
+    {
+      label: "Histori",
+      icon: <Description />,
+      onClick: () => navigate("/history"),
+    },
+    {
+      label: "Tukin",
+      icon: <RequestQuote />,
+      onClick: () => navigate("/daftar-tukin"),
+    },
+  ];
+
+  const kasubagSdmQuickActions = [
+    {
+      label: "Sekretariat",
+      icon: <Groups />,
+      onClick: () => navigate("/sekretariat"),
+    },
+    {
+      label: "Cuti",
+      icon: <ExitToApp />,
+      onClick: () => navigate("/leave-request"),
+    },
+    {
+      label: "Histori",
+      icon: <Description />,
+      onClick: () => navigate("/history"),
+    },
+    {
+      label: "Tukin",
+      icon: <RequestQuote />,
+      onClick: () => navigate("/daftar-tukin"),
+    },
+    {
+      label: "Revisi",
+      icon: <CheckBox />,
+      badge: pendingRequests?.length,
+      onClick: () => navigate("/persetujuan"),
+    },
+  ];
+
+  const stafKulQuickActions = [
+    {
+      label: "Sekretariat",
+      icon: <Groups />,
+      onClick: () => navigate("/sekretariat"),
+    },
+    {
+      label: "Cuti",
+      icon: <ExitToApp />,
+      onClick: () => navigate("/leave-request"),
+    },
+    {
+      label: "Histori",
+      icon: <Description />,
+      onClick: () => navigate("/history"),
+    },
+    {
+      label: "Tukin",
+      icon: <RequestQuote />,
+      onClick: () => navigate("/daftar-tukin"),
+    },
+    {
+      label: "Revisi",
+      icon: <CheckBox />,
+      badge: pendingRequests?.length,
+      onClick: () => navigate("/persetujuan"),
+    },
+  ];
+
+  const renderQuickActions = () => {
+    switch (selectedUser?.role) {
+      case UserRole.STAF:
+        return <QuickActions actions={stafQuickActions} />;
+
+      case UserRole.KASUBAG:
+        return <QuickActions actions={kasubagQuickActions} />;
+
+      case UserRole.KASUBAG_SDM:
+        return <QuickActions actions={kasubagSdmQuickActions} />;
+
+      case UserRole.STAF_KUL:
+        return <QuickActions actions={stafKulQuickActions} />;
+
+      default:
+        return null;
+    }
+  };
 
   const attendanceChartData = statistics
     ? [
@@ -213,7 +309,7 @@ const DashboardPage: React.FC = () => {
           </Grid>
 
           <Grid size={12}>
-            <QuickActions actions={quickActions} />
+            {renderQuickActions()}
           </Grid>
 
           <Grid size={12}>

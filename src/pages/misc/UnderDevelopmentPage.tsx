@@ -13,6 +13,7 @@ import {
   ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import { getNow } from "../../constant/time.constant";
 
 const UnderDevelopmentPage: React.FC = () => {
   const theme = useTheme();
@@ -114,7 +115,7 @@ const UnderDevelopmentPage: React.FC = () => {
             Estimasi penyelesaian: Mei 2025
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            © {new Date().getFullYear()} Presensi KPU Kota Batu
+            © {getNow().getFullYear()} Presensi KPU Kota Batu
           </Typography>
         </Box>
       </Container>

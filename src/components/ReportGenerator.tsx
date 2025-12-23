@@ -20,6 +20,7 @@ import {
 import DownloadIcon from "@mui/icons-material/Download";
 import { ReportPeriod, ReportFormat } from "../types/statistics";
 import { useStatistics } from "../contexts/StatisticsContext";
+import { getNow } from "../constant/time.constant";
 
 const ReportGenerator: React.FC = () => {
   const [open, setOpen] = useState(false);
@@ -39,7 +40,7 @@ const ReportGenerator: React.FC = () => {
 
   const handleOpen = () => {
     // Set default dates based on current month
-    const now = new Date();
+    const now = getNow();
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
@@ -57,7 +58,7 @@ const ReportGenerator: React.FC = () => {
     setPeriod(selectedPeriod);
 
     // Set default dates based on selected period
-    const now = new Date();
+    const now = getNow();
 
     if (selectedPeriod === ReportPeriod.DAILY) {
       setStartDate(now.toISOString().split("T")[0]);

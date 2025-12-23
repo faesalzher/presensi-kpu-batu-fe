@@ -95,18 +95,8 @@ const LoginPage: React.FC = () => {
       // Use the login function from AuthContext
       await login(credentials.email, credentials.password, credentials.keepLoggedIn);
 
-      // Get user from localStorage to determine redirect
-      const userStr = localStorage.getItem("user");
-      if (userStr) {
-        const user = JSON.parse(userStr);
-        // Redirect based on user role
-        if (user.role === "kasubag") {
-          navigate("/kasubag-dashboard");
-        } else {
-          // Default for "staf" or any other role
-          navigate("/dashboard");
-        }
-      }
+      // Default for "staf" or any other role
+      navigate("/dashboard");
     } catch (err) {
       setError("Login failed. Please check your credentials.");
       console.error("Login error:", err);

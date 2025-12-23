@@ -110,9 +110,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   // 🔥 logout (SATU PINTU)
-  const logout = async () => {
+  const logout = () => {
     clearLogoutTimer();
-    await supabase.auth.signOut();
+    supabase.auth.signOut();
 
     localStorage.removeItem(STORAGE_KEYS.USER);
     localStorage.removeItem(STORAGE_KEYS.KEEP_LOGGED_IN);

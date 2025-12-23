@@ -57,7 +57,7 @@ const PersetujuanPage: React.FC = () => {
   }, []);
 
   const handleBack = () => {
-    navigate("/kasubag-dashboard");
+    navigate("/dashboard");
   };
 
   const handleDetail = (guid: string) => {

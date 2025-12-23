@@ -16,6 +16,7 @@ import { useStatistics } from "../../contexts/StatisticsContext";
 import { useUsers } from "../../contexts/UserContext";
 import FileService from "../../services/FileService";
 import { ReportPeriod } from "../../types/statistics";
+import { formatDate, formatShortTime, formatTime, getNow } from "../../constant/time.constant";
 
 const KasubagDashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -54,7 +55,7 @@ const KasubagDashboardPage: React.FC = () => {
     fetchPendingCorrections,
   } = useCorrections();
 
-  const [now, setNow] = useState(new Date());
+  const [now, setNow] = useState(getNow());
   const [photoURL, setPhotoURL] = useState<string | null>(null);
 
   /* ================= EFFECT ================= */
@@ -67,7 +68,7 @@ const KasubagDashboardPage: React.FC = () => {
     fetchPendingRequests();
     fetchPendingCorrections();
 
-    const d = new Date();
+    const d = getNow();
     fetchMyStatistics({
       startDate: new Date(d.getFullYear(), d.getMonth(), 1)
         .toISOString()
@@ -89,7 +90,7 @@ const KasubagDashboardPage: React.FC = () => {
   }, [selectedUser?.profileImage]);
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 1000);
+    const timer = setInterval(() => setNow(getNow()), 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -97,9 +98,9 @@ const KasubagDashboardPage: React.FC = () => {
 
   const quickActions = [
     {
-      label: "Subbagian",
+      label: "Sekretariat",
       icon: <Person />,
-      onClick: () => navigate("/subbagian"),
+      onClick: () => navigate("/sekretariat"),
     },
     {
       label: "Cuti",
@@ -129,31 +130,6 @@ const KasubagDashboardPage: React.FC = () => {
       { name: "Alpha", value: statistics.absent, color: "#F44336" },
     ]
     : [];
-
-  /* ================= HELPERS ================= */
-
-  // const formatDate = (date: Date) =>
-  //   date.toLocaleDateString("id-ID", {
-  //     weekday: "long",
-  //     year: "numeric",
-  //     month: "long",
-  //     day: "numeric",
-  //   });
-
-  // const formatTime = (date: Date) =>
-  //   date.toLocaleTimeString("id-ID", {
-  //     hour: "2-digit",
-  //     minute: "2-digit",
-  //     second: "2-digit",
-  //   });
-
-  const formatShortTime = (value?: Date | string) => {
-    if (!value) return "--:--";
-    return new Date(value).toLocaleTimeString("id-ID", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
 
   const loading =
     loadingUser || loadingAttendance || loadingStatistics;
@@ -201,15 +177,7 @@ const KasubagDashboardPage: React.FC = () => {
       <Container sx={{ mt: 3, mb: 8 }}>
         <Grid container spacing={3}>
           <Grid size={12}>
-            <DateTimeBar
-              date={now.toLocaleDateString("id-ID", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-              time={now.toLocaleTimeString("id-ID")}
-            />
+            <DateTimeBar date={formatDate(now)} time={formatTime(now)} />
           </Grid>
 
           <Grid size={12}>

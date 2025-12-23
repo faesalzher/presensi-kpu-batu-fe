@@ -32,12 +32,12 @@ import CorrectionDetailPage from "./pages/correction/DetailCorrectionPage";
 import PersetujuanKoreksiPage from "./pages/correction/PersetujuanKoreksiPage";
 import PersetujuanKoreksiDetailPage from "./pages/correction/PersetujuanKoreksiDetail";
 import EditProfilePage from "./pages/profile/EditProfilePage";
-import KasubagDashboardPage from "./pages/dashboard/KasubagDashboardPage";
-import SubbagianPage from "./pages/department/SubbagianPage";
 import TukinPage from "./pages/tukin/TukinPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 import PublicRoute from "./components/PublicRoute";
+import { UserRole } from "./types/enums";
+import SekretariatPage from "./pages/sekretariat/SekretariatPage";
 
 function App() {
   return (
@@ -52,10 +52,14 @@ function App() {
                     <Router>
                       <Routes>
                         {/* Public route */}
-                        <Route path="/" element={<PublicRoute><LoginPage /></PublicRoute> }/>
+                        <Route path="/" element={<PublicRoute><LoginPage /></PublicRoute>} />
 
                         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                         <Route path="/reset-password" element={<ResetPasswordPage />} />
+                        <Route
+                          path="/dashboard"
+                          element={<DashboardPage />}
+                        />
 
                         {/* Protected routes for all authenticated users */}
                         <Route element={<ProtectedRoute />}>
@@ -66,20 +70,10 @@ function App() {
                           />
                         </Route>
 
-                        {/* Routes exclusively for staf */}
-                        <Route
-                          element={<ProtectedRoute allowedRoles={["staf"]} />}
-                        >
-                          <Route
-                            path="/dashboard"
-                            element={<DashboardPage />}
-                          />
-                        </Route>
-
                         {/* Routes accessible by both staf and kasubag */}
                         <Route
                           element={
-                            <ProtectedRoute allowedRoles={["staf", "kasubag"]} />
+                            <ProtectedRoute allowedRoles={[UserRole.STAF, UserRole.KASUBAG, UserRole.KASUBAG_SDM]} />
                           }
                         >
                           <Route path="/presensi" element={<PresensiPage />} />
@@ -143,12 +137,8 @@ function App() {
 
                         {/* Protected routes for kasubag (department head) only */}
                         <Route
-                          element={<ProtectedRoute allowedRoles={["kasubag"]} />}
+                          element={<ProtectedRoute allowedRoles={[UserRole.KASUBAG_SDM, UserRole.SEKRETARIS]} />}
                         >
-                          <Route
-                            path="/kasubag-dashboard"
-                            element={<KasubagDashboardPage />}
-                          />
                           <Route
                             path="/persetujuan"
                             element={<PersetujuanPage />}
@@ -162,8 +152,8 @@ function App() {
                             element={<RejectApplicationForm />}
                           />
                           <Route
-                            path="/subbagian"
-                            element={<SubbagianPage />}
+                            path="/sekretariat"
+                            element={<SekretariatPage />}
                           />
                         </Route>
 

@@ -55,7 +55,7 @@ const UsersService = {
   getUserByGuid: async (guid: string): Promise<User> => {
     // if (isDemoMode) return dummyUser;
 
-    const response = await API.get<User>(`api/Auth/${guid}`);
+    const response = await API.get<User>(`user/${guid}`);
     return response.data;
   },
 

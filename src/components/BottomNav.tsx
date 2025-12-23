@@ -6,6 +6,7 @@ import HistoryIcon from "@mui/icons-material/DescriptionOutlined";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import FingerprintIcon from "@mui/icons-material/Fingerprint";
 import { useLocation, useNavigate } from "react-router-dom";
+import { ExitToApp } from "@mui/icons-material";
 
 const BottomNav: React.FC = () => {
   const navigate = useNavigate();
@@ -71,7 +72,7 @@ const BottomNav: React.FC = () => {
         onClick={() => goTo("/leave-request")}
         color={location.pathname === "/leave-request" ? "error" : "default"}
       >
-        <EventNoteIcon />
+        <ExitToApp />
       </IconButton>
 
       {/* Fingerprint: only on Dashboard */}

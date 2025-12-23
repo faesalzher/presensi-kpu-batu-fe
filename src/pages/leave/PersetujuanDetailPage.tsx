@@ -94,7 +94,7 @@ const PersetujuanDetailPage: React.FC = () => {
         status: LeaveRequestStatus.APPROVED,
         comments: "Disetujui",
       });
-      navigate("/kasubag-dashboard");
+      navigate("/dashboard");
     } catch (err: any) {
       setError(err.message || "Failed to approve request");
     } finally {

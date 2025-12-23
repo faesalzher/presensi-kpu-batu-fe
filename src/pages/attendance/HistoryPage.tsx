@@ -32,6 +32,7 @@ import {
   eachMonthOfInterval,
 } from "date-fns";
 import { id } from "date-fns/locale/id";
+import { getNow } from "../../constant/time.constant";
 
 // Define the type for monthMap entries
 interface MonthMapEntry {
@@ -41,7 +42,7 @@ interface MonthMapEntry {
 
 const HistoryPage: React.FC = () => {
   const [month, setMonth] = useState<string>(
-    format(new Date(), "MMMM yyyy", { locale: id })
+    format(getNow(), "MMMM yyyy", { locale: id })
   );
   const [page, setPage] = useState(1);
   const navigate = useNavigate();

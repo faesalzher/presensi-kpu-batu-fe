@@ -26,6 +26,7 @@ import { useCorrections } from "../../contexts/CorrectionsContext";
 import { useAttendance } from "../../contexts/AttendanceContext";
 import { format } from "date-fns";
 import { CreateCorrectionDto } from "../../types/corrections";
+import { getNow } from "../../constant/time.constant";
 
 // Custom styled MenuItem for wrapping text
 const StyledMenuItem = styled(MenuItem)({
@@ -63,7 +64,7 @@ const AttendanceCorrectionPage: React.FC = () => {
 
   const [type, setPermissionType] = useState<string>("BREAK_TIME_AS_WORK");
   const [date, setRequestDate] = useState<string>(
-    format(new Date(), "yyyy-MM-dd")
+    format(getNow(), "yyyy-MM-dd")
   );
   const [reason, setDescription] = useState<string>("");
 

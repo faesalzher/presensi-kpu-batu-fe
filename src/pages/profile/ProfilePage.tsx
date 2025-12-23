@@ -35,6 +35,7 @@ import { ReportPeriod } from "../../types/statistics";
 import FileService from "../../services/FileService";
 import defaultProfileImage from "../../assets/default-pp.png";
 import ReportGenerator from "../../components/ReportGenerator";
+import { getNow } from "../../constant/time.constant";
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
@@ -149,7 +150,7 @@ const ProfilePage: React.FC = () => {
     }
 
     // Fetch statistics for the current month
-    const now = new Date();
+    const now = getNow();
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 

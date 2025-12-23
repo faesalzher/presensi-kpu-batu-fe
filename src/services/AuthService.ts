@@ -81,7 +81,7 @@ export const AuthService = {
       throw new Error("User ID not found from Supabase");
     }
 
-    const responseUser = await API.get<User>(`api/Auth/${guid}`);
+    const responseUser = await API.get<User>(`user/${guid}`);
 
     // 3️⃣ Return user ke AuthContext
     return {

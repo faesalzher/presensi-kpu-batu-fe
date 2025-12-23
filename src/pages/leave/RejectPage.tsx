@@ -76,7 +76,7 @@ const RejectApplicationForm: React.FC = () => {
       });
 
       // Navigate back to dashboard on success
-      navigate("/kasubag-dashboard");
+      navigate("/dashboard");
     } catch (err: any) {
       setError(err.message || "Failed to reject request");
     } finally {
