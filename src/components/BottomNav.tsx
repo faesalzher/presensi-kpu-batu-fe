@@ -29,7 +29,7 @@ const BottomNav: React.FC = () => {
 
   // Determine home path based on user role
   const getHomePath = () => {
-    return userRole === "kasubag" ? "/kasubag-dashboard" : "/dashboard";
+    return "/dashboard";
   };
 
   // Handler for navigation
@@ -75,8 +75,7 @@ const BottomNav: React.FC = () => {
       </IconButton>
 
       {/* Fingerprint: only on Dashboard */}
-      {(location.pathname === "/dashboard" ||
-        location.pathname === "/kasubag-dashboard") && (
+      {(location.pathname === "/dashboard") && (
         <IconButton
           onClick={() => goTo("/presensi")}
           sx={{

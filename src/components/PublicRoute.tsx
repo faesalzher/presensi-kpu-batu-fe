@@ -4,15 +4,12 @@ import { useAuth } from "../contexts/AuthContext";
 import { JSX } from "react";
 
 const PublicRoute = ({ children }: { children: JSX.Element }) => {
-  const { isAuthenticated, loading, user } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
 
   if (loading) return null; // atau spinner
 
   // 🔥 kalau masih punya sesi → langsung ke dashboard
   if (isAuthenticated) {
-    if (user?.role === "kasubag") {
-      return <Navigate to="/kasubag-dashboard" replace />;
-    }
     return <Navigate to="/dashboard" replace />;
   }
 

@@ -119,7 +119,7 @@ const DashboardPage: React.FC = () => {
 
   const stafQuickActions = [
     {
-      label: "Sekretariat",
+      label: "Profil",
       icon: <Person />,
       onClick: () => navigate("/profile"),
     },
@@ -139,7 +139,7 @@ const DashboardPage: React.FC = () => {
       onClick: () => navigate("/daftar-tukin"),
     },
   ];
-  
+
 
   const kasubagQuickActions = [
     {
@@ -193,35 +193,6 @@ const DashboardPage: React.FC = () => {
     },
   ];
 
-  const stafKulQuickActions = [
-    {
-      label: "Sekretariat",
-      icon: <Groups />,
-      onClick: () => navigate("/sekretariat"),
-    },
-    {
-      label: "Cuti",
-      icon: <ExitToApp />,
-      onClick: () => navigate("/leave-request"),
-    },
-    {
-      label: "Histori",
-      icon: <Description />,
-      onClick: () => navigate("/history"),
-    },
-    {
-      label: "Tukin",
-      icon: <RequestQuote />,
-      onClick: () => navigate("/daftar-tukin"),
-    },
-    {
-      label: "Revisi",
-      icon: <CheckBox />,
-      badge: pendingRequests?.length,
-      onClick: () => navigate("/persetujuan"),
-    },
-  ];
-
   const renderQuickActions = () => {
     switch (selectedUser?.role) {
       case UserRole.STAF:
@@ -230,11 +201,17 @@ const DashboardPage: React.FC = () => {
       case UserRole.KASUBAG:
         return <QuickActions actions={kasubagQuickActions} />;
 
+      case UserRole.STAF_SPIP:
+        return <QuickActions actions={kasubagQuickActions} />;
+
+      case UserRole.STAF_KUL:
+        return <QuickActions actions={kasubagQuickActions} />;
+
       case UserRole.KASUBAG_SDM:
         return <QuickActions actions={kasubagSdmQuickActions} />;
 
-      case UserRole.STAF_KUL:
-        return <QuickActions actions={stafKulQuickActions} />;
+      case UserRole.SEKRETARIS:
+        return <QuickActions actions={kasubagSdmQuickActions} />;
 
       default:
         return null;
@@ -286,7 +263,7 @@ const DashboardPage: React.FC = () => {
 
       <DashboardHeader
         name={selectedUser?.fullName}
-        role={selectedUser?.role}
+        department={selectedUser?.department}
         nip={selectedUser?.nip}
         photoURL={photoURL}
       />

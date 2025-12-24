@@ -5,12 +5,12 @@ import bg from '../assets/images/bg.png'
 
 interface Props {
   name?: string;
-  role?: string;
+  department?: string;
   nip?: string;
   photoURL?: string | null;
 }
 
-const DashboardHeader = ({ name, role, nip, photoURL }: Props) => {
+const DashboardHeader = ({ name, department, nip, photoURL }: Props) => {
   return (
     <Box
       sx={{
@@ -45,7 +45,7 @@ const DashboardHeader = ({ name, role, nip, photoURL }: Props) => {
               // fontWeight="bold"
               sx={{ textTransform: "uppercase" }}
             >
-              {role} {nip ? `• ${nip}` : ""}
+              {department} {nip ? `• ${nip}` : ""}
             </Typography>
           </Box>
         </Box>

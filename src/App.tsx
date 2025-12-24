@@ -137,7 +137,7 @@ function App() {
 
                         {/* Protected routes for kasubag (department head) only */}
                         <Route
-                          element={<ProtectedRoute allowedRoles={[UserRole.KASUBAG_SDM, UserRole.SEKRETARIS]} />}
+                          element={<ProtectedRoute allowedRoles={[UserRole.KASUBAG_SDM, UserRole.SEKRETARIS, UserRole.KASUBAG, UserRole.STAF_KUL, UserRole.STAF_SPIP]} />}
                         >
                           <Route
                             path="/persetujuan"
