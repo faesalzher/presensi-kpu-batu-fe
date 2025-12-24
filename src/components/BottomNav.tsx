@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Paper, IconButton } from "@mui/material";
 import HomeIcon from "@mui/icons-material/Home";
-import EventNoteIcon from "@mui/icons-material/EventNote";
 import HistoryIcon from "@mui/icons-material/DescriptionOutlined";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import FingerprintIcon from "@mui/icons-material/Fingerprint";

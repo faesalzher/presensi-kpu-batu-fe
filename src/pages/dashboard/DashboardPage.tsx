@@ -9,7 +9,6 @@ import {
 } from "@mui/material";
 import {
   Person,
-  CalendarToday,
   Description,
   RequestQuote,
   CheckBox,
