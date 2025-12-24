@@ -169,7 +169,7 @@ const KasubagDashboardPage: React.FC = () => {
 
       <DashboardHeader
         name={selectedUser?.fullName}
-        role={selectedUser?.role}
+        department={selectedUser?.role}
         nip={selectedUser?.nip}
         photoURL={photoURL}
       />

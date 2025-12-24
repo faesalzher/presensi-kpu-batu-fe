@@ -29,7 +29,7 @@ const BottomNav: React.FC = () => {
 
   // Determine home path based on user role
   const getHomePath = () => {
-    return "/dashboard";
+    return userRole === "kasubag" ? "/dashboard" : "/dashboard";
   };
 
   // Handler for navigation
