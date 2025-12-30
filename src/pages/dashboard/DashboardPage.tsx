@@ -13,7 +13,8 @@ import {
   RequestQuote,
   CheckBox,
   Groups,
-  ExitToApp
+  ExitToApp,
+  AccessTime
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 
@@ -27,7 +28,6 @@ import AttendanceActions from "../../components/AttendanceActions";
 import AttendanceChart from "../../components/AttendanceChart";
 import DashboardHeader from "../../components/DashboardHeader";
 import DashboardLayout from "../../components/DashboardLayout";
-import DateTimeBar from "../../components/DateTimeBar";
 import QuickActions from "../../components/QuickActions";
 import { formatDate, formatShortTime, formatTime, getNow } from "../../constant/time.constant";
 import { useLeaveRequests } from "../../contexts/LeaveRequestsContext";
@@ -120,22 +120,22 @@ const DashboardPage: React.FC = () => {
   const stafQuickActions = [
     {
       label: "Profil",
-      icon: <Person />,
+      icon: <Person color="primary"/>,
       onClick: () => navigate("/profile"),
     },
     {
-      label: "Cuti",
-      icon: <ExitToApp />,
-      onClick: () => navigate("/leave-request"),
+      label: "Pengajuan Cuti",
+      icon: <ExitToApp color="primary"/>,
+      onClick: () => navigate("/leave-request-form"),
     },
     {
-      label: "Histori",
-      icon: <Description />,
+      label: "Riwayat Presensi",
+      icon: <Description color="primary"/>,
       onClick: () => navigate("/history"),
     },
     {
-      label: "Tukin",
-      icon: <RequestQuote />,
+      label: "Tunjangan Kinerja",
+      icon: <RequestQuote color="primary"/>,
       onClick: () => navigate("/daftar-tukin"),
     },
   ];
@@ -143,51 +143,51 @@ const DashboardPage: React.FC = () => {
 
   const kasubagQuickActions = [
     {
-      label: "Sekretariat",
-      icon: <Groups />,
+      label: "Rekap Sekretariat",
+      icon: <Groups color="primary"/>,
       onClick: () => navigate("/sekretariat"),
     },
     {
-      label: "Cuti",
-      icon: <ExitToApp />,
-      onClick: () => navigate("/leave-request"),
+      label: "Pengajuan Cuti",
+      icon: <ExitToApp color="primary"/>,
+      onClick: () => navigate("/leave-request-form"),
     },
     {
-      label: "Histori",
-      icon: <Description />,
+      label: "Riwayat Presensi",
+      icon: <Description color="primary"/>,
       onClick: () => navigate("/history"),
     },
     {
-      label: "Tukin",
-      icon: <RequestQuote />,
+      label: "Tunjangan Kinerja",
+      icon: <RequestQuote color="primary"/>,
       onClick: () => navigate("/daftar-tukin"),
     },
   ];
 
   const kasubagSdmQuickActions = [
     {
-      label: "Sekretariat",
-      icon: <Groups />,
+      label: "Rekap Sekretariat",
+      icon: <Groups color="primary"/>,
       onClick: () => navigate("/sekretariat"),
     },
     {
-      label: "Cuti",
-      icon: <ExitToApp />,
-      onClick: () => navigate("/leave-request"),
+      label: "Pengajuan Cuti",
+      icon: <ExitToApp color="primary"/>,
+      onClick: () => navigate("/leave-request-form"),
     },
     {
-      label: "Histori",
-      icon: <Description />,
+      label: "Riwayat Presensi",
+      icon: <Description color="primary"/>,
       onClick: () => navigate("/history"),
     },
     {
-      label: "Tukin",
-      icon: <RequestQuote />,
+      label: "Tunjangan Kinerja",
+      icon: <RequestQuote color="primary"/>,
       onClick: () => navigate("/daftar-tukin"),
     },
     {
-      label: "Revisi",
-      icon: <CheckBox />,
+      label: "Revisi Kehadiran",
+      icon: <CheckBox color="primary"/>,
       badge: pendingRequests?.length,
       onClick: () => navigate("/persetujuan"),
     },
@@ -263,51 +263,74 @@ const DashboardPage: React.FC = () => {
 
       <DashboardHeader
         name={selectedUser?.fullName}
-        department={selectedUser?.department}
         nip={selectedUser?.nip}
         photoURL={photoURL}
+        date={formatDate(now)}
+        time={formatTime(now)}
       />
 
-      <Container sx={{ mt: 3, mb: 8 }}>
-        <Grid container spacing={3}>
-          <Grid size={12}>
-            <DateTimeBar date={formatDate(now)} time={formatTime(now)} />
-          </Grid>
+      <Box
+        sx={{
+          bgcolor: "#f5f5f5",
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
 
-          <Grid size={12}>
-            <AttendanceActions
-              onClick={() => navigate("/presensi")}
-              checkInTime={formatShortTime(todayAttendance?.checkInTime)}
-              checkOutTime={formatShortTime(todayAttendance?.checkOutTime)}
-              hasCheckedIn={hasCheckedIn}
-              hasCheckedOut={hasCheckedOut}
-            />
-          </Grid>
+          mt: -3, // 🔑 NAIK KE HEADER
+          pt: 3
+        }}
+      >
+        <Container sx={{ mb: 8 }}>
+          <Grid container spacing={3}>
+            <Grid size={12}>
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                mb={1}
+              >
+                <AccessTime
+                  sx={{ fontSize: 16, mr: 0.5, color: "text.primary" }}
+                />
+                <Typography variant="body2" color="text.primary">
+                  Jam Kerja Hari Ini: <b>07.30 – 16.00</b>
+                </Typography>
+              </Box>
 
-          <Grid size={12}>
-            {renderQuickActions()}
-          </Grid>
 
-          <Grid size={12}>
-            {
-              loadingStatistics ? (<Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
-                <CircularProgress />
-              </Box>) : (
-                statistics ? (
-                  <AttendanceChart
-                    title={`Rekap Kehadiran ${now.toLocaleString("id-ID", {
-                      month: "long",
-                    })}`}
-                    data={attendanceChartData}
-                  />
-                ) : (<Typography variant="body1" color="text.secondary" align="center">
-                  Tidak ada data kehadiran untuk ditampilkan
-                </Typography>)
-              )
-            }
+              <AttendanceActions
+                onClick={() => navigate("/presensi")}
+                checkInTime={formatShortTime(todayAttendance?.checkInTime)}
+                checkOutTime={formatShortTime(todayAttendance?.checkOutTime)}
+                hasCheckedIn={hasCheckedIn}
+                hasCheckedOut={hasCheckedOut}
+              />
+            </Grid>
+
+            <Grid size={12}>
+              {renderQuickActions()}
+            </Grid>
+
+            <Grid size={12}>
+              {
+                loadingStatistics ? (<Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
+                  <CircularProgress />
+                </Box>) : (
+                  statistics ? (
+                    <AttendanceChart
+                      title={`Rekap Kehadiran ${now.toLocaleString("id-ID", {
+                        month: "long",
+                      })}`}
+                      data={attendanceChartData}
+                    />
+                  ) : (<Typography variant="body1" color="text.secondary" align="center">
+                    Tidak ada data kehadiran untuk ditampilkan
+                  </Typography>)
+                )
+              }
+            </Grid>
           </Grid>
-        </Grid>
-      </Container>
+        </Container>
+      </Box>
     </DashboardLayout>
   );
 };

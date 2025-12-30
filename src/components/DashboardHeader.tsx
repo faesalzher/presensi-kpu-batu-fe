@@ -1,26 +1,29 @@
 // components/DashboardHeader.tsx
-import { Box, Container, Avatar, Typography } from "@mui/material";
+import { Box, Container, Avatar, Typography, Grid } from "@mui/material";
 import defaultProfileImage from "../assets/default-pp.png";
 import bg from '../assets/images/bg.png'
+import DateTimeStatusCard from "./DateTimeStatusCard";
 
 interface Props {
   name?: string;
-  department?: string;
   nip?: string;
   photoURL?: string | null;
+  date: string;
+  time: string
 }
 
-const DashboardHeader = ({ name, department, nip, photoURL }: Props) => {
+const DashboardHeader = ({ name, nip, photoURL, date, time }: Props) => {
   return (
     <Box
       sx={{
         bgcolor: "primary.main",
         color: "white",
         py: 3,
-        borderBottomLeftRadius: 16,
-        borderBottomRightRadius: 16,
+        pb: 9,
+        // borderBottomLeftRadius: 16,
+        // borderBottomRightRadius: 16,
 
-                // FULLSCREEN BACKGROUND
+        // FULLSCREEN BACKGROUND
         backgroundImage: `url(${bg})`,
         backgroundSize: 'cover',
         backgroundPosition: '70% center',
@@ -28,27 +31,34 @@ const DashboardHeader = ({ name, department, nip, photoURL }: Props) => {
       }}
     >
       <Container maxWidth="lg">
-        <Box display="flex" alignItems="center">
-          <Avatar
-            src={photoURL || defaultProfileImage}
-            sx={{ width: 56, height: 56 }}
-          />
-          <Box ml={2}>
-            <Typography variant="body2" sx={{ opacity: 0.9 }}>
-              Selamat datang,
-            </Typography>
-            <Typography variant="h6" fontWeight="bold">
-              {name}
-            </Typography>
-            <Typography
-              // variant="h9 "
-              // fontWeight="bold"
-              sx={{ textTransform: "uppercase" }}
-            >
-              {department} {nip ? `• ${nip}` : ""}
-            </Typography>
-          </Box>
-        </Box>
+        <Grid container spacing={3}>
+          <Grid size={12}>
+            <Box display="flex" alignItems="center">
+              <Avatar
+                src={photoURL || defaultProfileImage}
+                sx={{ width: 56, height: 56 }}
+              />
+              <Box ml={2}>
+                <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                  Selamat datang,
+                </Typography>
+                <Typography variant="body1" fontWeight="bold">
+                  {name}
+                </Typography>
+                <Typography
+                  // variant="h9"
+                  // fontWeight="bold"
+                  sx={{ textTransform: "uppercase" }}
+                >
+                  {nip ? `${nip}` : ""}
+                </Typography>
+              </Box>
+            </Box>
+          </Grid>
+          <Grid size={12}>
+            <DateTimeStatusCard date={date} time={time} status="sudah" />
+          </Grid>
+        </Grid>
       </Container>
     </Box>
   );

@@ -1,5 +1,5 @@
-import { Grid, Paper, Typography, Box, Badge } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { Box, Typography, IconButton, Grid } from "@mui/material";
+
 
 interface Action {
   label: string;
@@ -9,56 +9,48 @@ interface Action {
   color?: "primary" | "success" | "warning" | "error" | "info";
 }
 
+
 const QuickActions = ({ actions }: { actions: Action[] }) => {
-  const theme = useTheme();
 
   return (
     <Grid container spacing={2}>
       {actions.map((a, i) => {
-        const color = a.color ?? "primary";
-
         return (
           <Grid size={3} key={i}>
-            <Paper
-              elevation={1}
-              onClick={a.onClick}
-              sx={{
-                p: 1.5,
-                borderRadius: 4,
-                cursor: "pointer",
-                textAlign: "center",
-                position: "relative",
-                transition: "all 0.2s ease",
-                bgcolor: theme.palette[color].main,
-                "&:hover": {
-                  boxShadow: theme.shadows[4],
-                  bgcolor: theme.palette[color].dark,
-                },
-              }}
-            >
-              <Box
+            <Box textAlign="center">
+              <IconButton
+                onClick={a.onClick}
                 sx={{
-                  mb: 0.5,
-                  color: "white", // 🔥 ICON PUTIH
-                  display: "flex",
-                  justifyContent: "center",
+                  width: 56,
+                  height: 56,
+                  borderRadius: 4,
+                  bgcolor: "#fff",
+                  boxShadow: "0 6px 16px rgba(0,0,0,0.08)",
+                  transform: "rotate(45deg)",
+                  mb: 1,
+
+                  "&:hover": {
+                    bgcolor: "#f5f5f5",
+                  },
                 }}
               >
-                <Badge badgeContent={a.badge} color="secondary" max={99}>
+                <Box sx={{ transform: "rotate(-45deg)" }}>
                   {a.icon}
-                </Badge>
-              </Box>
-              {/* Label */}
+                </Box>
+              </IconButton>
+
               <Typography
-                variant="caption"
+                variant="body2"
                 sx={{
+                  mt: 1,
+                  fontSize: 12,
                   fontWeight: 500,
-                  color: "white", // 🔥 TEXT PUTIH
+                  color: "text.primary",
                 }}
               >
                 {a.label}
               </Typography>
-            </Paper>
+            </Box>
           </Grid>
         );
       })}

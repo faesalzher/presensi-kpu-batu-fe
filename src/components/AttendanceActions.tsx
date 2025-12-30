@@ -21,7 +21,7 @@ const AttendanceActions = ({
   return (
     <Grid>
       <ButtonGroup variant="contained" fullWidth sx={{
-        minHeight: 90,
+        minHeight: 70,
         borderRadius: 3,
        "& .MuiButtonGroup-grouped:not(:last-of-type)": {
           borderRight: "1px solid #fff", // garis tengah putih
