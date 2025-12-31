@@ -119,7 +119,7 @@ const AttendanceService = {
 
     if (isDemoMode) return dummyAttendance;
     const response = await API.get<Attendance>("/attendance/today");
-    return response.data;
+    return response.data; 
   },
 
   /**

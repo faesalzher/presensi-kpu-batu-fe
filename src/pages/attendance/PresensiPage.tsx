@@ -7,28 +7,34 @@ import {
   Paper,
   Container,
   Button,
-  CircularProgress,
+  // CircularProgress,
   Snackbar,
   Alert,
   Dialog,
   DialogTitle,
   DialogContent,
-  Tooltip,
-  Fab,
+  // Tooltip,
+  // Fab,
+  Divider,
+  useTheme,
+  CircularProgress,
 } from "@mui/material";
 import {
   ArrowBack,
   LocationOff,
   Assignment,
-  MyLocation,
-  GpsFixed,
-  LocationSearching,
+  LogoutRounded,
+  SendRounded,
+  // MyLocation,
+  // GpsFixed,
+  // LocationSearching,
 } from "@mui/icons-material";
-import { MapContainer, TileLayer, Circle, Marker, Popup } from "react-leaflet";
+// import { MapContainer, TileLayer, Circle, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useAttendance } from "../../contexts/AttendanceContext";
 import { CheckInDto, CheckOutDto } from "../../types/attendance";
+import { formatDate, formatTime, getNow } from "../../constant/time.constant";
 
 // Fix Leaflet icon issue in React
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -49,39 +55,42 @@ const PresensiPage: React.FC = () => {
     todayAttendance,
     loading: attendanceLoading,
     error: attendanceError,
+    fetchTodayAttendance,
   } = useAttendance();
+  const [now] = useState(getNow());
 
-  const [userLocation, setUserLocation] = useState<[number, number] | null>(
-    null
-  );
+  // const [userLocation, setUserLocation] = useState<[number, number] | null>(
+  //   null
+  // );
   // const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const theme = useTheme();
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const [alertSeverity, setAlertSeverity] = useState<"success" | "error">(
     "success"
   );
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
-  const [isWithinRadius, setIsWithinRadius] = useState<boolean | null>(null);
-  const [distanceToOffice, setDistanceToOffice] = useState<number | null>(null);
+  // const [isWithinRadius, setIsWithinRadius] = useState<boolean | null>(null);
+  // const [distanceToOffice, setDistanceToOffice] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   // const [imageFile, setImageFile] = useState<File | null>(null);
   const [isCheckOut, setIsCheckOut] = useState<boolean>(false);
   const [showOutsideRadiusDialog, setShowOutsideRadiusDialog] = useState(false);
-  const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
-  const [isGettingLocation, setIsGettingLocation] = useState(false);
-  const [isHighAccuracy, setIsHighAccuracy] = useState(false);
+  // const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
+  // const [isGettingLocation, setIsGettingLocation] = useState(false);
+  // const [isHighAccuracy, setIsHighAccuracy] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const isMounted = useRef<boolean>(true);
-  // const isInitializing = useRef<boolean>(false);
-  const mapRef = useRef<L.Map | null>(null);
+  // // const isInitializing = useRef<boolean>(false);
+  // const mapRef = useRef<L.Map | null>(null);
 
-  const officeLocation: [number, number] = [
-    parseFloat(import.meta.env.VITE_OFFICE_LAT),
-    parseFloat(import.meta.env.VITE_OFFICE_LNG),
-  ];
+  // const officeLocation: [number, number] = [
+  //   parseFloat(import.meta.env.VITE_OFFICE_LAT),
+  //   parseFloat(import.meta.env.VITE_OFFICE_LNG),
+  // ];
 
-  const maxRadius = parseInt(import.meta.env.VITE_MAX_RADIUS, 10);
+  // const maxRadius = parseInt(import.meta.env.VITE_MAX_RADIUS, 10);
 
   // Stop the camera stream function
   const stopCameraStream = () => {
@@ -150,102 +159,101 @@ const PresensiPage: React.FC = () => {
   //   }
   // };
 
-  // Get user location with options
-  const getUserLocation = (enableHighAccuracy: boolean = false) => {
-    if (!navigator.geolocation) {
-      showNotification(
-        "Geolocation is not supported by this browser.",
-        "error"
-      );
-      return;
-    }
+  // // Get user location with options
+  // const getUserLocation = (enableHighAccuracy: boolean = false) => {
+  //   if (!navigator.geolocation) {
+  //     showNotification(
+  //       "Geolocation is not supported by this browser.",
+  //       "error"
+  //     );
+  //     return;
+  //   }
 
-    setIsGettingLocation(true);
-    setIsHighAccuracy(enableHighAccuracy);
+  //   setIsGettingLocation(true);
+  //   setIsHighAccuracy(enableHighAccuracy);
 
-    const options: PositionOptions = {
-      enableHighAccuracy,
-      timeout: enableHighAccuracy ? 30000 : 10000, // 30s for high accuracy, 10s for normal
-      maximumAge: enableHighAccuracy ? 0 : 30000, // No cache for high accuracy
-    };
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const userLoc: [number, number] = [
-          position.coords.latitude,
-          position.coords.longitude,
-        ];
-        setUserLocation(userLoc);
-        setLocationAccuracy(position.coords.accuracy);
-
-        const distance = calculateDistance(
-          userLoc[0],
-          userLoc[1],
-          officeLocation[0],
-          officeLocation[1]
-        );
-        setDistanceToOffice(distance);
-        setIsWithinRadius(distance <= maxRadius);
-        setIsGettingLocation(false);
-
-        // Pan map to new location if map is available
-        if (mapRef.current) {
-          mapRef.current.setView(userLoc, 16);
-        }
-
-        showNotification(
-          `Location updated ${
-            enableHighAccuracy ? "(High Accuracy)" : ""
-          }. Accuracy: ${Math.round(position.coords.accuracy)}m`,
-          "success"
-        );
-      },
-      (error) => {
-        setIsGettingLocation(false);
-        let errorMessage = "Error accessing your location.";
-
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage =
-              "Location access denied. Please enable location services.";
-            break;
-          case error.POSITION_UNAVAILABLE:
-            errorMessage = "Location information is unavailable.";
-            break;
-          case error.TIMEOUT:
-            errorMessage = "Location request timed out. Please try again.";
-            break;
-        }
-
-        showNotification(errorMessage, "error");
-      },
-      options
-    );
-  };
-
-  // Handle location button click
-  const handleLocationButtonClick = () => {
-    getUserLocation(true); // Always use high accuracy when manually requested
-  };
-
-  // // Consolidated useEffect for initialization and cleanup
-  // useEffect(() => {
-  //   isMounted.current = true;
-
-  //   // Fetch attendance and get initial location
-  //   fetchTodayAttendance();
-  //   // getUserLocation(false); // Start with normal accuracy
-
-  //   // // Initialize camera only if no captured image
-  //   // if (!capturedImage) {
-  //   //   initializeCamera();
-  //   // }
-
-  //   return () => {
-  //     isMounted.current = false;
-  //     stopCameraStream();
+  //   const options: PositionOptions = {
+  //     enableHighAccuracy,
+  //     timeout: enableHighAccuracy ? 30000 : 10000, // 30s for high accuracy, 10s for normal
+  //     maximumAge: enableHighAccuracy ? 0 : 30000, // No cache for high accuracy
   //   };
-  // }, [capturedImage]);
+
+  //   navigator.geolocation.getCurrentPosition(
+  //     (position) => {
+  //       const userLoc: [number, number] = [
+  //         position.coords.latitude,
+  //         position.coords.longitude,
+  //       ];
+  //       setUserLocation(userLoc);
+  //       setLocationAccuracy(position.coords.accuracy);
+
+  //       const distance = calculateDistance(
+  //         userLoc[0],
+  //         userLoc[1],
+  //         officeLocation[0],
+  //         officeLocation[1]
+  //       );
+  //       setDistanceToOffice(distance);
+  //       setIsWithinRadius(distance <= maxRadius);
+  //       setIsGettingLocation(false);
+
+  //       // Pan map to new location if map is available
+  //       if (mapRef.current) {
+  //         mapRef.current.setView(userLoc, 16);
+  //       }
+
+  //       showNotification(
+  //         `Location updated ${enableHighAccuracy ? "(High Accuracy)" : ""
+  //         }. Accuracy: ${Math.round(position.coords.accuracy)}m`,
+  //         "success"
+  //       );
+  //     },
+  //     (error) => {
+  //       setIsGettingLocation(false);
+  //       let errorMessage = "Error accessing your location.";
+
+  //       switch (error.code) {
+  //         case error.PERMISSION_DENIED:
+  //           errorMessage =
+  //             "Location access denied. Please enable location services.";
+  //           break;
+  //         case error.POSITION_UNAVAILABLE:
+  //           errorMessage = "Location information is unavailable.";
+  //           break;
+  //         case error.TIMEOUT:
+  //           errorMessage = "Location request timed out. Please try again.";
+  //           break;
+  //       }
+
+  //       showNotification(errorMessage, "error");
+  //     },
+  //     options
+  //   );
+  // };
+
+  // // Handle location button click
+  // const handleLocationButtonClick = () => {
+  //   getUserLocation(true); // Always use high accuracy when manually requested
+  // };
+
+  // Consolidated useEffect for initialization and cleanup
+  useEffect(() => {
+    // isMounted.current = true;
+
+    // Fetch attendance and get initial location
+    fetchTodayAttendance();
+    // getUserLocation(false); // Start with normal accuracy
+
+    // // Initialize camera only if no captured image
+    // if (!capturedImage) {
+    //   initializeCamera();
+    // }
+
+    return () => {
+      // isMounted.current = false;
+      // stopCameraStream();
+    };
+  }, []);
 
   // Check if user has already checked in and set the mode
   useEffect(() => {
@@ -270,24 +278,24 @@ const PresensiPage: React.FC = () => {
   //   }
   // }, [capturedImage, isWithinRadius]);
 
-  // Calculate distance between two points using the Haversine formula
-  const calculateDistance = (
-    lat1: number,
-    lon1: number,
-    lat2: number,
-    lon2: number
-  ): number => {
-    const R = 6371e3; // Earth's radius in meters
-    const φ1 = (lat1 * Math.PI) / 180;
-    const φ2 = (lat2 * Math.PI) / 180;
-    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-    const a =
-      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; // Distance in meters
-  };
+  // // Calculate distance between two points using the Haversine formula
+  // const calculateDistance = (
+  //   lat1: number,
+  //   lon1: number,
+  //   lat2: number,
+  //   lon2: number
+  // ): number => {
+  //   const R = 6371e3; // Earth's radius in meters
+  //   const φ1 = (lat1 * Math.PI) / 180;
+  //   const φ2 = (lat2 * Math.PI) / 180;
+  //   const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+  //   const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+  //   const a =
+  //     Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+  //     Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  //   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  //   return R * c; // Distance in meters
+  // };
 
   const showNotification = (message: string, severity: "success" | "error") => {
     setAlertMessage(message);
@@ -365,26 +373,26 @@ const PresensiPage: React.FC = () => {
   };
 
   const submitAttendance = async () => {
-    if (!userLocation) {
-      // showNotification("Location or image data not available", "error");
-      return;
-    }
+    // if (!userLocation) {
+    //   // showNotification("Location or image data not available", "error");
+    //   return;
+    // }
 
     setIsSubmitting(true);
 
     try {
       if (isCheckOut) {
         const checkOutData: CheckOutDto = {
-          latitude: userLocation[0],
-          longitude: userLocation[1],
+          latitude: 0,
+          longitude: 0,
           notes: "", // Empty string instead of notes
         };
         await checkOut(checkOutData);
         showNotification("Check-out successful!", "success");
       } else {
         const checkInData: CheckInDto = {
-          latitude: userLocation[0],
-          longitude: userLocation[1],
+          latitude: 0,
+          longitude: 0,
           notes: "", // Empty string instead of notes
         };
         await checkIn(checkInData);
@@ -405,12 +413,11 @@ const PresensiPage: React.FC = () => {
   };
 
   const canCheckIn =
-    !todayAttendance?.checkInTime && userLocation && isWithinRadius !== null;
+    !todayAttendance?.checkInTime !== null;
   const canCheckOut =
     todayAttendance?.checkInTime &&
-    !todayAttendance?.checkOutTime &&
-    userLocation &&
-    isWithinRadius !== null;
+    !todayAttendance?.checkOutTime
+    !== null;
   const actionButtonDisabled =
     attendanceLoading ||
     // !capturedImage ||
@@ -454,81 +461,11 @@ const PresensiPage: React.FC = () => {
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          my: 2,
+          my: 25,
           overflow: "auto",
         }}
       >
-        {/* <Paper
-          elevation={2}
-          sx={{
-            height: "40%",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            p: 0,
-            mb: 2,
-            borderRadius: 2,
-            overflow: "hidden",
-            position: "relative",
-          }}
-        >
-          {capturedImage ? (
-            <Box sx={{ width: "100%", height: "100%", position: "relative" }}>
-              <img
-                src={capturedImage}
-                alt="Captured"
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  display: "block",
-                }}
-              />
-              <IconButton
-                sx={{
-                  position: "absolute",
-                  bottom: 8,
-                  right: 8,
-                  backgroundColor: "white",
-                  "&:hover": { backgroundColor: "#f5f5f5" },
-                }}
-                onClick={resetCamera}
-              >
-                <RestartAlt />
-              </IconButton>
-            </Box>
-          ) : (
-            <video
-              ref={videoRef}
-              autoPlay
-              muted
-              playsInline
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                display: "block",
-                transform: "scaleX(-1)", // Mirror the video preview
-              }}
-            />
-          )}
 
-          {!capturedImage && (
-            <IconButton
-              sx={{
-                position: "absolute",
-                bottom: 8,
-                right: 8,
-                backgroundColor: "white",
-                "&:hover": { backgroundColor: "#f5f5f5" },
-              }}
-              onClick={handleCameraCapture}
-            >
-              <CameraAlt />
-            </IconButton>
-          )}
-        </Paper> */}
-<div></div>
         <Paper
           elevation={2}
           sx={{
@@ -536,132 +473,99 @@ const PresensiPage: React.FC = () => {
             borderRadius: 2,
             overflow: "hidden",
             position: "relative",
-            height: 300,
+            height: 240, // 🔑 DIPERKECIL
             mb: 2,
+            p: 2.5,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
           }}
         >
-          {userLocation ? (
-            <MapContainer
-              center={userLocation}
-              zoom={16}
-              style={{ height: "100%", width: "100%" }}
-              zoomControl={false}
-              ref={mapRef}
-            >
-              <TileLayer
-                attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <Circle
-                center={officeLocation}
-                radius={maxRadius}
-                pathOptions={{
-                  fillColor: "blue",
-                  fillOpacity: 0.2,
-                  color: "primary.dark",
-                }}
-              />
-              <Marker position={userLocation}>
-                <Popup>
-                  <div>
-                    <strong>Your Location</strong>
-                    <br />
-                    Accuracy:{" "}
-                    {locationAccuracy
-                      ? `${Math.round(locationAccuracy)}m`
-                      : "Unknown"}
-                    <br />
-                    {isHighAccuracy && <em>High Accuracy Mode</em>}
-                  </div>
-                </Popup>
-              </Marker>
-            </MapContainer>
-          ) : (
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100%",
-                flexDirection: "column",
-                p: 2,
-              }}
-            >
-              <CircularProgress size={40} sx={{ mb: 2 }} />
-              <Typography variant="body2" color="text.secondary" align="center">
-                Getting your location...
-              </Typography>
-            </Box>
-          )}
+          {/* STATUS */}
+          <Box textAlign="center">
+            <Typography variant="body1" fontWeight="bold" mb={2}>
+              Presensi Hari Ini
+            </Typography>
 
-          {/* Location Button */}
-          <Tooltip
-            title={
-              isGettingLocation ? "Getting location..." : "Get precise location"
-            }
-          >
-            <Fab
-              size="small"
-              color="primary"
-              sx={{
-                position: "absolute",
-                bottom: 50,
-                right: 16,
-                zIndex: 1000,
-                bgcolor: "white",
-                color: isGettingLocation ? "primary.main" : "#666",
-                "&:hover": { bgcolor: "#f5f5f5" },
-                boxShadow: 2,
-              }}
-              onClick={handleLocationButtonClick}
-              disabled={isGettingLocation}
+            <Divider />
+            <Typography variant="body2" color="text.secondary" mt={3}>
+              {formatDate(now)}
+            </Typography>
+            <Typography variant="h4" fontWeight={700} mt={2}>
+              {formatTime(now)}{" "}
+              <Typography component="span" variant="body2" color="text.secondary">
+                WIB
+              </Typography>
+            </Typography>
+
+            {/* <Typography
+              variant="body2"
+              color="success.main"
+              mt={0.5}
             >
-              {isGettingLocation ? (
-                <LocationSearching />
-              ) : locationAccuracy && locationAccuracy < 20 ? (
-                <GpsFixed />
+              ● Sudah Absen
+            </Typography> */}
+          </Box>
+
+          {/* JAM KERJA */}
+          <Box textAlign="center" mt={2}>
+            <Typography variant="body2" color="text.secondary">
+              Jam Kerja Hari Ini
+            </Typography>
+            <Typography fontWeight={600}>
+              07.30 – 16.00
+            </Typography>
+          </Box>
+
+          {/* ACTION BUTTON */}
+          <Box mt={3}>
+            <Button
+              fullWidth
+              size="large"
+              variant="contained"
+              startIcon={isCheckOut ? (<LogoutRounded />) : (<SendRounded />)}
+              onClick={submitAttendance}
+              disabled={(actionButtonDisabled)}
+              sx={{
+                height: 56,
+                borderRadius: 2,
+                fontWeight: 600,
+                bgcolor: isCheckOut ? "#ff9800" : theme.palette.success.main,
+                py: 1.5,
+                textTransform: "none",
+                "&:hover": { bgcolor: isCheckOut ? "#f57c00" : theme.palette.success.dark },
+                "&.Mui-disabled": { bgcolor: "#ccc", color: "#666" },
+              }}
+            >
+              {attendanceLoading || isSubmitting ? (
+                <CircularProgress size={24} color="inherit" sx={{ mr: 1 }} />
               ) : (
-                <MyLocation />
+                isCheckOut ? (
+                  "PULANG"
+                ) : (
+                  "MASUK"
+                )
               )}
-            </Fab>
-          </Tooltip>
+            </Button>
 
-          {isWithinRadius !== null && (
-            <Box
-              sx={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                bgcolor: isWithinRadius
-                  ? "rgba(76, 175, 80, 0.8)"
-                  : "rgba(211, 47, 47, 0.8)",
-                color: "white",
-                p: 1,
-                zIndex: 1000,
-              }}
-            >
-              <Typography variant="body2" align="center">
-                {isWithinRadius
-                  ? `Within range (${Math.round(
-                      distanceToOffice || 0
-                    )}m from office)`
-                  : `Outside range (${Math.round(
-                      distanceToOffice || 0
-                    )}m from office)`}
-                {locationAccuracy && (
-                  <span style={{ opacity: 0.8, fontSize: "0.75em" }}>
-                    {" "}
-                    • Accuracy: {Math.round(locationAccuracy)}m
-                  </span>
-                )}
-              </Typography>
-            </Box>
-          )}
+            {/* kalau sudah masuk, ganti jadi PULANG */}
+            {/* <Button color="error">PULANG</Button> */}
+          </Box>
+
+          {/* CATATAN */}
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            textAlign="center"
+            mt={2}
+          >
+            Pastikan waktu sudah sesuai sebelum melakukan presensi.
+          </Typography>
         </Paper>
 
+
         {/* Main action button */}
-        <Button
+        {/* <Button
           variant="contained"
           // startIcon={
           //   capturedImage ? (
@@ -698,7 +602,7 @@ const PresensiPage: React.FC = () => {
               "Check In"
             )
           )}
-        </Button>
+        </Button> */}
       </Container>
 
       {/* Outside Radius Dialog */}
@@ -730,7 +634,7 @@ const PresensiPage: React.FC = () => {
 
         <DialogContent>
           <Box sx={{ mb: 2 }}>
-            <Typography variant="body1" sx={{ mb: 1, fontWeight: 500 }}>
+            {/* <Typography variant="body1" sx={{ mb: 1, fontWeight: 500 }}>
               Anda berada di luar radius kantor
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -741,7 +645,7 @@ const PresensiPage: React.FC = () => {
               Presensi hanya dapat dilakukan dalam radius {maxRadius}m dari
               kantor. Jika Anda perlu bekerja dari lokasi lain, silakan ajukan
               permohonan izin.
-            </Typography>
+            </Typography> */}
           </Box>
         </DialogContent>
 

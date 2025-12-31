@@ -10,6 +10,7 @@ import {
 import CorrectionsService from "../services/CorrectionsService";
 import { useAuth } from "./AuthContext";
 import { UserRole } from "../types/enums";
+import { isDemoMode } from "../mocks/demoData";
 
 interface CorrectionsContextType {
   corrections: Correction[];
@@ -256,8 +257,10 @@ export const CorrectionsProvider: React.FC<{ children: React.ReactNode }> = ({
     setError(null);
 
     try {
-      const data = await CorrectionsService.getMonthlyUsage();
-      setMonthlyUsage(data);
+      if (!isDemoMode) {
+        const data = await CorrectionsService.getMonthlyUsage();
+        setMonthlyUsage(data);
+      }
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message || "Failed to fetch monthly usage";
