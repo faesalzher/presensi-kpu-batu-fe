@@ -117,7 +117,7 @@ const AttendanceService = {
    */
   getTodayAttendance: async (): Promise<Attendance | null> => {
 
-    if (isDemoMode) return dummyAttendance;
+    // if (isDemoMode) return dummyAttendance;
     const response = await API.get<Attendance>("/attendance/today");
     return response.data; 
   },
