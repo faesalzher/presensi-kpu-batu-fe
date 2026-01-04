@@ -57,6 +57,8 @@ const PresensiPage: React.FC = () => {
     error: attendanceError,
     fetchTodayAttendance,
   } = useAttendance();
+
+
   const [now] = useState(getNow());
 
   // const [userLocation, setUserLocation] = useState<[number, number] | null>(
@@ -430,7 +432,6 @@ const PresensiPage: React.FC = () => {
       sx={{
         display: "flex",
         flexDirection: "column",
-        height: "100vh",
         width: "100%",
         bgcolor: "#f5f5f5",
       }}
@@ -457,28 +458,25 @@ const PresensiPage: React.FC = () => {
       </Box>
 
       <Container
+        maxWidth="sm"
         sx={{
-          flex: 1,
+          minHeight: "95svh", // 🔑 FIX utama
           display: "flex",
-          flexDirection: "column",
-          my: 25,
-          overflow: "auto",
+          alignItems: "center",
+          justifyContent: "center",
+          px: 2,
         }}
       >
 
         <Paper
           elevation={2}
           sx={{
-            flex: 1,
+            width: "100%",
             borderRadius: 2,
-            overflow: "hidden",
-            position: "relative",
-            height: 240, // 🔑 DIPERKECIL
-            mb: 2,
             p: 2.5,
             display: "flex",
             flexDirection: "column",
-            justifyContent: "space-between",
+            gap: 1,          // ✅ ganti space-between
           }}
         >
           {/* STATUS */}
@@ -604,6 +602,7 @@ const PresensiPage: React.FC = () => {
           )}
         </Button> */}
       </Container>
+      <BottomNav />
 
       {/* Outside Radius Dialog */}
       <Dialog
