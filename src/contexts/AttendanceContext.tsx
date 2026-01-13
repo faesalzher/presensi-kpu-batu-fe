@@ -99,13 +99,12 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const checkOut = async (
-    checkOutData: CheckOutDto,
-    photo?: File
+    checkOutData: CheckOutDto
   ): Promise<void> => {
     setLoading(true);
     setError(null);
     try {
-      const attendance = await AttendanceService.checkOut(checkOutData, photo);
+      const attendance = await AttendanceService.checkOut(checkOutData);
       setTodayAttendance(attendance);
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || "Check-out failed";

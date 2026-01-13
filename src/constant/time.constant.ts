@@ -1,5 +1,5 @@
 // utils/time.ts
-export const getNow = () => new Date('2025-11-20T07:08:20');
+export const getNow = () => new Date();
   /* ================= HELPERS ================= */
 
 export  const formatDate = (date: Date) =>

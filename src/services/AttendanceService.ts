@@ -95,9 +95,8 @@ const AttendanceService = {
    */
   checkOut: async (
     checkOutData: CheckOutDto,
-    photo?: File
   ): Promise<Attendance> => {
-    const formData = prepareFormData(checkOutData, photo);
+    const formData = prepareFormData(checkOutData);
 
     const response = await API.post<Attendance>(
       "/attendance/check-out",

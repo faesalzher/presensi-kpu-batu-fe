@@ -35,6 +35,7 @@ import L from "leaflet";
 import { useAttendance } from "../../contexts/AttendanceContext";
 import { CheckInDto, CheckOutDto } from "../../types/attendance";
 import { formatDate, formatTime, getNow } from "../../constant/time.constant";
+import BottomNav from "../../components/BottomNav";
 
 // Fix Leaflet icon issue in React
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -58,8 +59,7 @@ const PresensiPage: React.FC = () => {
     fetchTodayAttendance,
   } = useAttendance();
 
-
-  const [now] = useState(getNow());
+  const [now, setNow] = useState(getNow());
 
   // const [userLocation, setUserLocation] = useState<[number, number] | null>(
   //   null
@@ -71,7 +71,7 @@ const PresensiPage: React.FC = () => {
   const [alertSeverity, setAlertSeverity] = useState<"success" | "error">(
     "success"
   );
-  const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
+  // const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
   // const [isWithinRadius, setIsWithinRadius] = useState<boolean | null>(null);
   // const [distanceToOffice, setDistanceToOffice] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -82,7 +82,7 @@ const PresensiPage: React.FC = () => {
   // const [isGettingLocation, setIsGettingLocation] = useState(false);
   // const [isHighAccuracy, setIsHighAccuracy] = useState(false);
 
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  // const videoRef = useRef<HTMLVideoElement | null>(null);
   const isMounted = useRef<boolean>(true);
   // // const isInitializing = useRef<boolean>(false);
   // const mapRef = useRef<L.Map | null>(null);
@@ -94,20 +94,20 @@ const PresensiPage: React.FC = () => {
 
   // const maxRadius = parseInt(import.meta.env.VITE_MAX_RADIUS, 10);
 
-  // Stop the camera stream function
-  const stopCameraStream = () => {
-    if (videoStream) {
-      videoStream.getTracks().forEach((track) => {
-        if (track.readyState === "live") {
-          track.stop();
-        }
-      });
-      setVideoStream(null);
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
-      }
-    }
-  };
+  // // Stop the camera stream function
+  // const stopCameraStream = () => {
+  //   if (videoStream) {
+  //     videoStream.getTracks().forEach((track) => {
+  //       if (track.readyState === "live") {
+  //         track.stop();
+  //       }
+  //     });
+  //     setVideoStream(null);
+  //     if (videoRef.current) {
+  //       videoRef.current.srcObject = null;
+  //     }
+  //   }
+  // };
 
   // // Initialize the camera
   // const initializeCamera = async () => {
@@ -273,6 +273,11 @@ const PresensiPage: React.FC = () => {
     }
   }, [attendanceError]);
 
+  useEffect(() => {
+    const timer = setInterval(() => setNow(getNow), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   // // Show dialog when user is outside radius and has captured image
   // useEffect(() => {
   //   if (capturedImage && isWithinRadius === false) {
@@ -306,7 +311,7 @@ const PresensiPage: React.FC = () => {
   };
 
   const handleBackClick = () => {
-    stopCameraStream();
+    // stopCameraStream();
     navigate("/dashboard");
   };
 
@@ -362,7 +367,7 @@ const PresensiPage: React.FC = () => {
   // };
 
   const handleLeaveRequest = () => {
-    stopCameraStream();
+    // stopCameraStream();
     navigate("/leave-request-form");
   };
 
@@ -403,7 +408,7 @@ const PresensiPage: React.FC = () => {
 
       setTimeout(() => {
         if (isMounted.current) {
-          stopCameraStream();
+          // stopCameraStream();
           navigate("/dashboard");
         }
       }, 2000);
@@ -414,12 +419,9 @@ const PresensiPage: React.FC = () => {
     }
   };
 
-  const canCheckIn =
-    !todayAttendance?.checkInTime !== null;
+  const canCheckIn = !todayAttendance?.checkInTime !== null;
   const canCheckOut =
-    todayAttendance?.checkInTime &&
-    !todayAttendance?.checkOutTime
-    !== null;
+    todayAttendance?.checkInTime && !todayAttendance?.checkOutTime !== null;
   const actionButtonDisabled =
     attendanceLoading ||
     // !capturedImage ||
@@ -467,7 +469,6 @@ const PresensiPage: React.FC = () => {
           px: 2,
         }}
       >
-
         <Paper
           elevation={2}
           sx={{
@@ -476,7 +477,7 @@ const PresensiPage: React.FC = () => {
             p: 2.5,
             display: "flex",
             flexDirection: "column",
-            gap: 1,          // ✅ ganti space-between
+            gap: 1, // ✅ ganti space-between
           }}
         >
           {/* STATUS */}
@@ -491,7 +492,11 @@ const PresensiPage: React.FC = () => {
             </Typography>
             <Typography variant="h4" fontWeight={700} mt={2}>
               {formatTime(now)}{" "}
-              <Typography component="span" variant="body2" color="text.secondary">
+              <Typography
+                component="span"
+                variant="body2"
+                color="text.secondary"
+              >
                 WIB
               </Typography>
             </Typography>
@@ -510,9 +515,7 @@ const PresensiPage: React.FC = () => {
             <Typography variant="body2" color="text.secondary">
               Jam Kerja Hari Ini
             </Typography>
-            <Typography fontWeight={600}>
-              07.30 – 16.00
-            </Typography>
+            <Typography fontWeight={600}>07.30 – 16.00</Typography>
           </Box>
 
           {/* ACTION BUTTON */}
@@ -521,9 +524,9 @@ const PresensiPage: React.FC = () => {
               fullWidth
               size="large"
               variant="contained"
-              startIcon={isCheckOut ? (<LogoutRounded />) : (<SendRounded />)}
+              startIcon={isCheckOut ? <LogoutRounded /> : <SendRounded />}
               onClick={submitAttendance}
-              disabled={(actionButtonDisabled)}
+              disabled={actionButtonDisabled}
               sx={{
                 height: 56,
                 borderRadius: 2,
@@ -531,18 +534,18 @@ const PresensiPage: React.FC = () => {
                 bgcolor: isCheckOut ? "#ff9800" : theme.palette.success.main,
                 py: 1.5,
                 textTransform: "none",
-                "&:hover": { bgcolor: isCheckOut ? "#f57c00" : theme.palette.success.dark },
+                "&:hover": {
+                  bgcolor: isCheckOut ? "#f57c00" : theme.palette.success.dark,
+                },
                 "&.Mui-disabled": { bgcolor: "#ccc", color: "#666" },
               }}
             >
               {attendanceLoading || isSubmitting ? (
                 <CircularProgress size={24} color="inherit" sx={{ mr: 1 }} />
+              ) : isCheckOut ? (
+                "PULANG"
               ) : (
-                isCheckOut ? (
-                  "PULANG"
-                ) : (
-                  "MASUK"
-                )
+                "MASUK"
               )}
             </Button>
 
@@ -560,7 +563,6 @@ const PresensiPage: React.FC = () => {
             Pastikan waktu sudah sesuai sebelum melakukan presensi.
           </Typography>
         </Paper>
-
 
         {/* Main action button */}
         {/* <Button

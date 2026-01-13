@@ -48,7 +48,7 @@ const AttendanceActions = ({
         >
           <Box textAlign="center">
             <Typography fontWeight="bold">Masuk</Typography>
-            <Typography variant="caption">{checkInTime}</Typography>
+            <Typography variant="body2">{checkInTime}</Typography>
           </Box>
         </Button>
         <Button
@@ -56,11 +56,11 @@ const AttendanceActions = ({
           disabled={!hasCheckedIn || hasCheckedOut}
           onClick={onClick}
           sx={{
-            bgcolor: !hasCheckedIn || hasCheckedOut ? "#9E9E9E" : "#F44336",
+            bgcolor: !hasCheckedIn || hasCheckedOut ? "#9E9E9E" : "#ff9800",
             color: "white",
             "&:hover": {
               bgcolor:
-                !hasCheckedIn || hasCheckedOut ? "#9E9E9E" : "#D32F2F",
+                !hasCheckedIn || hasCheckedOut ? "#9E9E9E" : "#f57c00",
             },
             "&.Mui-disabled": {
               bgcolor: "#9E9E9E",
@@ -70,7 +70,7 @@ const AttendanceActions = ({
         >
           <Box textAlign="center">
             <Typography fontWeight="bold">Pulang</Typography>
-            <Typography variant="caption">{checkOutTime}</Typography>
+            <Typography variant="body2">{checkOutTime}</Typography>
           </Box>
         </Button>
       </ButtonGroup>
