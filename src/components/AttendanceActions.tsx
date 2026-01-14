@@ -35,7 +35,7 @@ const AttendanceActions = ({
         },
       }} aria-label="Basic button group">
         <Button
-          disabled={hasCheckedIn || hasCheckedOut || workingDayToday?.isHoliday}
+          disabled={hasCheckedIn || hasCheckedOut || workingDayToday?.isHoliday || !workingDayToday?.isWorkAllowed}
           onClick={onClick}
           sx={{
             bgcolor: hasCheckedIn ? "#9E9E9E" : theme.palette.success.main,
@@ -56,14 +56,14 @@ const AttendanceActions = ({
         </Button>
         <Button
           color="error"
-          disabled={!hasCheckedIn || hasCheckedOut || workingDayToday?.isHoliday}
+          disabled={!hasCheckedIn || hasCheckedOut || workingDayToday?.isHoliday || !workingDayToday?.isWorkAllowed}
           onClick={onClick}
           sx={{
-            bgcolor: !hasCheckedIn || hasCheckedOut || workingDayToday?.isHoliday ? "#9E9E9E" : "#ff9800",
+            bgcolor: !hasCheckedIn || hasCheckedOut || workingDayToday?.isHoliday || !workingDayToday?.isWorkAllowed ? "#9E9E9E" : "#ff9800",
             color: "white",
             "&:hover": {
               bgcolor:
-                !hasCheckedIn || hasCheckedOut || workingDayToday?.isHoliday ? "#9E9E9E" : "#f57c00",
+                !hasCheckedIn || hasCheckedOut || workingDayToday?.isHoliday || !workingDayToday?.isWorkAllowed? "#9E9E9E" : "#f57c00",
             },
             "&.Mui-disabled": {
               bgcolor: "#9E9E9E",

@@ -4,6 +4,7 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useCallback,
 } from "react";
 import { useAuth } from "./AuthContext";
 import SystemService from "../services/SystemService";
@@ -28,9 +29,9 @@ export const SystemProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   // Cache to store fetched attendance records by guid
-    const [workingDayToday, setworkingDayToday] = useState<WorkingDayResponse | null>(
-      null
-    );
+  const [workingDayToday, setworkingDayToday] = useState<WorkingDayResponse | null>(
+    null
+  );
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
@@ -39,23 +40,8 @@ export const SystemProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [isAuthenticated]);
 
-  useEffect(() => {
-  if (!workingDayToday?.nextChangeAt) return;
 
-  const next = new Date(workingDayToday.nextChangeAt).getTime();
-  const now = Date.now();
-  const delay = next - now;
-
-  if (delay <= 0) return;
-
-  const timeout = setTimeout(() => {
-    fetchWorkingDayToday();
-  }, delay);
-
-  return () => clearTimeout(timeout);
-}, [workingDayToday]);
-
-    const fetchWorkingDayToday = async (): Promise<void> => {
+  const fetchWorkingDayToday = useCallback(async (): Promise<void> => {
     setLoading(true);
     setError(null);
     try {
@@ -68,7 +54,23 @@ export const SystemProvider: React.FC<{ children: React.ReactNode }> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!workingDayToday?.nextChangeAt) return;
+
+    const delay =
+      new Date(workingDayToday.nextChangeAt).getTime() - Date.now();
+
+    if (delay <= 0) return;
+
+    const timeout = setTimeout(() => {
+      fetchWorkingDayToday();
+    }, delay);
+
+    return () => clearTimeout(timeout);
+  }, [workingDayToday, fetchWorkingDayToday]);
+
 
 
   const clearError = (): void => {

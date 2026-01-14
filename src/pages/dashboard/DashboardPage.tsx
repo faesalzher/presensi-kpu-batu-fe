@@ -106,6 +106,7 @@ const DashboardPage: React.FC = () => {
       period: ReportPeriod.MONTHLY,
     });
   }, [authUser?.guid]);
+  
 
   useEffect(() => {
     if (!selectedUser?.profileImage) return;
@@ -291,6 +292,19 @@ const DashboardPage: React.FC = () => {
         <Container sx={{ mb: 8 }}>
           <Grid container spacing={3}>
             <Grid size={12}>
+
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                mb={1}
+              >
+                {(!workingDayToday?.isWorkAllowed && !workingDayToday?.isHoliday) && (
+                  <Alert severity="warning">
+                    {workingDayToday?.message}
+                  </Alert>
+                )}
+              </Box>
               <Box
                 display="flex"
                 alignItems="center"
@@ -304,11 +318,6 @@ const DashboardPage: React.FC = () => {
                   </Alert>
                 )}
 
-                {(!workingDayToday?.isWorkAllowed && !workingDayToday?.isHoliday) && (
-                  <Alert severity="warning">
-                    {workingDayToday?.message}
-                  </Alert>
-                )}
 
 
                 {workingDayToday && !workingDayToday.isHoliday && (
@@ -359,7 +368,7 @@ const DashboardPage: React.FC = () => {
           </Grid>
         </Container>
       </Box>
-    </DashboardLayout>
+    </DashboardLayout >
   );
 };
 

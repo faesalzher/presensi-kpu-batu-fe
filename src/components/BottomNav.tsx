@@ -80,7 +80,7 @@ const BottomNav: React.FC = () => {
       </IconButton>
 
       {/* Fingerprint: only on Dashboard */}
-      {(location.pathname === "/dashboard" && !workingDayToday?.isHoliday) && (
+      {(location.pathname === "/dashboard" && !workingDayToday?.isHoliday && workingDayToday?.isWorkAllowed) && (
         <IconButton
           onClick={() => goTo("/presensi")}
           sx={{
