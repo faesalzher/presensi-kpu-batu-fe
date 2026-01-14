@@ -39,6 +39,22 @@ export const SystemProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [isAuthenticated]);
 
+  useEffect(() => {
+  if (!workingDayToday?.nextChangeAt) return;
+
+  const next = new Date(workingDayToday.nextChangeAt).getTime();
+  const now = Date.now();
+  const delay = next - now;
+
+  if (delay <= 0) return;
+
+  const timeout = setTimeout(() => {
+    fetchWorkingDayToday();
+  }, delay);
+
+  return () => clearTimeout(timeout);
+}, [workingDayToday]);
+
     const fetchWorkingDayToday = async (): Promise<void> => {
     setLoading(true);
     setError(null);

@@ -304,6 +304,12 @@ const DashboardPage: React.FC = () => {
                   </Alert>
                 )}
 
+                {(!workingDayToday?.isWorkAllowed && !workingDayToday?.isHoliday) && (
+                  <Alert severity="warning">
+                    {workingDayToday?.message}
+                  </Alert>
+                )}
+
 
                 {workingDayToday && !workingDayToday.isHoliday && (
                   <>
