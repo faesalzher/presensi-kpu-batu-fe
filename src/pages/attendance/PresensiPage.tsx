@@ -33,6 +33,7 @@ import {
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useAttendance } from "../../contexts/AttendanceContext";
+import { useSystem } from "../../contexts/SystemContext.tsx";
 import { CheckInDto, CheckOutDto } from "../../types/attendance";
 import { formatDate, formatTime, getNow } from "../../constant/time.constant";
 import BottomNav from "../../components/BottomNav";
@@ -56,8 +57,15 @@ const PresensiPage: React.FC = () => {
     todayAttendance,
     loading: attendanceLoading,
     error: attendanceError,
-    fetchTodayAttendance,
+    fetchTodayAttendance
   } = useAttendance();
+
+  const {
+    workingDayToday,
+    loading: systemLoading,
+    error: systemError,
+    fetchWorkingDayToday
+  } = useSystem();
 
   const [now, setNow] = useState(getNow());
 
@@ -244,6 +252,7 @@ const PresensiPage: React.FC = () => {
 
     // Fetch attendance and get initial location
     fetchTodayAttendance();
+    fetchWorkingDayToday();
     // getUserLocation(false); // Start with normal accuracy
 
     // // Initialize camera only if no captured image
@@ -272,6 +281,13 @@ const PresensiPage: React.FC = () => {
       showNotification(attendanceError, "error");
     }
   }, [attendanceError]);
+
+    // Show error notification from system context
+  useEffect(() => {
+    if (systemError) {
+      showNotification(systemError, "error");
+    }
+  }, [systemError]);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(getNow), 1000);
@@ -424,6 +440,7 @@ const PresensiPage: React.FC = () => {
     todayAttendance?.checkInTime && !todayAttendance?.checkOutTime !== null;
   const actionButtonDisabled =
     attendanceLoading ||
+    systemLoading ||
     // !capturedImage ||
     isSubmitting ||
     (isCheckOut ? !canCheckOut : !canCheckIn) ||
@@ -515,7 +532,7 @@ const PresensiPage: React.FC = () => {
             <Typography variant="body2" color="text.secondary">
               Jam Kerja Hari Ini
             </Typography>
-            <Typography fontWeight={600}>07.30 – 16.00</Typography>
+            <Typography fontWeight={600}>{workingDayToday?.workStart} – {workingDayToday?.workEnd}</Typography>
           </Box>
 
           {/* ACTION BUTTON */}

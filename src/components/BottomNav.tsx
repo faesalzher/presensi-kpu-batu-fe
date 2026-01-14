@@ -6,11 +6,16 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import FingerprintIcon from "@mui/icons-material/Fingerprint";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ExitToApp } from "@mui/icons-material";
+import { useSystem } from "../contexts/SystemContext";
 
 const BottomNav: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [userRole, setUserRole] = useState<string>("staf"); // Default role
+
+  const {
+    workingDayToday
+  } = useSystem();
 
   // Get user role from localStorage on component mount
   useEffect(() => {
@@ -75,7 +80,7 @@ const BottomNav: React.FC = () => {
       </IconButton>
 
       {/* Fingerprint: only on Dashboard */}
-      {(location.pathname === "/dashboard") && (
+      {(location.pathname === "/dashboard" && !workingDayToday?.isHoliday) && (
         <IconButton
           onClick={() => goTo("/presensi")}
           sx={{

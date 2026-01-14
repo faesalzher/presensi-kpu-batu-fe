@@ -1,5 +1,6 @@
 // components/AttendanceActions.tsx
 import { Grid, Button, Typography, Box, useTheme, ButtonGroup } from "@mui/material";
+import { WorkingDayResponse } from "../types/system";
 
 interface Props {
   onClick: () => void;
@@ -7,6 +8,7 @@ interface Props {
   checkOutTime: string;
   hasCheckedIn: boolean;
   hasCheckedOut: boolean;
+  workingDayToday: WorkingDayResponse | null;
 }
 
 const AttendanceActions = ({
@@ -15,6 +17,7 @@ const AttendanceActions = ({
   checkOutTime,
   hasCheckedIn,
   hasCheckedOut,
+  workingDayToday
 }: Props) => {
   const theme = useTheme();
 
@@ -23,7 +26,7 @@ const AttendanceActions = ({
       <ButtonGroup variant="contained" fullWidth sx={{
         minHeight: 70,
         borderRadius: 3,
-       "& .MuiButtonGroup-grouped:not(:last-of-type)": {
+        "& .MuiButtonGroup-grouped:not(:last-of-type)": {
           borderRight: "1px solid #fff", // garis tengah putih
         },
         overflow: "hidden", // penting biar radius kepake
@@ -32,7 +35,7 @@ const AttendanceActions = ({
         },
       }} aria-label="Basic button group">
         <Button
-          disabled={hasCheckedIn || hasCheckedOut}
+          disabled={hasCheckedIn || hasCheckedOut || workingDayToday?.isHoliday}
           onClick={onClick}
           sx={{
             bgcolor: hasCheckedIn ? "#9E9E9E" : theme.palette.success.main,
@@ -53,14 +56,14 @@ const AttendanceActions = ({
         </Button>
         <Button
           color="error"
-          disabled={!hasCheckedIn || hasCheckedOut}
+          disabled={!hasCheckedIn || hasCheckedOut || workingDayToday?.isHoliday}
           onClick={onClick}
           sx={{
-            bgcolor: !hasCheckedIn || hasCheckedOut ? "#9E9E9E" : "#ff9800",
+            bgcolor: !hasCheckedIn || hasCheckedOut || workingDayToday?.isHoliday ? "#9E9E9E" : "#ff9800",
             color: "white",
             "&:hover": {
               bgcolor:
-                !hasCheckedIn || hasCheckedOut ? "#9E9E9E" : "#f57c00",
+                !hasCheckedIn || hasCheckedOut || workingDayToday?.isHoliday ? "#9E9E9E" : "#f57c00",
             },
             "&.Mui-disabled": {
               bgcolor: "#9E9E9E",

@@ -33,6 +33,7 @@ import { formatDate, formatShortTime, formatTime, getNow } from "../../constant/
 import { useLeaveRequests } from "../../contexts/LeaveRequestsContext";
 import { useCorrections } from "../../contexts/CorrectionsContext";
 import { UserRole } from "../../types/enums";
+import { useSystem } from "../../contexts/SystemContext";
 
 /* ===================================================== */
 
@@ -69,6 +70,13 @@ const DashboardPage: React.FC = () => {
   } = useLeaveRequests();
 
   const {
+    workingDayToday,
+    loading: systemLoading,
+    error: systemError,
+    fetchWorkingDayToday
+  } = useSystem();
+
+  const {
     // pendingCorrections,
     fetchPendingCorrections,
   } = useCorrections();
@@ -85,6 +93,7 @@ const DashboardPage: React.FC = () => {
     fetchTodayAttendance();
     fetchPendingRequests();
     fetchPendingCorrections();
+    fetchWorkingDayToday();
 
     const d = getNow();
     fetchMyStatistics({
@@ -120,22 +129,22 @@ const DashboardPage: React.FC = () => {
   const stafQuickActions = [
     {
       label: "Profil",
-      icon: <Person color="primary"/>,
+      icon: <Person color="primary" />,
       onClick: () => navigate("/profile"),
     },
     {
       label: "Pengajuan Cuti",
-      icon: <ExitToApp color="primary"/>,
+      icon: <ExitToApp color="primary" />,
       onClick: () => navigate("/leave-request-form"),
     },
     {
       label: "Riwayat Presensi",
-      icon: <Description color="primary"/>,
+      icon: <Description color="primary" />,
       onClick: () => navigate("/history"),
     },
     {
       label: "Tunjangan Kinerja",
-      icon: <RequestQuote color="primary"/>,
+      icon: <RequestQuote color="primary" />,
       onClick: () => navigate("/daftar-tukin"),
     },
   ];
@@ -144,22 +153,22 @@ const DashboardPage: React.FC = () => {
   const kasubagQuickActions = [
     {
       label: "Rekap Sekretariat",
-      icon: <Groups color="primary"/>,
+      icon: <Groups color="primary" />,
       onClick: () => navigate("/sekretariat"),
     },
     {
       label: "Pengajuan Cuti",
-      icon: <ExitToApp color="primary"/>,
+      icon: <ExitToApp color="primary" />,
       onClick: () => navigate("/leave-request-form"),
     },
     {
       label: "Riwayat Presensi",
-      icon: <Description color="primary"/>,
+      icon: <Description color="primary" />,
       onClick: () => navigate("/history"),
     },
     {
       label: "Tunjangan Kinerja",
-      icon: <RequestQuote color="primary"/>,
+      icon: <RequestQuote color="primary" />,
       onClick: () => navigate("/daftar-tukin"),
     },
   ];
@@ -167,27 +176,27 @@ const DashboardPage: React.FC = () => {
   const kasubagSdmQuickActions = [
     {
       label: "Rekap Sekretariat",
-      icon: <Groups color="primary"/>,
+      icon: <Groups color="primary" />,
       onClick: () => navigate("/sekretariat"),
     },
     {
       label: "Pengajuan Cuti",
-      icon: <ExitToApp color="primary"/>,
+      icon: <ExitToApp color="primary" />,
       onClick: () => navigate("/leave-request-form"),
     },
     {
       label: "Riwayat Presensi",
-      icon: <Description color="primary"/>,
+      icon: <Description color="primary" />,
       onClick: () => navigate("/history"),
     },
     {
       label: "Tunjangan Kinerja",
-      icon: <RequestQuote color="primary"/>,
+      icon: <RequestQuote color="primary" />,
       onClick: () => navigate("/daftar-tukin"),
     },
     {
       label: "Revisi Kehadiran",
-      icon: <CheckBox color="primary"/>,
+      icon: <CheckBox color="primary" />,
       badge: pendingRequests?.length,
       onClick: () => navigate("/persetujuan"),
     },
@@ -228,8 +237,8 @@ const DashboardPage: React.FC = () => {
     ]
     : [];
 
-  const loading = loadingUser || loadingAttendance || loadingStatistics;
-  const error = userError || attendanceError || statisticsError;
+  const loading = loadingUser || loadingAttendance || loadingStatistics || systemLoading;
+  const error = userError || attendanceError || statisticsError || systemError;
 
   const clearError = () => {
     clearUserError();
@@ -288,12 +297,24 @@ const DashboardPage: React.FC = () => {
                 justifyContent="center"
                 mb={1}
               >
-                <AccessTime
-                  sx={{ fontSize: 16, mr: 0.5, color: "text.primary" }}
-                />
-                <Typography variant="body2" color="text.primary">
-                  Jam Kerja Hari Ini: <b>07.30 – 16.00</b>
-                </Typography>
+
+                {workingDayToday?.isHoliday && (
+                  <Alert severity="warning">
+                    {workingDayToday.message}
+                  </Alert>
+                )}
+
+
+                {workingDayToday && !workingDayToday.isHoliday && (
+                  <>
+                    <AccessTime
+                      sx={{ fontSize: 16, mr: 0.5, color: "text.primary" }}
+                    />
+                    <Typography variant="body2" color="text.primary">
+                      Jam Kerja Hari Ini: <b>{workingDayToday?.workStart} – {workingDayToday?.workEnd}</b>
+                    </Typography>
+                  </>
+                )}
               </Box>
 
 
@@ -303,6 +324,7 @@ const DashboardPage: React.FC = () => {
                 checkOutTime={formatShortTime(todayAttendance?.checkOutTime)}
                 hasCheckedIn={hasCheckedIn}
                 hasCheckedOut={hasCheckedOut}
+                workingDayToday={workingDayToday}
               />
             </Grid>
 

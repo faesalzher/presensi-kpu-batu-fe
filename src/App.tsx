@@ -38,6 +38,7 @@ import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 import PublicRoute from "./components/PublicRoute";
 import { UserRole } from "./types/enums";
 import SekretariatPage from "./pages/sekretariat/SekretariatPage";
+import { SystemProvider } from "./contexts/SystemContext";
 
 function App() {
   return (
@@ -46,128 +47,130 @@ function App() {
         <LeaveRequestsProvider>
           <UsersProvider>
             <AttendanceProvider>
-              <CorrectionsProvider>
-                <FileProvider>
-                  <StatisticsProvider>
-                    <Router>
-                      <Routes>
-                        {/* Public route */}
-                        <Route path="/" element={<PublicRoute><LoginPage /></PublicRoute>} />
+              <SystemProvider>
+                <CorrectionsProvider>
+                  <FileProvider>
+                    <StatisticsProvider>
+                      <Router>
+                        <Routes>
+                          {/* Public route */}
+                          <Route path="/" element={<PublicRoute><LoginPage /></PublicRoute>} />
 
-                        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                        <Route path="/reset-password" element={<ResetPasswordPage />} />
-                        <Route
-                          path="/dashboard"
-                          element={<DashboardPage />}
-                        />
+                          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                          <Route path="/reset-password" element={<ResetPasswordPage />} />
+                          <Route
+                            path="/dashboard"
+                            element={<DashboardPage />}
+                          />
 
-                        {/* Protected routes for all authenticated users */}
-                        <Route element={<ProtectedRoute />}>
-                          <Route path="/profile" element={<ProfilePage />} />
-                          <Route
-                            path="/change-password"
-                            element={<ChangePasswordPage />}
-                          />
-                        </Route>
+                          {/* Protected routes for all authenticated users */}
+                          <Route element={<ProtectedRoute />}>
+                            <Route path="/profile" element={<ProfilePage />} />
+                            <Route
+                              path="/change-password"
+                              element={<ChangePasswordPage />}
+                            />
+                          </Route>
 
-                        {/* Routes accessible by both staf and kasubag */}
-                        <Route
-                          element={
-                            <ProtectedRoute allowedRoles={[UserRole.STAF, UserRole.KASUBAG, UserRole.KASUBAG_SDM]} />
-                          }
-                        >
-                          <Route path="/presensi" element={<PresensiPage />} />
+                          {/* Routes accessible by both staf and kasubag */}
                           <Route
-                            path="/history"
-                            element={<PresensiHistoryPage />}
-                          />
-                          <Route
-                            path="/leave-request"
-                            element={<LeaveRequestPage />}
-                          />
-                          <Route
-                            path="/detail-request/:id"
-                            element={<PengajuanDetailPage />}
-                          />
-                          <Route
-                            path="/attendance-present/:guid"
-                            element={<AttendanceDetailPresent />}
-                          />
-                          <Route
-                            path="/attendance-absent/:guid"
-                            element={<AttendanceDetailAbsent />}
-                          />
-                          <Route
-                            path="/attendance-problem/:guid"
-                            element={<AttendanceDetailProblem />}
-                          />
-                          <Route
-                            path="/attendance-correction/:attendanceId"
-                            element={<AttendanceCorrection />}
-                          />
-                          <Route
-                            path="/leave-request-form"
-                            element={<LeaveRequestFormPage />}
-                          />
-                          <Route
-                            path="/status-koreksi"
-                            element={<StatusCorrectionPage />}
-                          />
-                          <Route
-                            path="/detail-koreksi/:guid"
-                            element={<CorrectionDetailPage />}
-                          />
-                          <Route
-                            path="/persetujuan-koreksi"
-                            element={<PersetujuanKoreksiPage />}
-                          />
-                          <Route
-                            path="/persetujuan-koreksi-detail/:guid"
-                            element={<PersetujuanKoreksiDetailPage />}
-                          />
-                          <Route
-                            path="/daftar-tukin"
-                            element={<TukinPage />}
-                          />
-                          <Route
-                            path="/edit-profile"
-                            element={<EditProfilePage />}
-                          />
-                        </Route>
+                            element={
+                              <ProtectedRoute allowedRoles={[UserRole.STAF, UserRole.KASUBAG, UserRole.KASUBAG_SDM]} />
+                            }
+                          >
+                            <Route path="/presensi" element={<PresensiPage />} />
+                            <Route
+                              path="/history"
+                              element={<PresensiHistoryPage />}
+                            />
+                            <Route
+                              path="/leave-request"
+                              element={<LeaveRequestPage />}
+                            />
+                            <Route
+                              path="/detail-request/:id"
+                              element={<PengajuanDetailPage />}
+                            />
+                            <Route
+                              path="/attendance-present/:guid"
+                              element={<AttendanceDetailPresent />}
+                            />
+                            <Route
+                              path="/attendance-absent/:guid"
+                              element={<AttendanceDetailAbsent />}
+                            />
+                            <Route
+                              path="/attendance-problem/:guid"
+                              element={<AttendanceDetailProblem />}
+                            />
+                            <Route
+                              path="/attendance-correction/:attendanceId"
+                              element={<AttendanceCorrection />}
+                            />
+                            <Route
+                              path="/leave-request-form"
+                              element={<LeaveRequestFormPage />}
+                            />
+                            <Route
+                              path="/status-koreksi"
+                              element={<StatusCorrectionPage />}
+                            />
+                            <Route
+                              path="/detail-koreksi/:guid"
+                              element={<CorrectionDetailPage />}
+                            />
+                            <Route
+                              path="/persetujuan-koreksi"
+                              element={<PersetujuanKoreksiPage />}
+                            />
+                            <Route
+                              path="/persetujuan-koreksi-detail/:guid"
+                              element={<PersetujuanKoreksiDetailPage />}
+                            />
+                            <Route
+                              path="/daftar-tukin"
+                              element={<TukinPage />}
+                            />
+                            <Route
+                              path="/edit-profile"
+                              element={<EditProfilePage />}
+                            />
+                          </Route>
 
-                        {/* Protected routes for kasubag (department head) only */}
-                        <Route
-                          element={<ProtectedRoute allowedRoles={[UserRole.KASUBAG_SDM, UserRole.SEKRETARIS, UserRole.KASUBAG, UserRole.STAF_KUL, UserRole.STAF_SPIP]} />}
-                        >
+                          {/* Protected routes for kasubag (department head) only */}
                           <Route
-                            path="/persetujuan"
-                            element={<PersetujuanPage />}
-                          />
-                          <Route
-                            path="/persetujuan-detail/:guid"
-                            element={<PersetujuanDetailPage />}
-                          />
-                          <Route
-                            path="/reject-pengajuan"
-                            element={<RejectApplicationForm />}
-                          />
-                          <Route
-                            path="/sekretariat"
-                            element={<SekretariatPage />}
-                          />
-                        </Route>
+                            element={<ProtectedRoute allowedRoles={[UserRole.KASUBAG_SDM, UserRole.SEKRETARIS, UserRole.KASUBAG, UserRole.STAF_KUL, UserRole.STAF_SPIP]} />}
+                          >
+                            <Route
+                              path="/persetujuan"
+                              element={<PersetujuanPage />}
+                            />
+                            <Route
+                              path="/persetujuan-detail/:guid"
+                              element={<PersetujuanDetailPage />}
+                            />
+                            <Route
+                              path="/reject-pengajuan"
+                              element={<RejectApplicationForm />}
+                            />
+                            <Route
+                              path="/sekretariat"
+                              element={<SekretariatPage />}
+                            />
+                          </Route>
 
-                        {/* Other routes */}
-                        <Route
-                          path="/under-development"
-                          element={<UnderDevelopmentPage />}
-                        />
-                        <Route path="*" element={<NotFoundPage />} />
-                      </Routes>
-                    </Router>
-                  </StatisticsProvider>
-                </FileProvider>
-              </CorrectionsProvider>
+                          {/* Other routes */}
+                          <Route
+                            path="/under-development"
+                            element={<UnderDevelopmentPage />}
+                          />
+                          <Route path="*" element={<NotFoundPage />} />
+                        </Routes>
+                      </Router>
+                    </StatisticsProvider>
+                  </FileProvider>
+                </CorrectionsProvider>
+              </SystemProvider>
             </AttendanceProvider>
           </UsersProvider>
         </LeaveRequestsProvider>
