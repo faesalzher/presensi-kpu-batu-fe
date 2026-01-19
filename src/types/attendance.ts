@@ -19,6 +19,8 @@ export interface Attendance {
   checkOutPhotoId?: string;
   checkOutNotes?: string;
   workHours?: number;
+  isForgotCheckIn: boolean;
+  isForgotCheckOut: boolean;
   status: string;
   verified: boolean;
   verifiedBy?: string;

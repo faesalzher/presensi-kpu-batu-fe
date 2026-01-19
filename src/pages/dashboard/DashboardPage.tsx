@@ -122,7 +122,7 @@ const DashboardPage: React.FC = () => {
   }, []);
 
 
-  const hasCheckedIn = !!todayAttendance?.checkInTime;
+  const hasCheckedIn = !!todayAttendance?.checkInTime || !!todayAttendance?.isForgotCheckIn;
   const hasCheckedOut = !!todayAttendance?.checkOutTime;
 
   /* ================= DATA ================= */

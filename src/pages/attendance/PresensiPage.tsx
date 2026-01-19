@@ -268,7 +268,7 @@ const PresensiPage: React.FC = () => {
 
   // Check if user has already checked in and set the mode
   useEffect(() => {
-    if (todayAttendance?.checkInTime && !todayAttendance?.checkOutTime) {
+    if ((todayAttendance?.checkInTime || todayAttendance?.isForgotCheckIn) && !todayAttendance?.checkOutTime) {
       setIsCheckOut(true);
     } else {
       setIsCheckOut(false);
