@@ -99,34 +99,34 @@ export const dummyLeaveRequests: LeaveRequest[] = [
 ];
 
 export const dummyLeaveRequest: LeaveRequest =
-  {
-    guid: "LEAVE-REQ-001",
-    userId: "USER-001",
-    departmentId: "DEPT-IT",
-    type: LeaveRequestType.LEAVE,
-    startDate: new Date("2025-11-10"),
-    endDate: new Date("2025-11-12"),
-    reason: "Liburan keluarga",
-    attachmentId: "ATTACH-001",
-    status: LeaveRequestStatus.APPROVED,
-    reviewedById: "ADMIN-001",
-    reviewedAt: new Date("2025-11-05T10:00:00Z"),
-    comments: "Disetujui, selamat berlibur!",
-    createdAt: new Date("2025-11-01T09:00:00Z"),
-    updatedAt: new Date("2025-11-05T10:00:00Z"),
+{
+  guid: "LEAVE-REQ-001",
+  userId: "USER-001",
+  departmentId: "DEPT-IT",
+  type: LeaveRequestType.LEAVE,
+  startDate: new Date("2025-11-10"),
+  endDate: new Date("2025-11-12"),
+  reason: "Liburan keluarga",
+  attachmentId: "ATTACH-001",
+  status: LeaveRequestStatus.APPROVED,
+  reviewedById: "ADMIN-001",
+  reviewedAt: new Date("2025-11-05T10:00:00Z"),
+  comments: "Disetujui, selamat berlibur!",
+  createdAt: new Date("2025-11-01T09:00:00Z"),
+  updatedAt: new Date("2025-11-05T10:00:00Z"),
 
-    attachment: {
-      guid: "ATTACH-001",
-      fileName: "cuti_maret_2024.pdf",
-      originalName: "cuti_maret_2024.pdf",
-      mimeType: "application/pdf",
-      size: 204800,
-    },
+  attachment: {
+    guid: "ATTACH-001",
+    fileName: "cuti_maret_2024.pdf",
+    originalName: "cuti_maret_2024.pdf",
+    mimeType: "application/pdf",
+    size: 204800,
+  },
 
-    userName: "Demo User",
-    departmentName: "Information Technology",
-    reviewerName: "HR Admin",
-  };
+  userName: "Demo User",
+  departmentName: "Information Technology",
+  reviewerName: "HR Admin",
+};
 // -------------------------
 //  Dummy Correction Requests
 // -------------------------
@@ -145,19 +145,19 @@ export const dummyCorrections: Correction[] = [
   },
 ];
 
-export const dummyCorrection: Correction = 
-  {
-    guid: "CORR-001",
-    userId: "USER-001",
-    departmentId: "DEPT-IT",
-    attendanceId: "ATT-001",
-    type: "TIME_IN",
-    requestDate: new Date("2025-11-10T08:05:00Z"),
-    reason: "Fingerprint error saat masuk kerja",
-    status: "PENDING",
-    createdAt: new Date("2025-11-10T08:10:00Z"),
-    updatedAt: new Date("2025-11-10T08:10:00Z"),
-  };
+export const dummyCorrection: Correction =
+{
+  guid: "CORR-001",
+  userId: "USER-001",
+  departmentId: "DEPT-IT",
+  attendanceId: "ATT-001",
+  type: "TIME_IN",
+  requestDate: new Date("2025-11-10T08:05:00Z"),
+  reason: "Fingerprint error saat masuk kerja",
+  status: "PENDING",
+  createdAt: new Date("2025-11-10T08:10:00Z"),
+  updatedAt: new Date("2025-11-10T08:10:00Z"),
+};
 // -------------------------
 //  Dummy Attendance
 // -------------------------
@@ -174,6 +174,8 @@ export const dummyAttendance: Attendance = {
   checkOutLocation: undefined,
   checkOutPhotoId: "PHOTO-OUT-001",
   checkOutNotes: "Pulang tepat waktu",
+  isForgotCheckIn: false,
+  isForgotCheckOut: false,
 
   workHours: 8.75,
   status: "PRESENT",
@@ -207,7 +209,7 @@ export const dummyAttendances: Attendance[] = Array.from({ length: 30 }).map(
 
     // Random status
     const statusPool = ["present", "late", "absent", "remote_working", "official_travel", "on_leave"];
-    
+
     const status = statusPool[Math.floor(Math.random() * statusPool.length)];
 
     // Default values
@@ -220,6 +222,8 @@ export const dummyAttendances: Attendance[] = Array.from({ length: 30 }).map(
     let checkOutPhotoId: string | undefined = undefined;
     let checkInNotes: string | undefined = undefined;
     let checkOutNotes: string | undefined = undefined;
+    let isForgotCheckIn: boolean | undefined = undefined;
+    let isForgotCheckOut: boolean | undefined = undefined;
 
     const ci = randomTime(status === "present" ? 7.5 : 8.3, 30); // earlier if present
     const co = randomTime(16.3, 40);
@@ -251,6 +255,8 @@ export const dummyAttendances: Attendance[] = Array.from({ length: 30 }).map(
     }
 
     // ABSENT → no workHours
+    isForgotCheckIn = false;
+    isForgotCheckOut = false;
 
     return {
       guid: `ATT-${String(day).padStart(3, "0")}`,
@@ -268,6 +274,8 @@ export const dummyAttendances: Attendance[] = Array.from({ length: 30 }).map(
       checkOutNotes,
 
       workHours,
+      isForgotCheckIn,
+      isForgotCheckOut,
       status,
 
       verified: Math.random() > 0.3, // some verified, some not
