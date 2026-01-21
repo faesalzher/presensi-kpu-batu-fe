@@ -75,7 +75,7 @@ function App() {
                           {/* Routes accessible by both staf and kasubag */}
                           <Route
                             element={
-                              <ProtectedRoute allowedRoles={[UserRole.STAF, UserRole.KASUBAG, UserRole.KASUBAG_SDM]} />
+                              <ProtectedRoute allowedRoles={[UserRole.STAF, UserRole.KASUBAG, UserRole.KASUBAG_SDM, UserRole.STAF_KUL, UserRole.STAF_SPIP]} />
                             }
                           >
                             <Route path="/presensi" element={<PresensiPage />} />
