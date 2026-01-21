@@ -2,7 +2,7 @@
 //  DEMO MODE DATA PROVIDER
 // =========================
 
-import { Attendance, GeoLocation } from "../types/attendance";
+// import { Attendance, GeoLocation } from "../types/attendance";
 import { User as UserAuth, LoginResponse } from "../types/auth";
 import { User } from "../types/users";
 import { Correction, CorrectionQueryParams } from "../types/corrections";
@@ -161,37 +161,37 @@ export const dummyCorrection: Correction =
 // -------------------------
 //  Dummy Attendance
 // -------------------------
-export const dummyAttendance: Attendance = {
-  guid: "ATT-001",
-  userId: dummyUser.guid,
-  date: new Date("2025-11-15"),
-  checkInTime: undefined,
-  checkInLocation: undefined,
-  checkInPhotoId: "PHOTO-IN-001",
-  checkInNotes: "On time, fingerprint OK",
+// export const dummyAttendance: Attendance = {
+//   guid: "ATT-001",
+//   userId: dummyUser.guid,
+//   date: new Date("2025-11-15"),
+//   checkInTime: undefined,
+//   checkInLocation: undefined,
+//   checkInPhotoId: "PHOTO-IN-001",
+//   checkInNotes: "On time, fingerprint OK",
 
-  checkOutTime: undefined,
-  checkOutLocation: undefined,
-  checkOutPhotoId: "PHOTO-OUT-001",
-  checkOutNotes: "Pulang tepat waktu",
+//   checkOutTime: undefined,
+//   checkOutLocation: undefined,
+//   checkOutPhotoId: "PHOTO-OUT-001",
+//   checkOutNotes: "Pulang tepat waktu",
 
-  workHours: 8.75,
-  status: "PRESENT",
-  verified: true,
-  verifiedBy: "ADMIN-001",
-  verifiedAt: new Date("2025-11-15T17:00:00Z"),
+//   workHours: 8.75,
+//   status: "PRESENT",
+//   verified: true,
+//   verifiedBy: "ADMIN-001",
+//   verifiedAt: new Date("2025-11-15T17:00:00Z"),
 
-  departmentId: "DEPT-IT",
-  createdAt: new Date("2025-11-15T08:00:00Z"),
-  updatedAt: new Date("2025-11-15T17:00:00Z"),
-};
+//   departmentId: "DEPT-IT",
+//   createdAt: new Date("2025-11-15T08:00:00Z"),
+//   updatedAt: new Date("2025-11-15T17:00:00Z"),
+// };
 
-function randomTime(baseHour: number, varianceMinutes: number) {
-  const minutes = baseHour * 60 + Math.floor(Math.random() * varianceMinutes);
-  const h = Math.floor(minutes / 60).toString().padStart(2, "0");
-  const m = (minutes % 60).toString().padStart(2, "0");
-  return `${h}:${m}`;
-}
+// function randomTime(baseHour: number, varianceMinutes: number) {
+//   const minutes = baseHour * 60 + Math.floor(Math.random() * varianceMinutes);
+//   const h = Math.floor(minutes / 60).toString().padStart(2, "0");
+//   const m = (minutes % 60).toString().padStart(2, "0");
+//   return `${h}:${m}`;
+// }
 
 // function randomLocation(): GeoLocation {
 //   return {
@@ -200,89 +200,89 @@ function randomTime(baseHour: number, varianceMinutes: number) {
 //   };
 // }
 
-export const dummyAttendances: Attendance[] = Array.from({ length: 30 }).map(
-  (_, i) => {
-    const day = i + 1;
-    const date = new Date(`2025-11-${String(day).padStart(2, "0")}`);
+// export const dummyAttendances: Attendance[] = Array.from({ length: 30 }).map(
+//   (_, i) => {
+//     const day = i + 1;
+//     const date = new Date(`2025-11-${String(day).padStart(2, "0")}`);
 
-    // Random status
-    const statusPool = ["present", "late", "absent", "remote_working", "official_travel", "on_leave"];
+//     // Random status
+//     const statusPool = ["present", "late", "absent", "remote_working", "official_travel", "on_leave"];
     
-    const status = statusPool[Math.floor(Math.random() * statusPool.length)];
+//     const status = statusPool[Math.floor(Math.random() * statusPool.length)];
 
-    // Default values
-    let checkInTime: Date | undefined = undefined;
-    let checkOutTime: Date | undefined = undefined;
-    let workHours: number | undefined = undefined;
-    let checkInLocation: GeoLocation | undefined = undefined;
-    let checkOutLocation: GeoLocation | undefined = undefined;
-    let checkInPhotoId: string | undefined = undefined;
-    let checkOutPhotoId: string | undefined = undefined;
-    let checkInNotes: string | undefined = undefined;
-    let checkOutNotes: string | undefined = undefined;
+//     // Default values
+//     let checkInTime: Date | undefined = undefined;
+//     let checkOutTime: Date | undefined = undefined;
+//     let workHours: number | undefined = undefined;
+//     let checkInLocation: GeoLocation | undefined = undefined;
+//     let checkOutLocation: GeoLocation | undefined = undefined;
+//     let checkInPhotoId: string | undefined = undefined;
+//     let checkOutPhotoId: string | undefined = undefined;
+//     let checkInNotes: string | undefined = undefined;
+//     let checkOutNotes: string | undefined = undefined;
 
-    const ci = randomTime(status === "present" ? 7.5 : 8.3, 30); // earlier if present
-    const co = randomTime(16.3, 40);
+//     const ci = randomTime(status === "present" ? 7.5 : 8.3, 30); // earlier if present
+//     const co = randomTime(16.3, 40);
 
-    const dateString = `2024-03-${String(day).padStart(2, "0")}`;
+//     const dateString = `2024-03-${String(day).padStart(2, "0")}`;
 
-    if (status === "present" || status === "late") {
-      const [hIn, mIn] = ci.split(":").map(Number);
-      const [hOut, mOut] = co.split(":").map(Number);
+//     if (status === "present" || status === "late") {
+//       const [hIn, mIn] = ci.split(":").map(Number);
+//       const [hOut, mOut] = co.split(":").map(Number);
 
-      checkInTime = new Date(dateString);
-      checkInTime.setHours(hIn, mIn, 0);
+//       checkInTime = new Date(dateString);
+//       checkInTime.setHours(hIn, mIn, 0);
 
-      checkOutTime = new Date(dateString);
-      checkOutTime.setHours(hOut, mOut, 0);
+//       checkOutTime = new Date(dateString);
+//       checkOutTime.setHours(hOut, mOut, 0);
 
-      const diffMs = checkOutTime.getTime() - checkInTime.getTime();
-      workHours = Math.round((diffMs / 1000 / 3600) * 100) / 100;
-    }
+//       const diffMs = checkOutTime.getTime() - checkInTime.getTime();
+//       workHours = Math.round((diffMs / 1000 / 3600) * 100) / 100;
+//     }
 
-    if (status === "remote") {
-      workHours = 7.5;
-      checkInNotes = "WFH";
-    }
+//     if (status === "remote") {
+//       workHours = 7.5;
+//       checkInNotes = "WFH";
+//     }
 
-    if (status === "official_travel") {
-      workHours = 8;
-      checkInNotes = "Dinas luar";
-    }
+//     if (status === "official_travel") {
+//       workHours = 8;
+//       checkInNotes = "Dinas luar";
+//     }
 
-    // ABSENT → no workHours
+//     // ABSENT → no workHours
 
-    return {
-      guid: `ATT-${String(day).padStart(3, "0")}`,
-      userId: "USER-001",
-      date,
+//     return {
+//       guid: `ATT-${String(day).padStart(3, "0")}`,
+//       userId: "USER-001",
+//       date,
 
-      checkInTime,
-      checkInLocation,
-      checkInPhotoId,
-      checkInNotes,
+//       checkInTime,
+//       checkInLocation,
+//       checkInPhotoId,
+//       checkInNotes,
 
-      checkOutTime,
-      checkOutLocation,
-      checkOutPhotoId,
-      checkOutNotes,
+//       checkOutTime,
+//       checkOutLocation,
+//       checkOutPhotoId,
+//       checkOutNotes,
 
-      workHours,
-      status,
+//       workHours,
+//       status,
 
-      verified: Math.random() > 0.3, // some verified, some not
-      verifiedBy: "ADMIN-001",
-      verifiedAt:
-        Math.random() > 0.3
-          ? new Date(`2025-11-${String(day).padStart(2, "0")}T18:00:00Z`)
-          : undefined,
+//       verified: Math.random() > 0.3, // some verified, some not
+//       verifiedBy: "ADMIN-001",
+//       verifiedAt:
+//         Math.random() > 0.3
+//           ? new Date(`2025-11-${String(day).padStart(2, "0")}T18:00:00Z`)
+//           : undefined,
 
-      departmentId: "DEPT-IT",
-      createdAt: new Date(`2025-11-${String(day).padStart(2, "0")}T08:00:00Z`),
-      updatedAt: new Date(`2025-11-${String(day).padStart(2, "0")}T18:00:00Z`),
-    };
-  }
-);
+//       departmentId: "DEPT-IT",
+//       createdAt: new Date(`2025-11-${String(day).padStart(2, "0")}T08:00:00Z`),
+//       updatedAt: new Date(`2025-11-${String(day).padStart(2, "0")}T18:00:00Z`),
+//     };
+//   }
+// );
 
 // -------------------------
 //  Dummy Correction Query Params

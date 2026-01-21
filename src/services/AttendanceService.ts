@@ -9,7 +9,6 @@ import {
   AttendanceSummary,
 } from "../types/attendance";
 import AuthService from "./AuthService";
-import { dummyAttendance, dummyAttendances, isDemoMode } from "../mocks/demoData";
 import { supabase } from "../lib/supabase";
 
 // Create API instance with base configuration
@@ -138,8 +137,8 @@ const AttendanceService = {
     params: AttendanceQueryParams
   ): Promise<Attendance[]> => {
 
-    console.log(dummyAttendances);
-    if(isDemoMode) return dummyAttendances;
+    // console.log(dummyAttendances);
+    // if(isDemoMode) return dummyAttendances;
     const response = await API.get<Attendance[]>("/attendance/my-records", {
       params,
     });
@@ -182,7 +181,7 @@ const AttendanceService = {
    */
   getAttendanceById: async (guid: string): Promise<Attendance> => {
 
-    if(isDemoMode) return dummyAttendance;
+    // if(isDemoMode) return dummyAttendance;
     const response = await API.get<Attendance>(`/attendance/${guid}`);
     return response.data;
   },

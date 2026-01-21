@@ -50,8 +50,13 @@ const HistoryPage: React.FC = () => {
     useAttendance();
   const itemsPerPage = 5;
 
-  const startDate = new Date(2025, 0, 1);
-  const endDate = new Date(2025, 11, 31);
+  // ambil waktu sekarang (pakai util kamu)
+  const now = getNow();
+  const currentYear = now.getFullYear();
+
+  // range bulan = 1 tahun ini saja
+  const startDate = new Date(currentYear, 0, 1);
+  const endDate = new Date(currentYear, 11, 31);
   const monthsInYear = eachMonthOfInterval({ start: startDate, end: endDate });
   const monthMap: { [key: string]: MonthMapEntry } = monthsInYear.reduce(
     (acc, monthDate) => {
@@ -104,6 +109,7 @@ const HistoryPage: React.FC = () => {
         break;
       case "late":
       case "early_departure":
+      case "incomplete":
         navigate(`/attendance-problem/${guid}`);
         break;
       default:
@@ -124,6 +130,7 @@ const HistoryPage: React.FC = () => {
         return <CloseIcon style={{ color: "#F44336" }} />;
       case "late":
       case "early_departure":
+      case "incomplete":
         return <WarningIcon style={{ color: "#FFC107" }} />;
       default:
         return <UnknownIcon style={{ color: "#757575" }} />;

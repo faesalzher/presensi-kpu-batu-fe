@@ -125,13 +125,14 @@ const AttendanceDetailProblem: React.FC = () => {
 
   // Title text berdasarkan status
   const getTitleText = () => {
-    if (selectedAttendance.status === WorkingStatus.LATE) {
-      return "Terlambat!";
-    } else if (selectedAttendance.status === WorkingStatus.EARLY_DEPARTURE) {
-      return "Jam Kerja Kurang!";
-    } else {
-      return "Masalah Presensi";
-    }
+    // if (selectedAttendance.status === WorkingStatus.LATE) {
+    //   return "Terlambat!";
+    // } else if (selectedAttendance.status === WorkingStatus.EARLY_DEPARTURE) {
+    //   return "Jam Kerja Kurang!";
+    // } else {
+    //   return "Masalah Presensi";
+    // }
+    return selectedAttendance.violationNotes
   };
 
   return (

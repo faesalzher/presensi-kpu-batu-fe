@@ -22,6 +22,7 @@ export interface Attendance {
   isForgotCheckIn: boolean;
   isForgotCheckOut: boolean;
   status: string;
+  violationNotes: string;
   verified: boolean;
   verifiedBy?: string;
   verifiedAt?: Date;
