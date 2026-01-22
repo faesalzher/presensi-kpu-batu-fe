@@ -2,8 +2,9 @@
 
 export enum LeaveRequestType {
   LEAVE = "LEAVE", // Cuti
-  WFH = "WFH", // Work From Home
-  WFA = "WFA", // Work From Anywhere
+  SICK = "SICK",
+  // WFH = "WFH", // Work From Home
+  // WFA = "WFA", // Work From Anywhere
   DL = "DL", // Dinas Luar
 }
 

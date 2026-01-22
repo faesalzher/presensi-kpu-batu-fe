@@ -78,8 +78,8 @@ class StatisticsService {
     params: StatisticsQueryParams
   ): Promise<StatisticsSummary> {
     try {
-      if(isDemoMode) return dummyStatisticsSummary
-      const response = await API.get("/statistics/my-statistics", {
+      // if(isDemoMode) return dummyStatisticsSummary
+      const response = await API.get("/statistic/my-statistic", {
         params,
       });
       return response.data;

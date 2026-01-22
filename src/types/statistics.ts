@@ -67,8 +67,7 @@ export interface StatisticsSummary {
   totalDays: number;
   present: number;
   absent: number;
-  late: number;
-  earlyDeparture: number;
+  problem: number;
   remoteWorking: number;
   onLeave: number;
   officialTravel: number;

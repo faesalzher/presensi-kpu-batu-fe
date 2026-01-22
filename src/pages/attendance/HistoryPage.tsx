@@ -109,7 +109,7 @@ const HistoryPage: React.FC = () => {
         break;
       case "late":
       case "early_departure":
-      case "incomplete":
+      case "problem":
         navigate(`/attendance-problem/${guid}`);
         break;
       default:
@@ -130,8 +130,8 @@ const HistoryPage: React.FC = () => {
         return <CloseIcon style={{ color: "#F44336" }} />;
       case "late":
       case "early_departure":
-      case "incomplete":
-        return <WarningIcon style={{ color: "#FFC107" }} />;
+      case "problem":
+        return <WarningIcon style={{ color: theme.palette.warning.main }} />;
       default:
         return <UnknownIcon style={{ color: "#757575" }} />;
     }

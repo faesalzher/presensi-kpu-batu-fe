@@ -71,11 +71,16 @@ const LeaveRequestFormPage: React.FC = () => {
     if (formData.leaveType === LeaveRequestType.LEAVE) {
       return "Upload Dokumen Surat Cuti";
     } else if (
-      formData.leaveType === LeaveRequestType.WFH ||
-      formData.leaveType === LeaveRequestType.WFA ||
+      // formData.leaveType === LeaveRequestType.WFH ||
+      // formData.leaveType === LeaveRequestType.WFA ||
       formData.leaveType === LeaveRequestType.DL
     ) {
       return "Upload Dokumen Surat Tugas";
+    }
+    else if (
+      formData.leaveType === LeaveRequestType.SICK
+    ) {
+      return "Upload Dokumen Surat Dokter / Surat Keterangan Sakit";
     }
     return "Upload Berkas";
   };
@@ -85,11 +90,16 @@ const LeaveRequestFormPage: React.FC = () => {
     if (formData.leaveType === LeaveRequestType.LEAVE) {
       return fileName || "File Upload Dokumen Surat Cuti (PDF/JPG, max 2MB)";
     } else if (
-      formData.leaveType === LeaveRequestType.WFH ||
-      formData.leaveType === LeaveRequestType.WFA ||
+      // formData.leaveType === LeaveRequestType.WFH ||
+      // formData.leaveType === LeaveRequestType.WFA ||
       formData.leaveType === LeaveRequestType.DL
     ) {
       return fileName || "File Upload Dokumen Surat Tugas (PDF/JPG, max 2MB)";
+    }
+    else if (
+      formData.leaveType === LeaveRequestType.SICK
+    ) {
+      return "File Upload Dokumen Surat Dokter / Surat Keterangan Sakit  (PDF/JPG, max 2MB)";
     }
     return fileName || "File Upload (PDF/JPG, max 2MB)";
   };
@@ -388,12 +398,13 @@ const LeaveRequestFormPage: React.FC = () => {
               }}
             >
               <MenuItem value={LeaveRequestType.LEAVE}>Cuti</MenuItem>
-              <MenuItem value={LeaveRequestType.WFH}>
+              {/* <MenuItem value={LeaveRequestType.WFH}>
                 Work From Home (WFH)
-              </MenuItem>
-              <MenuItem value={LeaveRequestType.WFA}>
+              </MenuItem> */}
+              {/* <MenuItem value={LeaveRequestType.WFA}>
                 Work From Anywhere (WFA)
-              </MenuItem>
+              </MenuItem> */}
+              <MenuItem value={LeaveRequestType.SICK}>Sakit</MenuItem>
               <MenuItem value={LeaveRequestType.DL}>Dinas Luar (DL)</MenuItem>
             </Select>
             {formErrors.leaveType && (

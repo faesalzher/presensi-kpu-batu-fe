@@ -1,8 +1,8 @@
 // src/services/DepartmentService.ts
 import axios from "axios";
-import { Department } from "../types/departments";
 import { dummyDepartment, isDemoMode } from "../mocks/demoData";
 import { supabase } from "../lib/supabase";
+import { Department } from "../types/departments";
 
 // Create API instance with base configuration
 const API = axios.create({
@@ -29,7 +29,7 @@ const DepartmentService = {
    * @returns Array of all departments
    */
   getAllDepartments: async (): Promise<Department[]> => {
-    const response = await API.get<Department[]>("/departments");
+    const response = await API.get<Department[]>("/department");
     return response.data;
   },
 
@@ -39,7 +39,7 @@ const DepartmentService = {
    * @returns The department details
    */
   getDepartmentById: async (guid: string): Promise<Department> => {
-    const response = await API.get<Department>(`/departments/${guid}`);
+    const response = await API.get<Department>(`/department/${guid}`);
     return response.data;
   },
 
@@ -50,7 +50,7 @@ const DepartmentService = {
    */
   getDepartmentByName: async (name: string): Promise<Department> => {
     const response = await API.get<Department>(
-      `/departments/by-name/${encodeURIComponent(name)}`
+      `/department/by-name/${encodeURIComponent(name)}`
     );
     return response.data;
   },
@@ -62,7 +62,7 @@ const DepartmentService = {
    */
   getDepartmentsByHead: async (headId: string): Promise<Department[]> => {
     const response = await API.get<Department[]>(
-      `/departments/by-head/${headId}`
+      `/department/by-head/${headId}`
     );
     return response.data;
   },
@@ -77,7 +77,7 @@ const DepartmentService = {
     if(isDemoMode) return dummyDepartment;
     
     const response = await API.get<Department[]>(
-      `/departments/by-member/${memberId}`
+      `/department/by-member/${memberId}`
     );
     return response.data;
   },

@@ -6,6 +6,7 @@ import {
   Grid,
   Box,
   Typography,
+  useTheme,
 } from "@mui/material";
 import {
   Person,
@@ -106,7 +107,7 @@ const DashboardPage: React.FC = () => {
       period: ReportPeriod.MONTHLY,
     });
   }, [authUser?.guid]);
-  
+
 
   useEffect(() => {
     if (!selectedUser?.profileImage) return;
@@ -228,13 +229,39 @@ const DashboardPage: React.FC = () => {
     }
   };
 
+  const theme = useTheme();
   const attendanceChartData = statistics
     ? [
-      { name: "Hadir", value: statistics.present, color: "#4CAF50" },
-      { name: "Cuti", value: statistics.onLeave, color: "#FFC107" },
-      { name: "Remote", value: statistics.remoteWorking, color: "#FF7043" },
-      { name: "DL", value: statistics.officialTravel, color: "#03A9F4" },
-      { name: "Alpha", value: statistics.absent, color: "#F44336" },
+      {
+        name: "Hadir",
+        value: statistics.present,
+        color: theme.palette.success.main,
+      },
+      {
+        name: "Cuti",
+        value: statistics.onLeave,
+        color: theme.palette.info.main,
+      },
+      {
+        name: "Remote",
+        value: statistics.remoteWorking,
+        color: theme.palette.info.main,
+      },
+      {
+        name: "DL",
+        value: statistics.officialTravel,
+        color: theme.palette.info.main,
+      },
+      {
+        name: "Absen",
+        value: statistics.absent,
+        color: theme.palette.error.main,
+      },
+      {
+        name: "Masalah Presensi",
+        value: statistics.problem,
+        color: theme.palette.warning.main,
+      },
     ]
     : [];
 

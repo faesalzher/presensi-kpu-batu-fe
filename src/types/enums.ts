@@ -10,13 +10,14 @@ export enum UserRole {
 }
 
 export enum WorkingStatus {
-  PRESENT = "present",
-  ABSENT = "absent",
+  PRESENT = "PRESENT",
+  ABSENT = "ABSENT",
   LATE = "late",
-  EARLY_DEPARTURE = "early_departure",
-  REMOTE_WORKING = "remote_working",
-  ON_LEAVE = "on_leave",
-  OFFICIAL_TRAVEL = "official_travel",
+  PROBLEM = "PROBLEM",
+  EARLY_DEPARTURE = "EARLY_DEPARTURE",
+  REMOTE_WORKING = "REMOTE_WORKING",
+  ON_LEAVE = "ON_LEAVE",
+  OFFICIAL_TRAVEL = "OFFICIAL_TRAVEL",
 }
 
 export enum FileCategory {

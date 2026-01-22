@@ -114,10 +114,10 @@ const AttendanceDetailProblem: React.FC = () => {
   );
 
   // Menentukan status dalam bahasa Indonesia
-  const statusText = selectedAttendance.status 
+  const statusText = selectedAttendance.status
     ? WorkingStatusLabels[selectedAttendance.status as WorkingStatus] || selectedAttendance.status
     : "Tidak Diketahui";
-  
+
   // Menentukan warna status
   const statusColor = selectedAttendance.status && (selectedAttendance.status as WorkingStatus) in WorkingStatusColors
     ? WorkingStatusColors[selectedAttendance.status as WorkingStatus]
@@ -125,14 +125,16 @@ const AttendanceDetailProblem: React.FC = () => {
 
   // Title text berdasarkan status
   const getTitleText = () => {
-    // if (selectedAttendance.status === WorkingStatus.LATE) {
+    // if (selectedAttendance.status === WorkingStatus.PROBLEM) {
     //   return "Terlambat!";
     // } else if (selectedAttendance.status === WorkingStatus.EARLY_DEPARTURE) {
     //   return "Jam Kerja Kurang!";
     // } else {
     //   return "Masalah Presensi";
     // }
-    return selectedAttendance.violationNotes
+    if (selectedAttendance.status === WorkingStatus.PROBLEM) {
+      return "Masalah Presensi";
+    }
   };
 
   return (
@@ -275,18 +277,28 @@ const AttendanceDetailProblem: React.FC = () => {
                     Status
                   </TableCell>
                   <TableCell align="right">
-                    <Chip 
-                      label={statusText} 
+                    <Chip
+                      label={statusText}
                       color={statusColor as "success" | "warning" | "error" | "info" | "default"}
                       size="small"
                     />
                   </TableCell>
                 </TableRow>
+                <TableRow>
+                  <TableCell
+                    component="th"
+                    scope="row"
+                    sx={{ fontWeight: "normal" }}
+                  >
+                    Notes
+                  </TableCell>
+                  <TableCell align="right">{selectedAttendance.violationNotes}</TableCell>
+                </TableRow>
               </TableBody>
             </Table>
           </TableContainer>
         </Paper>
-        <Button
+        {/* <Button
           fullWidth
           variant="contained"
           sx={{
@@ -301,7 +313,7 @@ const AttendanceDetailProblem: React.FC = () => {
           onClick={handleRequestPermission}
         >
           Ajukan Izin
-        </Button>
+        </Button> */}
       </Container>
       <Box sx={{ flexGrow: 1 }} />
       <BottomNav />

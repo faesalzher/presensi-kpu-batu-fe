@@ -94,9 +94,9 @@ export const LeaveRequestsProvider: React.FC<{ children: React.ReactNode }> = ({
       !user ||
       (user.role !== UserRole.ADMIN && user.role !== UserRole.KASUBAG)
     ) {
-      setError(
-        "Unauthorized: Only department heads and admins can view pending requests"
-      );
+      // setError(
+      //   "Unauthorized: Only department heads and admins can view pending requests"
+      // );
       return;
     }
     setLoading(true);

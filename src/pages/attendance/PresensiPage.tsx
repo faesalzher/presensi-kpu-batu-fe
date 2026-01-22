@@ -436,8 +436,8 @@ const PresensiPage: React.FC = () => {
   };
 
   const canCheckIn = !todayAttendance?.checkInTime !== null;
-  const canCheckOut =
-    todayAttendance?.checkInTime && !todayAttendance?.checkOutTime !== null;
+  const canCheckOut = 
+    todayAttendance?.checkInTime && !todayAttendance?.checkOutTime !== null || todayAttendance?.isForgotCheckIn; 
   const actionButtonDisabled =
     attendanceLoading ||
     systemLoading ||
