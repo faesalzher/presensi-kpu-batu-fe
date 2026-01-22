@@ -7,7 +7,6 @@ import { User as UserAuth, LoginResponse } from "../types/auth";
 import { User } from "../types/users";
 import { Correction, CorrectionQueryParams } from "../types/corrections";
 import { LeaveRequest, LeaveRequestStatus, LeaveRequestType } from "../types/leave-requests";
-import { StatisticsSummary } from "../types/statistics";
 import { Department } from "../types/departments";
 
 
@@ -297,67 +296,67 @@ export const dummyCorrectionQueryParams: CorrectionQueryParams = {
   limit: 10,
 };
 
-export const dummyStatisticsSummary: StatisticsSummary = {
-  totalDays: 30,
-  present: 22,
-  absent: 2,
-  late: 3,
-  earlyDeparture: 1,
-  remoteWorking: 2,
-  onLeave: 1,
-  officialTravel: 1,
+// export const dummyStatisticsSummary: StatisticsSummary = {
+//   totalDays: 30,
+//   present: 22,
+//   absent: 2,
+//   // late: 3,
+//   earlyDeparture: 1,
+//   remoteWorking: 2,
+//   onLeave: 1,
+//   officialTravel: 1,
 
-  totalWorkHours: 180,
-  averageWorkHours: 7.5,
-  totalAttendances: 22,
+//   totalWorkHours: 180,
+//   averageWorkHours: 7.5,
+//   totalAttendances: 22,
 
-  records: [
-    {
-      date: "2025-11-01",
-      checkInTime: "07:55",
-      checkOutTime: "16:30",
-      workHours: 8.5,
-      status: "PRESENT",
-      checkInLocation: "Politeknik Negeri IT",
-      checkInNotes: "On time",
-      verified: true,
-    },
-    {
-      date: "2025-11-02",
-      checkInTime: "08:20",
-      checkOutTime: "16:40",
-      workHours: 8,
-      status: "LATE",
-      checkInLocation: "Main Gate",
-      checkInNotes: "Telat karena macet",
-      verified: true,
-    },
-    {
-      date: "2025-11-03",
-      checkInTime: "08:05",
-      checkOutTime: "16:00",
-      workHours: 7.8,
-      status: "PRESENT",
-      checkInLocation: "Campus Lobby",
-      checkInNotes: "",
-      verified: true,
-    },
-    {
-      date: "2025-11-04",
-      status: "REMOTE_WORKING",
-      workHours: 7.5,
-      verified: false,
-      checkInLocation: "Home",
-      checkInNotes: "WFH",
-    },
-    {
-      date: "2025-11-05",
-      status: "ON_LEAVE",
-      workHours: 0,
-      verified: true,
-    },
-  ],
-};
+//   records: [
+//     {
+//       date: "2025-11-01",
+//       checkInTime: "07:55",
+//       checkOutTime: "16:30",
+//       workHours: 8.5,
+//       status: "PRESENT",
+//       checkInLocation: "Politeknik Negeri IT",
+//       checkInNotes: "On time",
+//       verified: true,
+//     },
+//     {
+//       date: "2025-11-02",
+//       checkInTime: "08:20",
+//       checkOutTime: "16:40",
+//       workHours: 8,
+//       status: "LATE",
+//       checkInLocation: "Main Gate",
+//       checkInNotes: "Telat karena macet",
+//       verified: true,
+//     },
+//     {
+//       date: "2025-11-03",
+//       checkInTime: "08:05",
+//       checkOutTime: "16:00",
+//       workHours: 7.8,
+//       status: "PRESENT",
+//       checkInLocation: "Campus Lobby",
+//       checkInNotes: "",
+//       verified: true,
+//     },
+//     {
+//       date: "2025-11-04",
+//       status: "REMOTE_WORKING",
+//       workHours: 7.5,
+//       verified: false,
+//       checkInLocation: "Home",
+//       checkInNotes: "WFH",
+//     },
+//     {
+//       date: "2025-11-05",
+//       status: "ON_LEAVE",
+//       workHours: 0,
+//       verified: true,
+//     },
+//   ],
+// };
 
 export const dummyDepartment: Department[] = [{
   guid: "DEPT-IT",

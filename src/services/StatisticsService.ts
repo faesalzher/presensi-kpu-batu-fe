@@ -9,7 +9,6 @@ import {
   GenerateBulkReportResponse,
 } from "../types/statistics";
 import AuthService from "./AuthService";
-import { dummyStatisticsSummary, isDemoMode } from "../mocks/demoData";
 import { supabase } from "../lib/supabase";
 
 // Get the base URL from environment variables

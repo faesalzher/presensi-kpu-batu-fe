@@ -10,7 +10,7 @@ import {
   TableCell,
   TableContainer,
   TableRow,
-  Button,
+  // Button,
   IconButton,
   CircularProgress,
   Alert,
@@ -64,13 +64,13 @@ const AttendanceDetailProblem: React.FC = () => {
     navigate(-1);
   };
 
-  const handleRequestPermission = () => {
-    if (guid) {
-      navigate(`/attendance-correction/${guid}`);
-    } else {
-      console.error("No attendance GUID available");
-    }
-  };
+  // const handleRequestPermission = () => {
+  //   if (guid) {
+  //     navigate(`/attendance-correction/${guid}`);
+  //   } else {
+  //     console.error("No attendance GUID available");
+  //   }
+  // };
 
   const handleCloseSnackbar = () => {
     setShowSuccessMessage(false);

@@ -132,12 +132,12 @@ const PersetujuanDetailPage: React.FC = () => {
     switch (type) {
       case LeaveRequestType.LEAVE:
         return "Cuti";
-      case LeaveRequestType.WFH:
-        return "Work From Home";
+      // case LeaveRequestType.WFH:
+        // return "Work From Home";
       case LeaveRequestType.DL:
         return "Dinas Luar";
-      case LeaveRequestType.WFA:
-        return "Work From Anywhere";
+      // case LeaveRequestType.WFA:
+        // return "Work From Anywhere";
       default:
         return type;
     }

@@ -81,11 +81,11 @@ const PersetujuanPage: React.FC = () => {
     switch (type) {
       case LeaveRequestType.LEAVE:
         return "primary.main"; // Blue for Cuti
-      case LeaveRequestType.WFH:
-        return "success.main"; // Green for Work From Home
+      // case LeaveRequestType.WFH:
+      //   return "success.main"; // Green for Work From Home
       case LeaveRequestType.DL:
         return "#F44336"; // Red for Dinas Luar
-      case LeaveRequestType.WFA:
+      case LeaveRequestType.SICK:
         return "#FFC107"; // Yellow/Amber for Work From Anywhere
       default:
         return "primary.main"; // Default blue
@@ -97,12 +97,14 @@ const PersetujuanPage: React.FC = () => {
     switch (type) {
       case LeaveRequestType.LEAVE:
         return "Cuti";
-      case LeaveRequestType.WFH:
-        return "WFH";
+      case LeaveRequestType.SICK:
+        return "Sakit";
+      // case LeaveRequestType.WFH:
+      //   return "WFH";
       case LeaveRequestType.DL:
         return "DL";
-      case LeaveRequestType.WFA:
-        return "WFA";
+      // case LeaveRequestType.WFA:
+      //   return "WFA";
       default:
         return type;
     }
