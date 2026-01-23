@@ -28,6 +28,7 @@ import { useLeaveRequests } from "../../contexts/LeaveRequestsContext";
 import { useDepartments } from "../../contexts/DepartmentContext";
 import { useUsers } from "../../contexts/UserContext";
 import { LeaveRequestType } from "../../types/leave-requests";
+import { getUserGuid } from "../../utils/auth";
 
 interface FormData {
   leaveType: LeaveRequestType | "";
@@ -106,10 +107,10 @@ const LeaveRequestFormPage: React.FC = () => {
 
   // Get current user information
   useEffect(() => {
-    // Use sessionStorage or localStorage to get the current user GUID
-    const currentUserGuid =
-      sessionStorage.getItem("userGuid") || localStorage.getItem("userGuid");
-
+    // console.log(localStorage);
+    const guid = getUserGuid();
+    const currentUserGuid = 
+      sessionStorage.getItem("userGuid") || guid 
     if (currentUserGuid && !userFetchedRef.current) {
       userFetchedRef.current = true;
       fetchUserByGuid(currentUserGuid);

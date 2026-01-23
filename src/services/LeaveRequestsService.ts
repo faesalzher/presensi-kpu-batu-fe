@@ -64,7 +64,7 @@ const LeaveRequestsService = {
     formData.append("reason", data.reason);
     formData.append("attachment", attachmentFile);
 
-    const response = await API.post<LeaveRequest>("/leave-requests", formData, {
+    const response = await API.post<LeaveRequest>("/leave-request", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
