@@ -22,7 +22,7 @@ jobs:
       - name: Build frontend
         run: npm run build
         env:
-          VITE_API_URL: https://presensi-kpu-kota-batu.online/api
+          VITE_API_URL: https://presensi-kpu-kota-batu.online/api/
 
       - name: Archive dist
         run: tar -czf dist.tar.gz dist
