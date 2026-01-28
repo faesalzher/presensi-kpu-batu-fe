@@ -1,15 +1,9 @@
 // src/services/LeaveRequestsService.ts
 import axios from "axios";
-import {
-  LeaveRequest,
-  CreateLeaveRequestDto,
-  UpdateLeaveRequestDto,
-  ReviewLeaveRequestDto,
-  QueryLeaveRequestsDto
-} from "../types/leave-requests";
 import AuthService from "./AuthService";
 import { dummyLeaveRequest, dummyLeaveRequests, isDemoMode } from "../mocks/demoData";
 import { supabase } from "../lib/supabase";
+import { CreateLeaveRequestDto, LeaveRequest, QueryLeaveRequestsDto, ReviewLeaveRequestDto, UpdateLeaveRequestDto } from "../types/leave-requests";
 
 // Reuse the API instance with the same configuration as other services
 const API = axios.create({
@@ -46,6 +40,8 @@ API.interceptors.response.use(
   }
 );
 
+const toYMD = (date: Date) =>
+  date.toLocaleDateString("en-CA"); // YYYY-MM-DD
 
 const LeaveRequestsService = {
   /**
@@ -59,8 +55,8 @@ const LeaveRequestsService = {
     const formData = new FormData();
     formData.append("departmentId", data.departmentId);
     formData.append("type", data.type);
-    formData.append("startDate", new Date(data.startDate).toISOString());
-    formData.append("endDate", new Date(data.endDate).toISOString());
+    formData.append("startDate", toYMD(data.startDate));
+    formData.append("endDate", toYMD(data.endDate));
     formData.append("reason", data.reason);
     formData.append("attachment", attachmentFile);
 
@@ -72,6 +68,8 @@ const LeaveRequestsService = {
 
     return response.data;
   },
+
+  
 
   /**
    * Get all leave requests with optional filters
@@ -117,7 +115,7 @@ const LeaveRequestsService = {
         );
     }
 
-    const response = await API.get<LeaveRequest[]>("/leave-requests", {
+    const response = await API.get<LeaveRequest[]>("/leave-request", {
       params,
     });
     return response.data;
@@ -130,7 +128,7 @@ const LeaveRequestsService = {
       if (isDemoMode) return dummyLeaveRequests;
   
     const response = await API.get<LeaveRequest[]>(
-      "/leave-requests/my-requests"
+      "/leave-request/my-requests"
     );
     return response.data;
   },
@@ -141,7 +139,7 @@ const LeaveRequestsService = {
     departmentId?: string
   ): Promise<LeaveRequest[]> => {
     const params = departmentId ? { departmentId } : {};
-    const response = await API.get<LeaveRequest[]>("/leave-requests/pending", {
+    const response = await API.get<LeaveRequest[]>("/leave-request/pending", {
       params,
     });
     return response.data;
@@ -153,7 +151,7 @@ const LeaveRequestsService = {
   getLeaveRequestByGuid: async (guid: string): Promise<LeaveRequest> => {
       if (isDemoMode) return dummyLeaveRequest;
     
-    const response = await API.get<LeaveRequest>(`/leave-requests/${guid}`);
+    const response = await API.get<LeaveRequest>(`/leave-request/${guid}`);
     return response.data;
   },
 
@@ -177,7 +175,7 @@ const LeaveRequestsService = {
     if (attachmentFile) formData.append("attachment", attachmentFile);
 
     const response = await API.patch<LeaveRequest>(
-      `/leave-requests/${guid}`,
+      `/leave-request/${guid}`,
       formData,
       {
         headers: {
@@ -193,7 +191,7 @@ const LeaveRequestsService = {
    * Delete a leave request
    */
   deleteLeaveRequest: async (guid: string): Promise<void> => {
-    await API.delete(`/leave-requests/${guid}`);
+    await API.delete(`/leave-request/${guid}`);
   },
 
   /**
@@ -204,7 +202,7 @@ const LeaveRequestsService = {
     reviewData: ReviewLeaveRequestDto
   ): Promise<LeaveRequest> => {
     const response = await API.post<LeaveRequest>(
-      `/leave-requests/${guid}/review`,
+      `/leave-request/${guid}/review`,
       reviewData
     );
     return response.data;
@@ -214,7 +212,7 @@ const LeaveRequestsService = {
    * Get attachment file information
    */
   getAttachmentInfo: async (guid: string): Promise<any> => {
-    const response = await API.get(`/leave-requests/${guid}/attachment`);
+    const response = await API.get(`/leave-request/${guid}/attachment`);
     return response.data;
   },
 

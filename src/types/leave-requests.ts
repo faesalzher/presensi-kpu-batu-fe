@@ -37,6 +37,7 @@ export interface LeaveRequest {
     originalName: string;
     mimeType: string;
     size: number;
+    path: string;
   };
 
   // UI helper properties (optional)

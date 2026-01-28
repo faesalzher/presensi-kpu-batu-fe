@@ -18,7 +18,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import BottomNav from "../../components/BottomNav";
 import { useLeaveRequests } from "../../contexts/LeaveRequestsContext";
 import { useUsers } from "../../contexts/UserContext";
-import { useFiles } from "../../contexts/FileContext"; // Import useFiles hook
+// import { useFiles } from "../../contexts/FileContext"; // Import useFiles hook
 import { format } from "date-fns";
 import { LeaveRequestTypeLabels } from "../../types/leave-request-enums";
 import FileService from "../../services/FileService";
@@ -50,8 +50,8 @@ const LeaveRequestDetailPage: React.FC = () => {
     clearSelectedUser,
   } = useUsers();
 
-  // Use the FileContext hook for file operations
-  const { downloadFile } = useFiles();
+  // // Use the FileContext hook for file operations
+  // const { downloadFile } = useFiles();
 
   // Use refs to track whether we've already initiated fetches
   const requestFetchedRef = useRef<boolean>(false);
@@ -151,18 +151,16 @@ const LeaveRequestDetailPage: React.FC = () => {
 
   // Update the attachment download handler to use FileContext
   const handleDownloadAttachment = async () => {
-    if (selectedRequest?.attachmentId) {
+    if (selectedRequest?.attachment?.path) {
       setDownloadingFile(true);
       setDownloadError(null);
 
       try {
-        // Use the FileContext's downloadFile method that handles auth
-        await downloadFile(
-          selectedRequest.attachmentId,
-          selectedRequest.attachment?.originalName
-        );
+        const url = selectedRequest.attachment.path;
+        // Open in a new tab - use noopener,noreferrer for security
+        window.open(url, "_blank", "noopener,noreferrer");
       } catch (error: any) {
-        setDownloadError(error.message || "Failed to download attachment");
+        setDownloadError(error?.message || "Gagal membuka lampiran");
       } finally {
         setDownloadingFile(false);
       }

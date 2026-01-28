@@ -89,6 +89,7 @@ export const dummyLeaveRequests: LeaveRequest[] = [
       originalName: "cuti_maret_2024.pdf",
       mimeType: "application/pdf",
       size: 204800,
+      path:''
     },
 
     userName: "Demo User",
@@ -114,13 +115,13 @@ export const dummyLeaveRequest: LeaveRequest =
   createdAt: new Date("2025-11-01T09:00:00Z"),
   updatedAt: new Date("2025-11-05T10:00:00Z"),
 
-  attachment: {
-    guid: "ATTACH-001",
-    fileName: "cuti_maret_2024.pdf",
-    originalName: "cuti_maret_2024.pdf",
-    mimeType: "application/pdf",
-    size: 204800,
-  },
+  // attachment: {
+  //   guid: "ATTACH-001",
+  //   fileName: "cuti_maret_2024.pdf",
+  //   originalName: "cuti_maret_2024.pdf",
+  //   mimeType: "application/pdf",
+  //   size: 204800,
+  // },
 
   userName: "Demo User",
   departmentName: "Information Technology",
