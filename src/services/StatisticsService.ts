@@ -7,6 +7,8 @@ import {
   GenerateReportResponse,
   GenerateBulkReportParams,
   GenerateBulkReportResponse,
+  TukinSummary,
+  TukinQueryParams,
 } from "../types/statistics";
 import AuthService from "./AuthService";
 import { supabase } from "../lib/supabase";
@@ -212,6 +214,22 @@ class StatisticsService {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
       }, 100);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Get TUKIN (Tunjangan Kinerja) summary data for current user
+   * @param params Query parameters with startDate and endDate
+   * @returns Promise with TUKIN summary including violations
+   */
+  async getMyTukinSummary(params: TukinQueryParams): Promise<TukinSummary> {
+    try {
+      const response = await API.get("/statistic/my-tukin", {
+        params,
+      });
+      return response.data;
     } catch (error) {
       throw error;
     }

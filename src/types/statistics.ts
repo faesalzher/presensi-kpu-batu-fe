@@ -94,3 +94,36 @@ export interface GenerateBulkReportResponse {
     downloadUrl: string;
   };
 }
+
+// ============ TUKIN TYPES ============
+
+export enum AttendanceViolationTypeLabel {
+  LATE = "Terlambat",
+  NOT_CHECKED_IN = "Tidak Absen Masuk",
+  NOT_CHECKED_OUT = "Tidak Absen Keluar",
+  ABSENT = "Tidak Hadir",
+  EARLY_DEPARTURE = "Pulang Cepat",
+}
+
+export interface TukinViolation {
+  date: string; // OccurredAt
+  type: string; // AttendanceViolationType
+  typeLabel: string; // Indonesian label
+  percent: number; // PenaltyPercent
+  tukinBaseAmount: number; // TukinBaseAmount
+  nominalDeduction: number; // PenaltyAmount
+}
+
+export interface TukinSummary {
+  month: string;
+  grade: number;
+  tukinBruto: number;
+  totalDeduction: number;
+  tukinReceived: number;
+  violations: TukinViolation[];
+}
+
+export interface TukinQueryParams {
+  startDate: string; // yyyy-MM-dd
+  endDate: string; // yyyy-MM-dd
+}

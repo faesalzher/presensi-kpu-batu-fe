@@ -13,15 +13,19 @@ import {
   GenerateReportResponse,
   GenerateBulkReportParams,
   GenerateBulkReportResponse,
+  TukinSummary,
+  TukinQueryParams,
 } from "../types/statistics";
 import statisticsService from "../services/StatisticsService";
 
 interface StatisticsContextType {
   statistics: StatisticsSummary | null;
+  tukinData: TukinSummary | null;
   loading: boolean;
   error: string | null;
   fetchStatistics: (params: StatisticsQueryParams) => Promise<void>;
   fetchMyStatistics: (params: StatisticsQueryParams) => Promise<void>;
+  fetchMyTukin: (params: TukinQueryParams) => Promise<void>;
   generateReport: (
     params: GenerateReportParams
   ) => Promise<GenerateReportResponse>;
@@ -55,6 +59,7 @@ export const StatisticsProvider: React.FC<StatisticsProviderProps> = ({
   children,
 }) => {
   const [statistics, setStatistics] = useState<StatisticsSummary | null>(null);
+  const [tukinData, setTukinData] = useState<TukinSummary | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -148,6 +153,22 @@ export const StatisticsProvider: React.FC<StatisticsProviderProps> = ({
     []
   );
 
+  const fetchMyTukin = useCallback(async (params: TukinQueryParams) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await statisticsService.getMyTukinSummary(params);
+      setTukinData(data);
+    } catch (err: any) {
+      setError(
+        err.response?.data?.message || "Failed to fetch TUKIN data"
+      );
+      console.error("Error fetching TUKIN data:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const downloadReport = useCallback((downloadUrl: string) => {
     statisticsService.downloadReport(downloadUrl);
   }, []);
@@ -158,10 +179,12 @@ export const StatisticsProvider: React.FC<StatisticsProviderProps> = ({
 
   const value = {
     statistics,
+    tukinData,
     loading,
     error,
     fetchStatistics,
     fetchMyStatistics,
+    fetchMyTukin,
     generateReport,
     generateMyReport,
     generateBulkReport,
