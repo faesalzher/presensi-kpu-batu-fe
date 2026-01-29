@@ -17,3 +17,13 @@ export enum WorkingDayType {
   NATIONAL_HOLIDAY = "NATIONAL_HOLIDAY",
   CUTI_BERSAMA = "CUTI_BERSAMA"
 }
+
+export interface SchedulerLog {
+  id: string | number;
+  jobName: string;
+  scheduledAt: string | null;
+  executedAt?: string | null;
+  status: string; // e.g. "SUCCESS" | "FAILED" | "SKIPPED" | "NOT_RUN"
+  message?: string | null;
+  createdAt?: string | null;
+}

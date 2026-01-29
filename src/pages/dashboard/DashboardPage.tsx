@@ -15,7 +15,8 @@ import {
   CheckBox,
   Groups,
   ExitToApp,
-  AccessTime
+  AccessTime,
+  AdminPanelSettings
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 
@@ -204,8 +205,19 @@ const DashboardPage: React.FC = () => {
     },
   ];
 
+  const adminQuickActions = [
+    {
+      label: "Monitoring Scheduler",
+      icon: <AdminPanelSettings color="primary" />,
+      onClick: () => navigate("/admin/scheduler"),
+    },
+  ];
+
   const renderQuickActions = () => {
     switch (selectedUser?.role) {
+      case UserRole.ADMIN:
+        return <QuickActions actions={adminQuickActions} />;
+
       case UserRole.STAF:
         return <QuickActions actions={stafQuickActions} />;
 
@@ -359,15 +371,16 @@ const DashboardPage: React.FC = () => {
                 )}
               </Box>
 
-
-              <AttendanceActions
-                onClick={() => navigate("/presensi")}
-                checkInTime={formatShortTime(todayAttendance?.checkInTime)}
-                checkOutTime={formatShortTime(todayAttendance?.checkOutTime)}
-                hasCheckedIn={hasCheckedIn}
-                hasCheckedOut={hasCheckedOut}
-                workingDayToday={workingDayToday}
-              />
+              {selectedUser?.role !== UserRole.ADMIN && (
+                <AttendanceActions
+                  onClick={() => navigate("/presensi")}
+                  checkInTime={formatShortTime(todayAttendance?.checkInTime)}
+                  checkOutTime={formatShortTime(todayAttendance?.checkOutTime)}
+                  hasCheckedIn={hasCheckedIn}
+                  hasCheckedOut={hasCheckedOut}
+                  workingDayToday={workingDayToday}
+                />
+              )}
             </Grid>
 
             <Grid size={12}>
@@ -375,22 +388,26 @@ const DashboardPage: React.FC = () => {
             </Grid>
 
             <Grid size={12}>
-              {
-                loadingStatistics ? (<Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
-                  <CircularProgress />
-                </Box>) : (
-                  statistics ? (
+              {selectedUser?.role !== UserRole.ADMIN && (
+                <>
+                  {loadingStatistics ? (
+                    <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
+                      <CircularProgress />
+                    </Box>
+                  ) : statistics ? (
                     <AttendanceChart
                       title={`Rekap Kehadiran ${now.toLocaleString("id-ID", {
                         month: "long",
                       })}`}
                       data={attendanceChartData}
                     />
-                  ) : (<Typography variant="body1" color="text.secondary" align="center">
-                    Tidak ada data kehadiran untuk ditampilkan
-                  </Typography>)
-                )
-              }
+                  ) : (
+                    <Typography variant="body1" color="text.secondary" align="center">
+                      Tidak ada data kehadiran untuk ditampilkan
+                    </Typography>
+                  )}
+                </>
+              )}
             </Grid>
           </Grid>
         </Container>

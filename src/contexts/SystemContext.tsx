@@ -8,7 +8,7 @@ import React, {
 } from "react";
 import { useAuth } from "./AuthContext";
 import SystemService from "../services/SystemService";
-import { WorkingDayResponse } from "../types/system";
+import type { SchedulerLog, WorkingDayResponse } from "../types/system";
 
 interface SystemContextType {
   workingDayToday: WorkingDayResponse | null;
@@ -17,21 +17,25 @@ interface SystemContextType {
 
   fetchWorkingDayToday: () => Promise<void>;
   clearError: () => void;
+
+  // scheduler monitoring
+  schedulerLogs: SchedulerLog[] | null;
+  schedulerLoading: boolean;
+  fetchSchedulerLogs: (params?: any) => Promise<void>;
+  runSchedulerJob: (jobName: string, scheduledAt?: string | null) => Promise<void>;
 }
 
-const SystemContext = createContext<SystemContextType | undefined>(
-  undefined
-);
+const SystemContext = createContext<SystemContextType | undefined>(undefined);
 
-export const SystemProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const SystemProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   // Cache to store fetched attendance records by guid
   const [workingDayToday, setworkingDayToday] = useState<WorkingDayResponse | null>(
     null
   );
+  const [schedulerLogs, setSchedulerLogs] = useState<SchedulerLog[] | null>(null);
+  const [schedulerLoading, setSchedulerLoading] = useState<boolean>(false);
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
@@ -77,12 +81,43 @@ export const SystemProvider: React.FC<{ children: React.ReactNode }> = ({
     setError(null);
   };
 
+  const fetchSchedulerLogs = useCallback(async (params?: any): Promise<void> => {
+    setSchedulerLoading(true);
+    try {
+      const data = await SystemService.getSchedulerLogs(params);
+      setSchedulerLogs(data || []);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to fetch scheduler logs");
+    } finally {
+      setSchedulerLoading(false);
+    }
+  }, []);
+
+  const runSchedulerJob = useCallback(async (jobName: string, scheduledAt?: string | null) => {
+    setSchedulerLoading(true);
+    try {
+      await SystemService.runSchedulerJob({ jobName, scheduledAt: scheduledAt || null });
+      // refresh logs after manual trigger
+      await fetchSchedulerLogs();
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to run scheduler job");
+    } finally {
+      setSchedulerLoading(false);
+    }
+  }, [fetchSchedulerLogs]);
+
   const value = {
     workingDayToday,
     loading,
     error,
     fetchWorkingDayToday,
-    clearError
+    clearError,
+
+    // scheduler
+    schedulerLogs,
+    schedulerLoading,
+    fetchSchedulerLogs,
+    runSchedulerJob,
   };
 
   return (
@@ -94,8 +129,8 @@ export const SystemProvider: React.FC<{ children: React.ReactNode }> = ({
 
 export const useSystem = (): SystemContextType => {
   const context = useContext(SystemContext);
-  if (context === undefined) {
-    throw new Error("useSystem must be used within an SystemProvider");
+  if (!context) {
+    throw new Error("useSystem must be used within a SystemProvider");
   }
   return context;
 };

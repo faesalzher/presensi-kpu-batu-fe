@@ -51,7 +51,23 @@ const SystemService = {
     // if (isDemoMode) return dummyAttendance;
     const response = await API.get<WorkingDayResponse>("/system/working-day/today");
     return response.data; 
-  }
+  },
+
+  // Scheduler / monitoring API
+  getSchedulerLogs: async (params?: Record<string, any>): Promise<any> => {
+    const response = await API.get("/system/scheduler-logs", { params });
+    return response.data;
+  },
+
+  getSchedulerLogById: async (id: string | number): Promise<any> => {
+    const response = await API.get(`/system/scheduler-logs/${id}`);
+    return response.data;
+  },
+
+  runSchedulerJob: async (payload: { jobName: string; scheduledAt?: string | null }): Promise<any> => {
+    const response = await API.post("/system/scheduler-run", payload);
+    return response.data;
+  },
 
 };
 
