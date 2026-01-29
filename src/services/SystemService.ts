@@ -42,6 +42,13 @@ API.interceptors.response.use(
 
 
 const SystemService = {
+  /**
+   * Get general setting by key (e.g. 'attendance_radius_m')
+   */
+  getGeneralSetting: async (key: string): Promise<string> => {
+    const response = await API.get<string>(`/system/general-setting/${key}`);
+    return response.data;
+  },
  
 
     /**

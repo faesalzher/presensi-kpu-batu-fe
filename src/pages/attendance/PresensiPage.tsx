@@ -19,6 +19,7 @@ import {
   useTheme,
   CircularProgress,
 } from "@mui/material";
+import { MapContainer, TileLayer, Circle, Marker, Popup } from "react-leaflet";
 import {
   ArrowBack,
   LocationOff,
@@ -29,11 +30,11 @@ import {
   // GpsFixed,
   // LocationSearching,
 } from "@mui/icons-material";
-// import { MapContainer, TileLayer, Circle, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useAttendance } from "../../contexts/AttendanceContext";
 import { useSystem } from "../../contexts/SystemContext.tsx";
+import SystemService from "../../services/SystemService";
 import { CheckInDto, CheckOutDto } from "../../types/attendance";
 import { formatDate, formatTime, getNow } from "../../constant/time.constant";
 import BottomNav from "../../components/BottomNav";
@@ -50,6 +51,100 @@ L.Icon.Default.mergeOptions({
 });
 
 const PresensiPage: React.FC = () => {
+    // Lokasi kantor (bisa diambil dari backend/general_setting, hardcode fallback)
+    const [officeLocation, setOfficeLocation] = useState<[number, number]>([-7.880554548953023, 112.52737963655478]); // fallback: KPU Batu
+    const [radius, setRadius] = useState<number>(500); // default 500m
+    const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+    const [distanceToOffice, setDistanceToOffice] = useState<number | null>(null);
+    const [isWithinRadius, setIsWithinRadius] = useState<boolean>(false);
+    const [locationError, setLocationError] = useState<string | null>(null);
+    // Haversine formula
+    const haversine = (
+      lat1: number,
+      lon1: number,
+      lat2: number,
+      lon2: number
+    ): number => {
+      const R = 6371e3;
+      const toRad = (d: number) => (d * Math.PI) / 180;
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(lat1)) *
+          Math.cos(toRad(lat2)) *
+          Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    };
+    // Fetch radius absen dan lokasi kantor dari backend
+    // general_setting:
+    // - LATITUDE_LONGITUDE: "-7.870000;112.525000"
+    // - MAX_RADIUS: "100" (meter)
+    useEffect(() => {
+      const fetchSettings = async () => {
+        const [radiusResult, officeResult] = await Promise.allSettled([
+          SystemService.getGeneralSetting("MAX_RADIUS"),
+          SystemService.getGeneralSetting("LATITUDE_LONGITUDE"),
+        ]);
+
+        // Radius
+        if (radiusResult.status === "fulfilled") {
+          const parsedRadius = Number(String(radiusResult.value).trim());
+          if (!Number.isNaN(parsedRadius) && parsedRadius > 0) {
+            setRadius(parsedRadius);
+          }
+        }
+
+        // Office location
+        if (officeResult.status === "fulfilled") {
+          const raw = String(officeResult.value).trim();
+          const parts = raw.split(";").map((p) => p.trim());
+          if (parts.length === 2) {
+            const lat = Number(parts[0]);
+            const lng = Number(parts[1]);
+            if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+              setOfficeLocation([lat, lng]);
+            }
+          }
+        }
+      };
+
+      fetchSettings();
+    }, []);
+    // Fetch lokasi user
+    useEffect(() => {
+      if (!navigator.geolocation) {
+        setLocationError("Geolocation tidak didukung browser ini.");
+        return;
+      }
+      const geoSuccess = (pos: GeolocationPosition) => {
+        const { latitude, longitude } = pos.coords;
+        setUserLocation([latitude, longitude]);
+        setLocationError(null);
+      };
+      const geoError = (_err: GeolocationPositionError) => {
+        setLocationError("Gagal mendapatkan lokasi. Aktifkan layanan lokasi di perangkat Anda.");
+        setUserLocation(null);
+      };
+      const watchId = navigator.geolocation.watchPosition(geoSuccess, geoError, {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      });
+      return () => navigator.geolocation.clearWatch(watchId);
+    }, []);
+    // Hitung jarak ke kantor & validasi radius
+    useEffect(() => {
+      if (userLocation) {
+        const dist = haversine(userLocation[0], userLocation[1], officeLocation[0], officeLocation[1]);
+        setDistanceToOffice(dist);
+        setIsWithinRadius(dist <= radius);
+      } else {
+        setDistanceToOffice(null);
+        setIsWithinRadius(false);
+      }
+    }, [userLocation, officeLocation, radius]);
   const navigate = useNavigate();
   const {
     checkIn,
@@ -396,26 +491,34 @@ const PresensiPage: React.FC = () => {
   };
 
   const submitAttendance = async () => {
-    // if (!userLocation) {
-    //   // showNotification("Location or image data not available", "error");
-    //   return;
-    // }
+    // Wajib lokasi untuk MASUK (sesuai requirement)
+    if (!isCheckOut && (!userLocation || !isWithinRadius)) {
+      showNotification(
+        locationError
+          ? locationError
+          : !userLocation
+            ? "Silakan aktifkan layanan lokasi untuk presensi."
+            : `Lokasi Anda di luar radius ${radius}m.`,
+        "error"
+      );
+      return;
+    }
 
     setIsSubmitting(true);
 
     try {
       if (isCheckOut) {
         const checkOutData: CheckOutDto = {
-          latitude: 0,
-          longitude: 0,
+          latitude: userLocation?.[0] ?? 0,
+          longitude: userLocation?.[1] ?? 0,
           notes: "", // Empty string instead of notes
         };
         await checkOut(checkOutData);
         showNotification("Check-out successful!", "success");
       } else {
         const checkInData: CheckInDto = {
-          latitude: 0,
-          longitude: 0,
+          latitude: userLocation?.[0] ?? 0,
+          longitude: userLocation?.[1] ?? 0,
           notes: "", // Empty string instead of notes
         };
         await checkIn(checkInData);
@@ -435,16 +538,16 @@ const PresensiPage: React.FC = () => {
     }
   };
 
-  const canCheckIn = !todayAttendance?.checkInTime !== null;
-  const canCheckOut = 
-    todayAttendance?.checkInTime && !todayAttendance?.checkOutTime !== null || todayAttendance?.isForgotCheckIn; 
+  const canCheckIn = !todayAttendance?.checkInTime && !todayAttendance?.isForgotCheckIn;
+  const canCheckOut = (todayAttendance?.checkInTime || todayAttendance?.isForgotCheckIn) && !todayAttendance?.checkOutTime;
   const actionButtonDisabled =
     attendanceLoading ||
     systemLoading ||
     // !capturedImage ||
     isSubmitting ||
     (isCheckOut ? !canCheckOut : !canCheckIn) ||
-    (!canCheckIn && !canCheckOut);
+    (!canCheckIn && !canCheckOut) ||
+    (!isCheckOut && (!userLocation || !isWithinRadius));
 
   return (
     <Box
@@ -533,6 +636,62 @@ const PresensiPage: React.FC = () => {
               Jam Kerja Hari Ini
             </Typography>
             <Typography fontWeight={600}>{workingDayToday?.workStart} – {workingDayToday?.workEnd}</Typography>
+          </Box>
+
+          {/* VALIDATOR LOKASI (MAP + STATUS) */}
+          <Box mt={3}>
+            <Typography variant="body2" fontWeight={700} mb={1}>
+              Validasi Lokasi
+            </Typography>
+
+            <Box sx={{ borderRadius: 2, overflow: "hidden" }}>
+              <MapContainer
+                center={userLocation || officeLocation}
+                zoom={16}
+                scrollWheelZoom={false}
+                style={{ height: 240, width: "100%" }}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+
+                <Circle
+                  center={officeLocation}
+                  radius={radius}
+                  pathOptions={{
+                    color: theme.palette.primary.main,
+                    fillColor: theme.palette.primary.main,
+                    fillOpacity: 0.15,
+                  }}
+                />
+
+                <Marker position={officeLocation}>
+                  <Popup>Kantor (radius {radius} m)</Popup>
+                </Marker>
+
+                {userLocation && (
+                  <Marker position={userLocation}>
+                    <Popup>Lokasi Anda</Popup>
+                  </Marker>
+                )}
+              </MapContainer>
+            </Box>
+
+            <Typography
+              variant="caption"
+              display="block"
+              mt={1}
+              color={isWithinRadius ? theme.palette.success.main : theme.palette.error.main}
+            >
+              {locationError
+                ? locationError
+                : !userLocation
+                  ? "Mencari lokasi... (aktifkan layanan lokasi untuk MASUK)"
+                  : isWithinRadius
+                    ? `Lokasi valid. Jarak ke kantor: ${distanceToOffice?.toFixed(0)} m`
+                    : `Di luar radius ${radius} m. Jarak: ${distanceToOffice?.toFixed(0)} m`}
+            </Typography>
           </Box>
 
           {/* ACTION BUTTON */}
