@@ -99,6 +99,7 @@ const HistoryPage: React.FC = () => {
   const handleDetailClick = (status: string, guid: string) => {
     switch (status.toLowerCase()) {
       case "present":
+      case "sick":
       case "on_leave":
       case "official_travel":
       case "remote_working":
@@ -123,6 +124,7 @@ const HistoryPage: React.FC = () => {
     switch (normalizedStatus) {
       case "present":
       case "on_leave":
+      case "sick":
       case "official_travel":
       case "remote_working":
         return <CheckIcon style={{ color: theme.palette.success.main }} />;

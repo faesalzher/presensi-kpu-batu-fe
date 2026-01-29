@@ -256,6 +256,10 @@ const LeaveRequestFormPage: React.FC = () => {
       newErrors.departmentId = "Department information is missing";
     }
 
+    if(!formData.notes) {
+      newErrors.notes = "Keterangan harus diisi";
+    }
+
     setFormErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -268,7 +272,8 @@ const LeaveRequestFormPage: React.FC = () => {
           !formData.startDate ||
           !formData.endDate ||
           !formData.leaveType ||
-          !formData.departmentId
+          !formData.departmentId ||
+          !formData.notes
         ) {
           return;
         }
@@ -522,6 +527,8 @@ const LeaveRequestFormPage: React.FC = () => {
             onChange={handleNotesChange}
             placeholder="Masukan Keterangan ..."
             sx={{ mb: 3 }}
+            error={!!formErrors.notes}
+            helperText={formErrors.notes}
             InputProps={{
               sx: {
                 borderRadius: 2,
