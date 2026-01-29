@@ -55,6 +55,7 @@ const PresensiPage: React.FC = () => {
     const [officeLocation, setOfficeLocation] = useState<[number, number]>([-7.880554548953023, 112.52737963655478]); // fallback: KPU Batu
     const [radius, setRadius] = useState<number>(500); // default 500m
   const [isGeofenceEnabled, setIsGeofenceEnabled] = useState<boolean | null>(null);
+  const [lateToleranceMinutes, setLateToleranceMinutes] = useState<number>(0);
     const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
     const [distanceToOffice, setDistanceToOffice] = useState<number | null>(null);
     const [isWithinRadius, setIsWithinRadius] = useState<boolean>(false);
@@ -83,12 +84,14 @@ const PresensiPage: React.FC = () => {
     // - LATITUDE_LONGITUDE: "-7.870000;112.525000"
     // - MAX_RADIUS: "100" (meter)
     // - IS_LOCATION_GEOFENCE_ENABLED: "ON" | "OFF" (atau "true/false", "1/0")
+    // - LATE_TOLERANCE_MINUTES: "10" (menit)
     useEffect(() => {
       const fetchSettings = async () => {
-        const [geofenceResult, radiusResult, officeResult] = await Promise.allSettled([
+        const [geofenceResult, radiusResult, officeResult, lateToleranceResult] = await Promise.allSettled([
           SystemService.getGeneralSetting("IS_LOCATION_GEOFENCE_ENABLED"),
           SystemService.getGeneralSetting("MAX_RADIUS"),
           SystemService.getGeneralSetting("LATITUDE_LONGITUDE"),
+          SystemService.getGeneralSetting("LATE_TOLERANCE_MINUTES"),
         ]);
 
         // Geofence enabled
@@ -113,13 +116,21 @@ const PresensiPage: React.FC = () => {
         // Office location
         if (officeResult.status === "fulfilled") {
           const raw = String(officeResult.value).trim();
-          const parts = raw.split(";").map((p) => p.trim());
+          const parts = raw.split(",").map((p) => p.trim());
           if (parts.length === 2) {
             const lat = Number(parts[0]);
             const lng = Number(parts[1]);
             if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
               setOfficeLocation([lat, lng]);
             }
+          }
+        }
+
+        // Late tolerance (minutes)
+        if (lateToleranceResult.status === "fulfilled") {
+          const parsed = Number(String(lateToleranceResult.value).trim());
+          if (!Number.isNaN(parsed) && parsed >= 0) {
+            setLateToleranceMinutes(parsed);
           }
         }
       };
@@ -580,6 +591,90 @@ const PresensiPage: React.FC = () => {
 
   const canCheckIn = !todayAttendance?.checkInTime && !todayAttendance?.isForgotCheckIn;
   const canCheckOut = (todayAttendance?.checkInTime || todayAttendance?.isForgotCheckIn) && !todayAttendance?.checkOutTime;
+
+  const lateMinutesForCheckout = React.useMemo(() => {
+    if (!isCheckOut) return null;
+    if (!workingDayToday?.workEnd) return null;
+
+    const workEndParts = String(workingDayToday.workEnd).split(":");
+    if (workEndParts.length < 2) return null;
+
+    const workEndHour = Number(workEndParts[0]);
+    const workEndMinute = Number(workEndParts[1]);
+    if (Number.isNaN(workEndHour) || Number.isNaN(workEndMinute)) return null;
+
+    const scheduledEnd = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      workEndHour,
+      workEndMinute,
+      0,
+      0
+    );
+
+    const diffMs = now.getTime() - scheduledEnd.getTime();
+    const lateMinutes = Math.floor(diffMs / 60000);
+    return lateMinutes > 0 ? lateMinutes : 0;
+  }, [isCheckOut, workingDayToday?.workEnd, now]);
+
+  const effectiveLateMinutesForCheckout = React.useMemo(() => {
+    if (!isCheckOut) return null;
+
+    const fromAttendance = (todayAttendance as any)?.lateMinutes;
+    const parseLateMinutes = (value: unknown): number | null => {
+      if (typeof value === "number" && Number.isFinite(value)) return value;
+      if (typeof value === "string") {
+        const parsed = Number(value.trim());
+        return Number.isFinite(parsed) ? parsed : null;
+      }
+      if (Array.isArray(value) && value.length > 0) {
+        return parseLateMinutes(value[0]);
+      }
+      return null;
+    };
+
+    const parsedLateMinutes = parseLateMinutes(fromAttendance);
+    if (parsedLateMinutes !== null) {
+      return Math.max(0, Math.floor(parsedLateMinutes));
+    }
+
+    return lateMinutesForCheckout;
+  }, [isCheckOut, todayAttendance?.lateMinutes, lateMinutesForCheckout]);
+
+  const showLateWithinToleranceInfo =
+    isCheckOut &&
+    lateToleranceMinutes > 0 &&
+    effectiveLateMinutesForCheckout !== null &&
+    effectiveLateMinutesForCheckout > 0 &&
+    effectiveLateMinutesForCheckout < lateToleranceMinutes;
+
+  const suggestedCheckoutTime = React.useMemo(() => {
+    if (!showLateWithinToleranceInfo) return null;
+    if (!workingDayToday?.workEnd) return null;
+    if (effectiveLateMinutesForCheckout === null) return null;
+
+    const workEndParts = String(workingDayToday.workEnd).split(":");
+    if (workEndParts.length < 2) return null;
+
+    const workEndHour = Number(workEndParts[0]);
+    const workEndMinute = Number(workEndParts[1]);
+    if (Number.isNaN(workEndHour) || Number.isNaN(workEndMinute)) return null;
+
+    const scheduledEnd = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      workEndHour,
+      workEndMinute,
+      0,
+      0
+    );
+
+    const suggested = new Date(scheduledEnd);
+    suggested.setMinutes(suggested.getMinutes() + effectiveLateMinutesForCheckout);
+    return formatTime(suggested);
+  }, [showLateWithinToleranceInfo, workingDayToday?.workEnd, effectiveLateMinutesForCheckout, now]);
   const actionButtonDisabled =
     attendanceLoading ||
     systemLoading ||
@@ -743,6 +838,11 @@ const PresensiPage: React.FC = () => {
 
           {/* ACTION BUTTON */}
           <Box mt={3}>
+            {showLateWithinToleranceInfo && (
+              <Alert severity="info" sx={{ mb: 1.5, borderRadius: 2 }}>
+                Anda telat {effectiveLateMinutesForCheckout} menit (dalam toleransi).{suggestedCheckoutTime ? ` Disarankan pulang pada: ${suggestedCheckoutTime} WIB.` : ""}
+              </Alert>
+            )}
             <Button
               fullWidth
               size="large"

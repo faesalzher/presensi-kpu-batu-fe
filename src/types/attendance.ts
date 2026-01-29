@@ -29,6 +29,7 @@ export interface Attendance {
   departmentId?: string;
   createdAt: Date;
   updatedAt: Date;
+  lateMinutes?: number;
 }
 
 export interface CheckInDto {
