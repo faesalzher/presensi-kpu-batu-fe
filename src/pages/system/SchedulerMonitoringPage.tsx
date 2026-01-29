@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Box,
   Container,
@@ -13,6 +13,7 @@ import {
   CircularProgress,
   Alert,
   TableContainer,
+  TablePagination,
 } from "@mui/material";
 import { format } from "date-fns";
 import { useSystem } from "../../contexts/SystemContext";
@@ -22,6 +23,21 @@ import { UserRole } from "../../types/enums";
 const SchedulerMonitoringPage: React.FC = () => {
   const { schedulerLogs, schedulerLoading, fetchSchedulerLogs, runSchedulerJob, error } = useSystem();
   const { user } = useAuth();
+
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const logs = schedulerLogs || [];
+  const pagedLogs = useMemo(() => {
+    const start = page * rowsPerPage;
+    return logs.slice(start, start + rowsPerPage);
+  }, [logs, page, rowsPerPage]);
+
+  useEffect(() => {
+    // If logs length changes (refresh), keep page in range.
+    const maxPage = Math.max(0, Math.ceil(logs.length / rowsPerPage) - 1);
+    if (page > maxPage) setPage(maxPage);
+  }, [logs.length, page, rowsPerPage]);
 
   useEffect(() => {
     if (user?.role === UserRole.ADMIN) {
@@ -94,7 +110,7 @@ const SchedulerMonitoringPage: React.FC = () => {
               </TableHead>
 
               <TableBody>
-                {(schedulerLogs || []).map((r) => {
+                {pagedLogs.map((r) => {
                   const scheduled = r.scheduledAt ? format(new Date(r.scheduledAt), "dd-MM-yyyy HH:mm") : "-";
                   const executed = r.executedAt ? format(new Date(r.executedAt), "dd-MM-yyyy HH:mm") : "-";
                   const delay =
@@ -126,6 +142,20 @@ const SchedulerMonitoringPage: React.FC = () => {
               </TableBody>
             </Table>
           </TableContainer>
+
+          <TablePagination
+            component="div"
+            count={logs.length}
+            page={page}
+            onPageChange={(_e, newPage) => setPage(newPage)}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={(e) => {
+              const next = Number(e.target.value);
+              setRowsPerPage(next);
+              setPage(0);
+            }}
+            rowsPerPageOptions={[10, 25, 50]}
+          />
         </Paper>
       </Container>
     </Box>

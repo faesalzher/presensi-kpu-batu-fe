@@ -26,6 +26,7 @@ import { useAttendance } from "../../contexts/AttendanceContext";
 import { useStatistics } from "../../contexts/StatisticsContext";
 import { ReportPeriod } from "../../types/statistics";
 import FileService from "../../services/FileService";
+import SystemService from "../../services/SystemService";
 import AttendanceActions from "../../components/AttendanceActions";
 import AttendanceChart from "../../components/AttendanceChart";
 import DashboardHeader from "../../components/DashboardHeader";
@@ -85,11 +86,28 @@ const DashboardPage: React.FC = () => {
 
   const [now, setNow] = useState(getNow());
   const [photoURL, setPhotoURL] = useState<string | null>(null);
+  const [isTukinMenuEnabled, setIsTukinMenuEnabled] = useState<boolean>(true);
 
   /* ================= EFFECTS ================= */
 
   useEffect(() => {
     if (!authUser?.guid) return;
+
+    const fetchTukinMenuSetting = async () => {
+      try {
+        const raw = String(await SystemService.getGeneralSetting("IS_TUKIN_MENU_ENABLED"))
+          .trim()
+          .toLowerCase();
+        const isOff = raw === "off" || raw === "false" || raw === "0" || raw === "no";
+        const isOn = raw === "on" || raw === "true" || raw === "1" || raw === "yes";
+        setIsTukinMenuEnabled(isOff ? false : isOn ? true : true);
+      } catch {
+        // default aman: tampilkan menu jika setting gagal dibaca
+        setIsTukinMenuEnabled(true);
+      }
+    };
+
+    fetchTukinMenuSetting();
 
     fetchUserByGuid(authUser.guid);
     fetchTodayAttendance();
@@ -128,6 +146,12 @@ const DashboardPage: React.FC = () => {
   const hasCheckedOut = !!todayAttendance?.checkOutTime;
 
   /* ================= DATA ================= */
+  const tukinQuickAction = {
+    label: "Tunjangan Kinerja",
+    icon: <RequestQuote color="primary" />,
+    onClick: () => navigate("/daftar-tukin"),
+  };
+
 
   const stafQuickActions = [
     {
@@ -145,11 +169,7 @@ const DashboardPage: React.FC = () => {
       icon: <Description color="primary" />,
       onClick: () => navigate("/history"),
     },
-    {
-      label: "Tunjangan Kinerja",
-      icon: <RequestQuote color="primary" />,
-      onClick: () => navigate("/daftar-tukin"),
-    },
+    ...(isTukinMenuEnabled ? [tukinQuickAction] : []),
   ];
 
 
@@ -169,11 +189,7 @@ const DashboardPage: React.FC = () => {
       icon: <Description color="primary" />,
       onClick: () => navigate("/history"),
     },
-    {
-      label: "Tunjangan Kinerja",
-      icon: <RequestQuote color="primary" />,
-      onClick: () => navigate("/daftar-tukin"),
-    },
+    ...(isTukinMenuEnabled ? [tukinQuickAction] : []),
   ];
 
   const kasubagSdmQuickActions = [
@@ -192,11 +208,7 @@ const DashboardPage: React.FC = () => {
       icon: <Description color="primary" />,
       onClick: () => navigate("/history"),
     },
-    {
-      label: "Tunjangan Kinerja",
-      icon: <RequestQuote color="primary" />,
-      onClick: () => navigate("/daftar-tukin"),
-    },
+    ...(isTukinMenuEnabled ? [tukinQuickAction] : []),
     {
       label: "Revisi Kehadiran",
       icon: <CheckBox color="primary" />,
