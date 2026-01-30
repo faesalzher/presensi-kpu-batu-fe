@@ -37,6 +37,13 @@ const DashboardHeader = ({ name, nip, photoURL, date, time }: Props) => {
               <Avatar
                 src={photoURL || defaultProfileImage}
                 sx={{ width: 56, height: 56 }}
+                imgProps={{
+                  referrerPolicy: "no-referrer",
+                  onError: (e) => {
+                    const img = e.target as HTMLImageElement;
+                    img.src = defaultProfileImage;
+                  },
+                }}
               />
               <Box ml={2}>
                 <Typography variant="body2" sx={{ opacity: 0.9 }}>

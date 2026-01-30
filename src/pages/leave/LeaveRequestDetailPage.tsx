@@ -113,6 +113,39 @@ const LeaveRequestDetailPage: React.FC = () => {
     }
   }, [selectedUser]);
 
+  const cacheBust = (url: string) => {
+    const hasQuery = url.includes("?");
+    return `${url}${hasQuery ? "&" : "?"}t=${Date.now()}`;
+  };
+
+  const canLoadImage = (url: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.referrerPolicy = "no-referrer";
+      img.onload = () => resolve(true);
+      img.onerror = () => resolve(false);
+      img.src = cacheBust(url);
+    });
+  };
+
+  const tryGetGoogleDriveId = (url: string): string | null => {
+    const filePathMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/i);
+    if (filePathMatch?.[1]) return filePathMatch[1];
+    try {
+      const parsed = new URL(url);
+      return parsed.searchParams.get("id") || null;
+    } catch {
+      return null;
+    }
+  };
+
+  const resolveDriveDownloadUrl = (url: string) => {
+    const driveId = tryGetGoogleDriveId(url);
+    if (!driveId) return url;
+    // For attachments, prefer download to make it easier for users.
+    return `https://drive.google.com/uc?export=download&id=${driveId}`;
+  };
+
   // Load profile photo function
   const loadProfilePhoto = async () => {
     try {
@@ -121,22 +154,91 @@ const LeaveRequestDetailPage: React.FC = () => {
       // Reset photo error if any
       setPhotoError(null);
 
-      // First try to use the profileImage field if it exists
-      if (selectedUser.profileImage) {
-        const photoUrl = FileService.getFileViewUrl(selectedUser.profileImage);
+      // First try profileImageUrl (supports external URL such as Google Drive)
+      const rawProfileImageUrl = (selectedUser as any).profileImageUrl as
+        | string
+        | undefined;
+      if (rawProfileImageUrl && rawProfileImageUrl.trim()) {
+        const rawUrl = rawProfileImageUrl.trim();
+        const isHttpUrl = /^https?:\/\//i.test(rawUrl);
 
-        // Add timestamp to prevent caching issues
-        const urlWithTimestamp = `${photoUrl}?t=${new Date().getTime()}`;
-        setPhotoURL(urlWithTimestamp);
+        if (isHttpUrl) {
+          const driveId = tryGetGoogleDriveId(rawUrl);
+          const candidates = driveId
+            ? [
+                `https://drive.google.com/uc?export=view&id=${driveId}`,
+                `https://drive.google.com/thumbnail?id=${driveId}&sz=w1000`,
+                `https://drive.google.com/uc?export=download&id=${driveId}`,
+              ]
+            : [rawUrl];
+
+          for (const candidate of candidates) {
+            // eslint-disable-next-line no-await-in-loop
+            const ok = await canLoadImage(candidate);
+            if (ok) {
+              setPhotoURL(cacheBust(candidate));
+              return;
+            }
+          }
+
+          setPhotoURL(null);
+          setPhotoError(
+            "Link foto tidak dapat dimuat. Pastikan file Google Drive sudah public (Anyone with the link) dan berupa file gambar."
+          );
+          return;
+        }
+
+        // Otherwise treat as internal GUID
+        const internalUrl = FileService.getFileViewUrl(rawUrl);
+        const ok = await canLoadImage(internalUrl);
+        if (ok) {
+          setPhotoURL(cacheBust(internalUrl));
+          return;
+        }
+      }
+
+      // Backward compatibility: profileImage (may be GUID OR external URL)
+      if (selectedUser.profileImage) {
+        const raw = String(selectedUser.profileImage).trim();
+        const isHttpUrl = /^https?:\/\//i.test(raw);
+
+        if (isHttpUrl) {
+          const driveId = tryGetGoogleDriveId(raw);
+          const candidates = driveId
+            ? [
+                `https://drive.google.com/uc?export=view&id=${driveId}`,
+                `https://drive.google.com/thumbnail?id=${driveId}&sz=w1000`,
+                `https://drive.google.com/uc?export=download&id=${driveId}`,
+              ]
+            : [raw];
+
+          for (const candidate of candidates) {
+            // eslint-disable-next-line no-await-in-loop
+            const ok = await canLoadImage(candidate);
+            if (ok) {
+              setPhotoURL(cacheBust(candidate));
+              return;
+            }
+          }
+
+          setPhotoURL(null);
+          setPhotoError(
+            "Link foto tidak dapat dimuat. Pastikan file Google Drive sudah public (Anyone with the link) dan berupa file gambar."
+          );
+          return;
+        }
+
+        const photoUrl = FileService.getFileViewUrl(raw);
+        const ok = await canLoadImage(photoUrl);
+        setPhotoURL(ok ? cacheBust(photoUrl) : null);
         return;
       }
 
       // Otherwise check if there's a profile photo available for this user
       const url = await FileService.getProfilePhotoUrl(selectedUser.guid);
       if (url) {
-        // Add timestamp to prevent caching issues
-        const urlWithTimestamp = `${url}?t=${new Date().getTime()}`;
-        setPhotoURL(urlWithTimestamp);
+        const ok = await canLoadImage(url);
+        setPhotoURL(ok ? cacheBust(url) : null);
       } else {
         setPhotoURL(null);
       }
@@ -156,7 +258,10 @@ const LeaveRequestDetailPage: React.FC = () => {
       setDownloadError(null);
 
       try {
-        const url = selectedRequest.attachment.path;
+        const rawUrl = selectedRequest.attachment.path;
+        const url = /^https?:\/\//i.test(rawUrl)
+          ? resolveDriveDownloadUrl(rawUrl)
+          : rawUrl;
         // Open in a new tab - use noopener,noreferrer for security
         window.open(url, "_blank", "noopener,noreferrer");
       } catch (error: any) {
@@ -300,10 +405,12 @@ const LeaveRequestDetailPage: React.FC = () => {
                 border: "3px solid #ff",
               }}
               imgProps={{
+                referrerPolicy: "no-referrer",
                 // Add error handling in case image fails to load
                 onError: (e) => {
                   const imgElement = e.target as HTMLImageElement;
-                  imgElement.src = ""; // Clear the src to show the fallback
+                  imgElement.src = defaultProfileImage;
+                  setPhotoURL(null);
                 },
               }}
             >
