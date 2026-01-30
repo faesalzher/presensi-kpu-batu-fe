@@ -12,7 +12,7 @@ import {
   Person,
   Description,
   RequestQuote,
-  CheckBox,
+  // CheckBox,
   Groups,
   ExitToApp,
   AccessTime,
