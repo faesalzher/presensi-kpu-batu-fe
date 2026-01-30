@@ -26,7 +26,7 @@ import { useStatistics } from "../../contexts/StatisticsContext";
 import { ReportPeriod } from "../../types/statistics";
 import FileService from "../../services/FileService";
 import defaultAvatar from "../../assets/default-pp.png";
-import ReportGenerator from "../../components/ReportGenerator";
+// import ReportGenerator from "../../components/ReportGenerator";
 import { getNow } from "../../constant/time.constant";
 
 const ProfilePage: React.FC = () => {
