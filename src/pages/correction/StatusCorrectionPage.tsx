@@ -142,12 +142,14 @@ const CorrectionItem: React.FC<CorrectionItemProps> = ({
 
 const StatusCorrectionPage: React.FC = () => {
   const navigate = useNavigate();
-  const { corrections, loading, error, fetchMyCorrections, clearError } =
+  const { corrections, loading, error, 
+    // fetchMyCorrections,
+     clearError } =
     useCorrections();
 
-  useEffect(() => {
-    fetchMyCorrections();
-  }, []);
+  // useEffect(() => {
+  //   fetchMyCorrections();
+  // }, []);
 
   const handleBack = () => {
     navigate("/history");

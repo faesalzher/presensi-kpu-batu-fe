@@ -34,7 +34,7 @@ const PersetujuanKoreksiPage: React.FC = () => {
     pendingCorrections,
     loading: correctionsLoading,
     error: correctionsError,
-    fetchPendingCorrections,
+    // fetchPendingCorrections,
     clearError: clearCorrectionsError,
   } = useCorrections();
 
@@ -61,7 +61,7 @@ const PersetujuanKoreksiPage: React.FC = () => {
   useEffect(() => {
     // Fetch users when component mounts
     fetchUsers();
-    fetchPendingCorrections();
+    // fetchPendingCorrections();
   }, []);
 
   const handleBack = () => {

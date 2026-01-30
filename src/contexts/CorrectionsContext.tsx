@@ -1,5 +1,5 @@
 // src/contexts/CorrectionsContext.tsx
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState } from "react";
 import {
   Correction,
   CreateCorrectionDto,
@@ -52,13 +52,13 @@ export const CorrectionsProvider: React.FC<{ children: React.ReactNode }> = ({
   const [error, setError] = useState<string | null>(null);
   const { user, isAuthenticated } = useAuth();
 
-  // Load user's corrections when authenticated
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      fetchMyCorrections();
-      fetchMonthlyUsage();
-    }
-  }, [isAuthenticated, user]);
+  // // Load user's corrections when authenticated
+  // useEffect(() => {
+  //   if (isAuthenticated && user) {
+  //     fetchMyCorrections();
+  //     fetchMonthlyUsage();
+  //   }
+  // }, [isAuthenticated, user]);
 
   const fetchCorrections = async (
     queryParams?: CorrectionQueryParams

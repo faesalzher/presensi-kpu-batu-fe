@@ -29,14 +29,14 @@ const PersetujuanPage: React.FC = () => {
     pendingRequests,
     loading: leaveLoading,
     error: leaveError,
-    fetchPendingRequests,
+    // fetchPendingRequests,
     clearError: clearLeaveError,
   } = useLeaveRequests();
   const {
     users,
     loading: usersLoading,
     error: usersError,
-    fetchUsers,
+    // fetchUsers,
     clearError: clearUsersError,
   } = useUsers(); // Use UserContext
 
@@ -50,11 +50,11 @@ const PersetujuanPage: React.FC = () => {
     return format(new Date(date), "dd MMMM yyyy");
   };
 
-  useEffect(() => {
-    // Fetch both pending requests and users when component mounts
-    fetchPendingRequests();
-    fetchUsers();
-  }, []);
+  // useEffect(() => {
+  //   // Fetch both pending requests and users when component mounts
+  //   fetchPendingRequests();
+  //   fetchUsers();
+  // }, []);
 
   const handleBack = () => {
     navigate("/dashboard");

@@ -65,9 +65,9 @@ export const LeaveRequestsProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (isAuthenticated && user) {
       fetchMyRequests();
-      if (user.role === UserRole.ADMIN || user.role === UserRole.KASUBAG) {
-        fetchPendingRequests();
-      }
+      // if (user.role === UserRole.ADMIN || user.role === UserRole.KASUBAG) {
+      //   fetchPendingRequests();
+      // }
     }
   }, [isAuthenticated, user]);
 

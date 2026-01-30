@@ -33,8 +33,8 @@ import DashboardHeader from "../../components/DashboardHeader";
 import DashboardLayout from "../../components/DashboardLayout";
 import QuickActions from "../../components/QuickActions";
 import { formatDate, formatShortTime, formatTime, getNow } from "../../constant/time.constant";
-import { useLeaveRequests } from "../../contexts/LeaveRequestsContext";
-import { useCorrections } from "../../contexts/CorrectionsContext";
+// import { useLeaveRequests } from "../../contexts/LeaveRequestsContext";
+// import { useCorrections } from "../../contexts/CorrectionsContext";
 import { UserRole } from "../../types/enums";
 import { useSystem } from "../../contexts/SystemContext";
 
@@ -67,10 +67,10 @@ const DashboardPage: React.FC = () => {
     clearError: clearStatisticsError,
   } = useStatistics();
 
-  const {
-    pendingRequests,
-    fetchPendingRequests,
-  } = useLeaveRequests();
+  // const {
+  //   pendingRequests,
+  //   fetchPendingRequests,
+  // } = useLeaveRequests();
 
   const {
     workingDayToday,
@@ -79,10 +79,10 @@ const DashboardPage: React.FC = () => {
     fetchWorkingDayToday
   } = useSystem();
 
-  const {
-    // pendingCorrections,
-    fetchPendingCorrections,
-  } = useCorrections();
+  // const {
+  //   // pendingCorrections,
+  //   // fetchPendingCorrections,
+  // } = useCorrections();
 
   const [now, setNow] = useState(getNow());
   const [photoURL, setPhotoURL] = useState<string | null>(null);
@@ -111,8 +111,8 @@ const DashboardPage: React.FC = () => {
 
     fetchUserByGuid(authUser.guid);
     fetchTodayAttendance();
-    fetchPendingRequests();
-    fetchPendingCorrections();
+    // fetchPendingRequests();
+    // fetchPendingCorrections();
     fetchWorkingDayToday();
 
     const d = getNow();
@@ -232,7 +232,7 @@ const DashboardPage: React.FC = () => {
     {
       label: "Revisi Kehadiran",
       icon: <CheckBox color="primary" />,
-      badge: pendingRequests?.length,
+      // badge: pendingRequests?.length,
       onClick: () => navigate("/persetujuan"),
     },
   ];
