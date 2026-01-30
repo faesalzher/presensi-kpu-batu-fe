@@ -228,13 +228,13 @@ const DashboardPage: React.FC = () => {
       icon: <Description color="primary" />,
       onClick: () => navigate("/history"),
     },
-    ...(isTukinMenuEnabled ? [tukinQuickAction] : []),
-    {
-      label: "Revisi Kehadiran",
-      icon: <CheckBox color="primary" />,
-      // badge: pendingRequests?.length,
-      onClick: () => navigate("/persetujuan"),
-    },
+    ...(isTukinMenuEnabled ? [tukinQuickAction] : [])
+    // {
+    //   label: "Revisi Kehadiran",
+    //   icon: <CheckBox color="primary" />,
+    //   // badge: pendingRequests?.length,
+    //   onClick: () => navigate("/persetujuan"),
+    // },
   ];
 
   const adminQuickActions = [
