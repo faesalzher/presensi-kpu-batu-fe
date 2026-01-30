@@ -22,7 +22,7 @@ import { useUsers } from "../../contexts/UserContext";
 import { format } from "date-fns";
 import { LeaveRequestTypeLabels } from "../../types/leave-request-enums";
 import FileService from "../../services/FileService";
-import defaultProfileImage from "../../assets/default-pp.png";
+import defaultAvatar from "../../assets/default-pp.png";
 
 const LeaveRequestDetailPage: React.FC = () => {
   const navigate = useNavigate();
@@ -397,7 +397,7 @@ const LeaveRequestDetailPage: React.FC = () => {
             {/* Updated Avatar to use photoURL or default image */}
             <Avatar
               key={photoURL || "default-image"}
-              src={photoURL || defaultProfileImage}
+              src={photoURL || defaultAvatar}
               alt={userFullName}
               sx={{
                 width: 80,
@@ -409,7 +409,7 @@ const LeaveRequestDetailPage: React.FC = () => {
                 // Add error handling in case image fails to load
                 onError: (e) => {
                   const imgElement = e.target as HTMLImageElement;
-                  imgElement.src = defaultProfileImage;
+                  imgElement.src = defaultAvatar;
                   setPhotoURL(null);
                 },
               }}

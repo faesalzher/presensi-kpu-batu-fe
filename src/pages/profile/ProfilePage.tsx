@@ -25,7 +25,7 @@ import { useUsers } from "../../contexts/UserContext";
 import { useStatistics } from "../../contexts/StatisticsContext";
 import { ReportPeriod } from "../../types/statistics";
 import FileService from "../../services/FileService";
-import defaultProfileImage from "../../assets/default-pp.png";
+import defaultAvatar from "../../assets/default-pp.png";
 import ReportGenerator from "../../components/ReportGenerator";
 import { getNow } from "../../constant/time.constant";
 
@@ -48,8 +48,42 @@ const ProfilePage: React.FC = () => {
   } = useStatistics();
 
   // State for profile photo
-  const [photoURL, setPhotoURL] = useState<string | null>(null);
-  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [photoURL, setPhotoURL] = useState<string>(defaultAvatar);
+
+  useEffect(() => {
+    if (!selectedUser) {
+      setPhotoURL(defaultAvatar);
+      return;
+    }
+
+    const profile = selectedUser.profileImageUrl?.trim();
+    if (!profile) {
+      setPhotoURL(defaultAvatar);
+      return;
+    }
+
+    // absolute URL (external / same-origin)
+    if (/^https?:\/\//i.test(profile)) {
+      try {
+        setPhotoURL(encodeURI(profile));
+      } catch {
+        setPhotoURL(profile);
+      }
+      return;
+    }
+
+    // internal path / id -> resolve with FileService
+    const view = FileService.getFileViewUrl(profile);
+    if (view) {
+      try {
+        setPhotoURL(encodeURI(view));
+      } catch {
+        setPhotoURL(view);
+      }
+    } else {
+      setPhotoURL(defaultAvatar);
+    }
+  }, [selectedUser?.profileImageUrl, selectedUser?.guid]);
 
   // Calculate stats based on actual statistics data
   const getStatsData = () => {
@@ -97,105 +131,6 @@ const ProfilePage: React.FC = () => {
     };
   };
 
-  // Load profile photo
-  const loadProfilePhoto = async () => {
-    try {
-      if (!selectedUser?.guid) return;
-
-      // Reset photo error if any
-      setPhotoError(null);
-
-      // First try to use the profileImage field if it exists
-      if (selectedUser.profileImageUrl) {
-        const cacheBust = (url: string) => {
-          const hasQuery = url.includes("?");
-          return `${url}${hasQuery ? "&" : "?"}t=${new Date().getTime()}`;
-        };
-
-        const canLoadImage = (url: string): Promise<boolean> => {
-          return new Promise((resolve) => {
-            const img = new Image();
-            img.referrerPolicy = "no-referrer";
-            img.onload = () => resolve(true);
-            img.onerror = () => resolve(false);
-            img.src = cacheBust(url);
-          });
-        };
-
-        const tryGetGoogleDriveId = (url: string): string | null => {
-          // Examples:
-          // - https://drive.google.com/file/d/<id>/view?...
-          // - https://drive.google.com/open?id=<id>
-          // - https://drive.google.com/uc?id=<id>&...
-          const filePathMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/i);
-          if (filePathMatch?.[1]) return filePathMatch[1];
-
-          try {
-            const parsed = new URL(url);
-            const idParam = parsed.searchParams.get("id");
-            return idParam || null;
-          } catch {
-            return null;
-          }
-        };
-
-        const isHttpUrl = /^https?:\/\//i.test(selectedUser.profileImageUrl);
-
-        if (isHttpUrl) {
-          const rawUrl = selectedUser.profileImageUrl.trim();
-          const driveId = tryGetGoogleDriveId(rawUrl);
-          const candidates = driveId
-            ? [
-                `https://drive.google.com/uc?export=view&id=${driveId}`,
-                `https://drive.google.com/thumbnail?id=${driveId}&sz=w1000`,
-                `https://drive.google.com/uc?export=download&id=${driveId}`,
-              ]
-            : [rawUrl];
-
-          for (const candidate of candidates) {
-            // Only set photoURL when it truly loads as an image.
-            // This avoids showing Avatar initials when the URL returns HTML/redirects.
-            // eslint-disable-next-line no-await-in-loop
-            const ok = await canLoadImage(candidate);
-            if (ok) {
-              setPhotoURL(cacheBust(candidate));
-              return;
-            }
-          }
-
-          setPhotoURL(null);
-          setPhotoError(
-            "Link foto tidak dapat dimuat. Pastikan file Google Drive sudah public (Anyone with the link) dan berupa file gambar."
-          );
-          return;
-        }
-
-        const photoUrl = FileService.getFileViewUrl(selectedUser.profileImageUrl);
-        // Validate that the internal file URL can load
-        const ok = await canLoadImage(photoUrl);
-        if (ok) {
-          setPhotoURL(cacheBust(photoUrl));
-        } else {
-          setPhotoURL(null);
-          setPhotoError("Gagal memuat foto profil dari server.");
-        }
-        return;
-      }
-
-      // Otherwise check if there's a profile photo available for this user
-      const url = await FileService.getProfilePhotoUrl(selectedUser.guid);
-      if (url) {
-        // Add timestamp to prevent caching issues
-        const urlWithTimestamp = `${url}?t=${new Date().getTime()}`;
-        setPhotoURL(urlWithTimestamp);
-      } else {
-        setPhotoURL(null);
-      }
-    } catch (error) {
-      setPhotoError("Gagal memuat foto profil");
-    }
-  };
-
   // Fetch user details and statistics when component mounts
   useEffect(() => {
     if (authUser?.guid) {
@@ -220,13 +155,6 @@ const ProfilePage: React.FC = () => {
     };
   }, [authUser?.guid]);
 
-  // Load profile photo when selectedUser changes
-  useEffect(() => {
-    if (selectedUser) {
-      loadProfilePhoto();
-    }
-  }, [selectedUser]);
-
   const handleLogout = () => {
     logout();
     navigate("/");
@@ -236,12 +164,11 @@ const ProfilePage: React.FC = () => {
   const statsData = getStatsData();
 
   const loading = loadingUser || loadingStatistics;
-  const error = userError || statisticsError || photoError;
+  const error = userError || statisticsError;
 
   const clearError = () => {
     clearUserError();
     clearStatisticsError();
-    setPhotoError(null);
   };
 
   if (loading) {
@@ -306,16 +233,7 @@ const ProfilePage: React.FC = () => {
               boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
             }}
             alt={selectedUser?.fullName || "User"}
-            src={photoURL || defaultProfileImage}
-            imgProps={{
-              referrerPolicy: "no-referrer",
-              // Add error handling in case image fails to load
-              onError: (e) => {
-                const imgElement = e.target as HTMLImageElement;
-                imgElement.src = defaultProfileImage;
-                setPhotoURL(null);
-              },
-            }}
+            src={photoURL}
           />
         </Box>
 
@@ -451,10 +369,10 @@ const ProfilePage: React.FC = () => {
           </Grid>
         </Grid>
 
-        Report Generator Button
+        {/* Report Generator Button
         <Box sx={{ display: "flex", justifyContent: "center" }}>
           <ReportGenerator />
-        </Box>
+        </Box> */}
 
         {/* <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
           <Button

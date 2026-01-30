@@ -129,85 +129,32 @@ const DashboardPage: React.FC = () => {
 
 
   useEffect(() => {
-    let cancelled = false;
+    if (!selectedUser) {
+      setPhotoURL(null);
+      return;
+    }
 
-    const cacheBust = (url: string) => {
-      const hasQuery = url.includes("?");
-      return `${url}${hasQuery ? "&" : "?"}t=${Date.now()}`;
-    };
+    const profile = selectedUser.profileImageUrl?.trim();
+    if (!profile) {
+      setPhotoURL(null);
+      return;
+    }
 
-    const canLoadImage = (url: string): Promise<boolean> => {
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.referrerPolicy = "no-referrer";
-        img.onload = () => resolve(true);
-        img.onerror = () => resolve(false);
-        img.src = cacheBust(url);
-      });
-    };
-
-    const tryGetGoogleDriveId = (url: string): string | null => {
-      const filePathMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/i);
-      if (filePathMatch?.[1]) return filePathMatch[1];
+    // jika sudah absolute URL (mis. https://presensi-kpu-kota-batu.online/...)
+    if (/^https?:\/\//i.test(profile)) {
+      // encode untuk mengubah spasi/karakter menjadi %20 dll
       try {
-        const parsed = new URL(url);
-        return parsed.searchParams.get("id") || null;
+        setPhotoURL(encodeURI(profile));
       } catch {
-        return null;
+        setPhotoURL(profile);
       }
-    };
+      return;
+    }
 
-    const resolvePhotoUrl = async () => {
-      if (!selectedUser?.guid) return;
-
-      const profileImageUrl = selectedUser.profileImageUrl?.trim();
-      if (profileImageUrl) {
-        const isHttpUrl = /^https?:\/\//i.test(profileImageUrl);
-
-        if (isHttpUrl) {
-          const driveId = tryGetGoogleDriveId(profileImageUrl);
-          const candidates = driveId
-            ? [
-                `https://drive.google.com/uc?export=view&id=${driveId}`,
-                `https://drive.google.com/thumbnail?id=${driveId}&sz=w1000`,
-                `https://drive.google.com/uc?export=download&id=${driveId}`,
-              ]
-            : [profileImageUrl];
-
-          for (const candidate of candidates) {
-            // eslint-disable-next-line no-await-in-loop
-            const ok = await canLoadImage(candidate);
-            if (ok) {
-              if (!cancelled) setPhotoURL(cacheBust(candidate));
-              return;
-            }
-          }
-
-          if (!cancelled) setPhotoURL(null);
-          return;
-        }
-
-        const internalUrl = FileService.getFileViewUrl(profileImageUrl);
-        const ok = await canLoadImage(internalUrl);
-        if (!cancelled) setPhotoURL(ok ? cacheBust(internalUrl) : null);
-        return;
-      }
-
-      // Fallback: check if backend provides a profile photo URL for this user
-      const fallback = await FileService.getProfilePhotoUrl(selectedUser.guid);
-      if (fallback) {
-        const ok = await canLoadImage(fallback);
-        if (!cancelled) setPhotoURL(ok ? cacheBust(fallback) : null);
-      } else {
-        if (!cancelled) setPhotoURL(null);
-      }
-    };
-
-    resolvePhotoUrl();
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedUser?.guid, selectedUser?.profileImageUrl]);
+    // jika bukan absolute -> resolve lewat FileService (internal path/id)
+    const viewUrl = FileService.getFileViewUrl(profile);
+    setPhotoURL(viewUrl ? `${viewUrl}?t=${Date.now()}` : null);
+  }, [selectedUser?.profileImageUrl, selectedUser?.guid]);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(getNow), 1000);
