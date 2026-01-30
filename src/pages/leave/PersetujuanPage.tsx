@@ -197,6 +197,13 @@ const PersetujuanPage: React.FC = () => {
                           height: 40,
                           bgcolor: "#ff7043",
                         }}
+                        imgProps={{
+                          style: {
+                            objectFit: "cover",
+                            // Move the visible crop slightly downward so the top of the head isn't cut off
+                            objectPosition: "center 20%",
+                          }
+                        }}
                       >
                         {getInitial(userName)}
                       </Avatar>

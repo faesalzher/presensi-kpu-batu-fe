@@ -100,7 +100,9 @@ const ChangePasswordPage: React.FC = () => {
 
       // Navigate back after a short delay
       setTimeout(() => {
-        navigate("/profile");
+        navigate("/profile", {
+          state: { toast: { message: "Password berhasil diubah", severity: "success" } },
+        });
       }, 2000);
     } catch (error: any) {
       setSnackbar({

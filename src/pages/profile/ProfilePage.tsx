@@ -16,9 +16,12 @@ import {
   Divider,
   CircularProgress,
   Alert,
+  Snackbar,
 } from "@mui/material";
+import LockIcon from "@mui/icons-material/Lock";
 import LogoutIcon from "@mui/icons-material/Logout";
-import { useNavigate } from "react-router-dom";
+import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
+import { useLocation, useNavigate } from "react-router-dom";
 import BottomNav from "../../components/BottomNav";
 import { useAuth } from "../../contexts/AuthContext";
 import { useUsers } from "../../contexts/UserContext";
@@ -31,6 +34,7 @@ import { getNow } from "../../constant/time.constant";
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { logout, user: authUser } = useAuth();
   const {
     fetchUserByGuid,
@@ -49,6 +53,26 @@ const ProfilePage: React.FC = () => {
 
   // State for profile photo
   const [photoURL, setPhotoURL] = useState<string>(defaultAvatar);
+
+  const [toast, setToast] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  }>({ open: false, message: "", severity: "info" });
+
+  useEffect(() => {
+    const state = location.state as any;
+    const nextToast = state?.toast;
+    if (nextToast?.message) {
+      setToast({
+        open: true,
+        message: String(nextToast.message),
+        severity: (nextToast.severity as any) || "info",
+      });
+      // clear navigation state so it doesn't re-show
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location.pathname, location.state, navigate]);
 
   useEffect(() => {
     if (!selectedUser) {
@@ -160,6 +184,10 @@ const ProfilePage: React.FC = () => {
     navigate("/");
   };
 
+  const handleChangePassword = () => {
+    navigate("/change-password");
+  };
+
   // Get real statistics data
   const statsData = getStatsData();
 
@@ -231,6 +259,13 @@ const ProfilePage: React.FC = () => {
               // bgcolor: "#ff6347",
               border: "4px solid white",
               boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+            }}
+            imgProps={{
+              style: {
+                objectFit: "cover",
+                // Move the visible crop slightly downward so the top of the head isn't cut off
+                objectPosition: "center 20%",
+              }
             }}
             alt={selectedUser?.fullName || "User"}
             src={photoURL}
@@ -373,7 +408,7 @@ const ProfilePage: React.FC = () => {
         <Box sx={{ display: "flex", justifyContent: "center" }}>
           <ReportGenerator />
         </Box> */}
-
+        {/* 
         {/* <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
           <Button
             variant="contained"
@@ -391,7 +426,7 @@ const ProfilePage: React.FC = () => {
           >
             Edit Profile
           </Button>
-        </Box>
+        </Box> */}
 
         <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
           <Button
@@ -411,7 +446,7 @@ const ProfilePage: React.FC = () => {
           >
             Ganti Password
           </Button>
-        </Box> */}
+        </Box>
 
         {/* Logout Button */}
         <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
@@ -436,6 +471,21 @@ const ProfilePage: React.FC = () => {
 
       {/* Bottom Navigation */}
       <BottomNav />
+
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={4000}
+        onClose={() => setToast((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setToast((prev) => ({ ...prev, open: false }))}
+          severity={toast.severity}
+          sx={{ width: "100%" }}
+        >
+          {toast.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

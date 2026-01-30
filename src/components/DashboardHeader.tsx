@@ -39,6 +39,11 @@ const DashboardHeader = ({ name, nip, photoURL, date, time }: Props) => {
                 sx={{ width: 56, height: 56 }}
                 imgProps={{
                   referrerPolicy: "no-referrer",
+                  style: {
+                    objectFit: "cover",
+                    // Move the visible crop slightly downward so the top of the head isn't cut off
+                    objectPosition: "center 20%",
+                  },
                   onError: (e) => {
                     const img = e.target as HTMLImageElement;
                     img.src = defaultProfileImage;

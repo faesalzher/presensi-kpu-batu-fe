@@ -179,7 +179,7 @@ const HistoryPage: React.FC = () => {
         }}
       >
         <Typography variant="h6" fontWeight="bold">Riwayat Presensi</Typography>
-        <Box
+        {/* <Box
           component="button"
           sx={{
             bgcolor: "#FFC107",
@@ -193,7 +193,7 @@ const HistoryPage: React.FC = () => {
           onClick={() => navigate("/status-koreksi")}
         >
           <Typography variant="h6">Koreksi</Typography>
-        </Box>
+        </Box> */}
       </Box>
       <Container maxWidth="sm" sx={{ mt: 2, mb: 2 }}>
         <FormControl fullWidth>

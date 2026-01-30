@@ -63,7 +63,7 @@ const DateTimeStatusCard = ({ date, time, status }: Props) => {
               variant="body2"
               color={isCheckedIn ? "success.main" : "error.main"}
             >
-              {isCheckedIn ? "Sudah Absen" : "Belum Absen"}
+              {/* {isCheckedIn ? "Sudah Absen" : "Belum Absen"} */}
             </Typography>
           </Box>
         </Box>

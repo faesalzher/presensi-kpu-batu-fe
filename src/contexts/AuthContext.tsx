@@ -139,7 +139,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       await AuthService.changePassword(changePasswordDto);
     } catch (err: any) {
       const errorMessage =
-        err.response?.data?.message || "Password change failed";
+        err?.response?.data?.message || err?.message || "Password change failed";
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {

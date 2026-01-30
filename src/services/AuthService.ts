@@ -135,11 +135,27 @@ export const AuthService = {
   changePassword: async (
     changePasswordDto: ChangePasswordDto
   ): Promise<{ message: string }> => {
-    const response = await API.patch<{ message: string }>(
-      "/auth/change-password",
-      changePasswordDto
-    );
-    return response.data;
+    const { currentPassword, newPassword, confirmPassword } = changePasswordDto;
+    void currentPassword; // Supabase update-password does not require current password when using access token.
+
+    if (!newPassword) {
+      throw new Error("Password baru wajib diisi");
+    }
+    if (newPassword !== confirmPassword) {
+      throw new Error("Konfirmasi password tidak sama");
+    }
+
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    void data;
+
+    if (error) {
+      throw new Error(error.message || "Gagal mengubah password");
+    }
+
+    return { message: "Password berhasil diubah" };
   },
 
   registerUser: async (userData: any) => {

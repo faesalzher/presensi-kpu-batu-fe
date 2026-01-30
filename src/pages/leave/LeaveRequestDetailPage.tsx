@@ -404,6 +404,7 @@ const LeaveRequestDetailPage: React.FC = () => {
                 height: 80,
                 border: "3px solid #ff",
               }}
+
               imgProps={{
                 referrerPolicy: "no-referrer",
                 // Add error handling in case image fails to load
@@ -412,6 +413,11 @@ const LeaveRequestDetailPage: React.FC = () => {
                   imgElement.src = defaultAvatar;
                   setPhotoURL(null);
                 },
+                style: {
+                  objectFit: "cover",
+                  // Move the visible crop slightly downward so the top of the head isn't cut off
+                  objectPosition: "center 20%",
+                }
               }}
             >
               {/* Only show initial if no image is loaded */}
