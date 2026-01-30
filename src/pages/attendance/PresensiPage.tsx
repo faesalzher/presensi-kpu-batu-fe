@@ -19,7 +19,7 @@ import {
   useTheme,
   CircularProgress,
 } from "@mui/material";
-import { MapContainer, TileLayer, Circle, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Circle, Marker, Popup, Tooltip } from "react-leaflet";
 import {
   ArrowBack,
   LocationOff,
@@ -692,6 +692,7 @@ const PresensiPage: React.FC = () => {
       sx={{
         display: "flex",
         flexDirection: "column",
+        height: "100svh",
         width: "100%",
         bgcolor: "#f5f5f5",
       }}
@@ -699,8 +700,9 @@ const PresensiPage: React.FC = () => {
       <Box
         sx={{
           bgcolor: "primary.main",
-          height: "4vh",
-          p: 2,
+          minHeight: 56,
+          px: 2,
+          py: 1,
           color: "white",
           display: "flex",
           alignItems: "center",
@@ -720,11 +722,14 @@ const PresensiPage: React.FC = () => {
       <Container
         maxWidth="sm"
         sx={{
-          minHeight: "95svh", // 🔑 FIX utama
+          flex: 1,
+          minHeight: 0,
           display: "flex",
-          alignItems: "center",
+          alignItems: "flex-start",
           justifyContent: "center",
+          overflowY: "auto",
           px: 2,
+          py: 2,
         }}
       >
         <Paper
@@ -748,7 +753,7 @@ const PresensiPage: React.FC = () => {
             <Typography variant="body2" color="text.secondary" mt={3}>
               {formatDate(now)}
             </Typography>
-            <Typography variant="h4" fontWeight={700} mt={2}>
+            <Typography variant="h4" fontWeight={700} mt={1}>
               {formatTime(now)}{" "}
               <Typography
                 component="span"
@@ -769,7 +774,7 @@ const PresensiPage: React.FC = () => {
           </Box>
 
           {/* JAM KERJA */}
-          <Box textAlign="center" mt={2}>
+          <Box textAlign="center" mt={1}>
             <Typography variant="body2" color="text.secondary">
               Jam Kerja Hari Ini
             </Typography>
@@ -778,7 +783,7 @@ const PresensiPage: React.FC = () => {
 
           {/* VALIDATOR LOKASI (MAP + STATUS) */}
           {isGeofenceEnabled === true && (
-            <Box mt={3}>
+            <Box mt={2}>
               <Typography variant="body2" fontWeight={700} mb={1}>
                 Validasi Lokasi
               </Typography>
@@ -788,7 +793,7 @@ const PresensiPage: React.FC = () => {
                   center={userLocation || officeLocation}
                   zoom={16}
                   scrollWheelZoom={false}
-                  style={{ height: 240, width: "100%" }}
+                  style={{ height: 200, width: "100%" }}
                 >
                   <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -806,11 +811,17 @@ const PresensiPage: React.FC = () => {
                   />
 
                   <Marker position={officeLocation}>
+                    <Tooltip direction="top" offset={[0, -10]} opacity={1} permanent>
+                      Office
+                    </Tooltip>
                     <Popup>Kantor (radius {radius} m)</Popup>
                   </Marker>
 
                   {userLocation && (
                     <Marker position={userLocation}>
+                      <Tooltip direction="top" offset={[0, -10]} opacity={1} permanent>
+                        You
+                      </Tooltip>
                       <Popup>Lokasi Anda</Popup>
                     </Marker>
                   )}
@@ -837,7 +848,7 @@ const PresensiPage: React.FC = () => {
           )}
 
           {/* ACTION BUTTON */}
-          <Box mt={3}>
+          <Box mt={2}>
             {showLateWithinToleranceInfo && (
               <Alert severity="info" sx={{ mb: 1.5, borderRadius: 2 }}>
                 Anda telat {effectiveLateMinutesForCheckout} menit (dalam toleransi).{suggestedCheckoutTime ? ` Disarankan pulang pada: ${suggestedCheckoutTime} WIB.` : ""}
