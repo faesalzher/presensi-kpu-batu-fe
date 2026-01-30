@@ -28,16 +28,33 @@ const SchedulerMonitoringPage: React.FC = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const logs = schedulerLogs || [];
+
+  const sortedLogs = useMemo(() => {
+    const toMs = (value?: string | null) => {
+      if (!value) return 0;
+      const t = new Date(value).getTime();
+      return Number.isFinite(t) ? t : 0;
+    };
+
+    return [...logs].sort((a, b) => {
+      // Primary: scheduledAt (scheduled_at)
+      const aKey = toMs(a.scheduledAt) || toMs(a.createdAt);
+      const bKey = toMs(b.scheduledAt) || toMs(b.createdAt);
+      // Newest first for monitoring
+      return bKey - aKey;
+    });
+  }, [logs]);
+
   const pagedLogs = useMemo(() => {
     const start = page * rowsPerPage;
-    return logs.slice(start, start + rowsPerPage);
-  }, [logs, page, rowsPerPage]);
+    return sortedLogs.slice(start, start + rowsPerPage);
+  }, [sortedLogs, page, rowsPerPage]);
 
   useEffect(() => {
     // If logs length changes (refresh), keep page in range.
-    const maxPage = Math.max(0, Math.ceil(logs.length / rowsPerPage) - 1);
+    const maxPage = Math.max(0, Math.ceil(sortedLogs.length / rowsPerPage) - 1);
     if (page > maxPage) setPage(maxPage);
-  }, [logs.length, page, rowsPerPage]);
+  }, [sortedLogs.length, page, rowsPerPage]);
 
   useEffect(() => {
     if (user?.role === UserRole.ADMIN) {
@@ -96,7 +113,7 @@ const SchedulerMonitoringPage: React.FC = () => {
 
           {/* make table horizontally scrollable on small screens */}
           <TableContainer sx={{ overflowX: "auto" }}>
-            <Table sx={{ minWidth: 800 }}>
+            <Table sx={{ minWidth: 980 }}>
               <TableHead>
                 <TableRow>
                   <TableCell>Tanggal</TableCell>
@@ -105,6 +122,7 @@ const SchedulerMonitoringPage: React.FC = () => {
                   <TableCell>Executed</TableCell>
                   <TableCell>Delay</TableCell>
                   <TableCell>Status</TableCell>
+                  <TableCell>Message</TableCell>
                   <TableCell>Aksi</TableCell>
                 </TableRow>
               </TableHead>
@@ -126,6 +144,7 @@ const SchedulerMonitoringPage: React.FC = () => {
                       <TableCell>{executed}</TableCell>
                       <TableCell>{delay}</TableCell>
                       <TableCell>{r.status}</TableCell>
+                      <TableCell>{r.message || "-"}</TableCell>
                       <TableCell>
                         {r.status === "NOT_RUN" ? (
                           <Button
@@ -145,7 +164,7 @@ const SchedulerMonitoringPage: React.FC = () => {
 
           <TablePagination
             component="div"
-            count={logs.length}
+            count={sortedLogs.length}
             page={page}
             onPageChange={(_e, newPage) => setPage(newPage)}
             rowsPerPage={rowsPerPage}
