@@ -1,5 +1,5 @@
 // src/pages/correction/StatusCorrectionPage.tsx
-import React, { useEffect } from "react";
+import React from "react";
 import {
   Box,
   Typography,

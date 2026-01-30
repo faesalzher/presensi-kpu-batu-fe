@@ -1,5 +1,5 @@
 // src/pages/leave/PersetujuanPage.tsx
-import React, { useEffect } from "react";
+import React from "react";
 import {
   Box,
   Container,
