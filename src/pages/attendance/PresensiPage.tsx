@@ -692,7 +692,6 @@ const PresensiPage: React.FC = () => {
       sx={{
         display: "flex",
         flexDirection: "column",
-        height: "100svh",
         width: "100%",
         bgcolor: "#f5f5f5",
       }}
@@ -700,9 +699,8 @@ const PresensiPage: React.FC = () => {
       <Box
         sx={{
           bgcolor: "primary.main",
-          minHeight: 56,
-          px: 2,
-          py: 1,
+         height: "4vh",
+          p: 2,
           color: "white",
           display: "flex",
           alignItems: "center",
@@ -722,14 +720,12 @@ const PresensiPage: React.FC = () => {
       <Container
         maxWidth="sm"
         sx={{
-          flex: 1,
-          minHeight: 0,
+         minHeight: "95svh", // 🔑 FIX utama
           display: "flex",
           alignItems: "flex-start",
           justifyContent: "center",
-          overflowY: "auto",
           px: 2,
-          py: 2,
+          py: 3,
         }}
       >
         <Paper
