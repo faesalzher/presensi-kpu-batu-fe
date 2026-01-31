@@ -76,7 +76,7 @@ function App() {
                           {/* Routes accessible by both staf and kasubag */}
                           <Route
                             element={
-                              <ProtectedRoute allowedRoles={[UserRole.STAF, UserRole.KASUBAG, UserRole.KASUBAG_SDM, UserRole.STAF_KUL, UserRole.SEKRETARIS]} />
+                              <ProtectedRoute allowedRoles={[UserRole.STAF, UserRole.KASUBAG, UserRole.STAF_SDM, UserRole.SEKRETARIS]} />
                             }
                           >
                             <Route path="/presensi" element={<PresensiPage />} />
@@ -140,7 +140,7 @@ function App() {
 
                           {/* Protected routes for kasubag (department head) only */}
                           <Route
-                            element={<ProtectedRoute allowedRoles={[UserRole.KASUBAG_SDM, UserRole.SEKRETARIS, UserRole.KASUBAG, UserRole.STAF_KUL, UserRole.STAF_SPIP]} />}
+                            element={<ProtectedRoute allowedRoles={[UserRole.SEKRETARIS, UserRole.KASUBAG, UserRole.STAF_SDM]} />}
                           >
                             <Route
                               path="/persetujuan"

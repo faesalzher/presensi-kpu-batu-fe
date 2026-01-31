@@ -37,7 +37,6 @@ import {
   Settings,
   CheckCircle,
   Group,
-  RequestQuote,
 } from "@mui/icons-material";
 import BottomNav from "../../components/BottomNav";
 import { useNavigate } from "react-router-dom";
@@ -45,6 +44,7 @@ import { useUsers } from "../../contexts/UserContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { useStatistics } from "../../contexts/StatisticsContext";
 import { User } from "../../types/users";
+import { UserRole } from "../../types/enums";
 import {
   ReportPeriod,
   ReportFormat,
@@ -56,8 +56,11 @@ import { getNow } from "../../constant/time.constant";
 
 const SekretariatPage: React.FC = () => {
   const navigate = useNavigate();
+  console.log()
   const { user: currentUser } = useAuth();
   const {
+    users,
+    fetchUsers,
     fetchUsersByDepartment,
     loading: usersLoading,
     error: usersError,
@@ -86,23 +89,36 @@ const SekretariatPage: React.FC = () => {
   });
   const [userSelectionDialog, setUserSelectionDialog] = useState(false);
 
+  const normalizedRole = String(currentUser?.role ?? "").toLowerCase().trim();
+  const isSekretariatWideRole =
+    normalizedRole === UserRole.SEKRETARIS ||
+    normalizedRole === UserRole.STAF_SDM
+
   useEffect(() => {
     clearUsersError();
     clearStatsError();
 
-    if (currentUser?.department) {
-      const fetchMembers = async () => {
-        try {
-          const results = await fetchUsersByDepartment(currentUser.department!);
-          setDepartmentMembers(results);
-        } catch (err) {
-          console.error("Error fetching department members:", err);
-          setDepartmentMembers([]);
+    const fetchMembers = async () => {
+      try {
+        if (isSekretariatWideRole) {
+          await fetchUsers();
+          return;
         }
-      };
 
-      fetchMembers();
-    }
+        if (currentUser?.department) {
+          const results = await fetchUsersByDepartment(currentUser.department);
+          setDepartmentMembers(results);
+          return;
+        }
+
+        setDepartmentMembers([]);
+      } catch (err) {
+        console.error("Error fetching department members:", err);
+        setDepartmentMembers([]);
+      }
+    };
+
+    fetchMembers();
 
     // Set default date range (current month)
     const now = getNow();
@@ -113,11 +129,17 @@ const SekretariatPage: React.FC = () => {
       ...prev,
       startDate: firstDay.toISOString().split("T")[0],
       endDate: lastDay.toISOString().split("T")[0],
-      title: `Laporan Kehadiran ${"Sekretariat"
+      title: `Laporan Kehadiran ${""
         } - ${now.toLocaleString("id-ID", { month: "long", year: "numeric" })}`,
-      departmentName: currentUser?.department,
+      scope: isSekretariatWideRole ? BulkReportScope.ALL_USERS : BulkReportScope.DEPARTMENT,
+      departmentName: isSekretariatWideRole ? undefined : currentUser?.department,
     }));
-  }, [currentUser]);
+  }, [currentUser, isSekretariatWideRole]);
+
+  useEffect(() => {
+    if (!isSekretariatWideRole) return;
+    setDepartmentMembers(users);
+  }, [users, isSekretariatWideRole]);
 
   const handleBack = () => {
     navigate("/dashboard");
@@ -127,17 +149,25 @@ const SekretariatPage: React.FC = () => {
     field: keyof GenerateBulkReportParams,
     value: any
   ) => {
+    if (field === "scope") {
+      setReportParams((prev) => ({
+        ...prev,
+        scope: value,
+        departmentName:
+          value === BulkReportScope.DEPARTMENT ? currentUser?.department : undefined,
+      }));
+
+      if (value !== BulkReportScope.SPECIFIC_USERS) {
+        setSelectedUsers([]);
+      }
+
+      return;
+    }
+
     setReportParams((prev) => ({
       ...prev,
       [field]: value,
     }));
-
-    // Reset specific settings when scope changes
-    if (field === "scope") {
-      if (value === BulkReportScope.DEPARTMENT) {
-        setSelectedUsers([]);
-      }
-    }
 
     // Update date range when period changes
     if (field === "period") {
@@ -336,8 +366,8 @@ const SekretariatPage: React.FC = () => {
                     <MenuItem value={ReportFormat.EXCEL}>
                       Excel (.xlsx)
                     </MenuItem>
-                    <MenuItem value={ReportFormat.PDF}>PDF</MenuItem>
-                    <MenuItem value={ReportFormat.CSV}>CSV</MenuItem>
+                    {/* <MenuItem value={ReportFormat.PDF}>PDF</MenuItem>
+                    <MenuItem value={ReportFormat.CSV}>CSV</MenuItem> */}
                   </Select>
                 </FormControl>
               </Grid>
@@ -396,8 +426,16 @@ const SekretariatPage: React.FC = () => {
                     label="Cakupan Laporan"
                     onChange={(e) => handleParamChange("scope", e.target.value)}
                   >
-                    <MenuItem value={BulkReportScope.DEPARTMENT}>
-                      Seluruh Sekretariat ({departmentMembers.length} orang)
+                    <MenuItem
+                      value={
+                        isSekretariatWideRole
+                          ? BulkReportScope.ALL_USERS
+                          : BulkReportScope.DEPARTMENT
+                      }
+                    >
+                      {isSekretariatWideRole
+                        ? `Seluruh Sekretariat (${departmentMembers.length} orang)`
+                        : `Seluruh Sub Bagian (${departmentMembers.length} orang)`}
                     </MenuItem>
                     <MenuItem value={BulkReportScope.SPECIFIC_USERS}>
                       Pilih Pengguna Tertentu
@@ -464,7 +502,7 @@ const SekretariatPage: React.FC = () => {
                     </Typography>
                   </Box>
 
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                  {/* <Box sx={{ display: "flex", alignItems: "center" }}>
                     <Checkbox
                       checked={reportParams.includeInactive || false}
                       onChange={(e) =>
@@ -474,7 +512,7 @@ const SekretariatPage: React.FC = () => {
                     <Typography variant="body2">
                       Sertakan pengguna tidak aktif
                     </Typography>
-                  </Box>
+                  </Box> */}
                 </Box>
               </Grid>
 
@@ -494,7 +532,7 @@ const SekretariatPage: React.FC = () => {
                   {loading ? "Generating..." : "Generate Laporan Kehadiran"}
                 </Button>
               </Box>
-              <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
+              {/* <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
                 <Button
                   fullWidth
                   variant="contained"
@@ -508,7 +546,7 @@ const SekretariatPage: React.FC = () => {
                 >
                   {loading ? "Generating..." : "Generate Laporan Tukin"}
                 </Button>
-              </Box>
+              </Box> */}
             </Grid>
           </CardContent>
         </Card>
@@ -622,13 +660,13 @@ const SekretariatPage: React.FC = () => {
             variant="contained"
             onClick={() => setUserSelectionDialog(false)}
             startIcon={<CheckCircle />}
-            sx={{
-              color: theme.palette.primary.main,
-              px: { xs: 2, sm: 4 },
-              py: 1,
-              fontSize: { xs: "0.875rem", sm: "1rem" },
-              fontWeight: 600,
-            }}
+            // sx={{
+            //   color: theme.palette.primary.main,
+            //   px: { xs: 2, sm: 4 },
+            //   py: 1,
+            //   fontSize: { xs: "0.875rem", sm: "1rem" },
+            //   fontWeight: 600,
+            // }}
           >
             konfirmasi ({selectedUsers.length})
           </Button>

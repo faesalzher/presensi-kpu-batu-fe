@@ -212,7 +212,7 @@ const DashboardPage: React.FC = () => {
     ...(isTukinMenuEnabled ? [tukinQuickAction] : []),
   ];
 
-  const kasubagSdmQuickActions = [
+    const stafSdmQuickActions = [
     {
       label: "Rekap Sekretariat",
       icon: <Groups color="primary" />,
@@ -228,14 +228,33 @@ const DashboardPage: React.FC = () => {
       icon: <Description color="primary" />,
       onClick: () => navigate("/history"),
     },
-    ...(isTukinMenuEnabled ? [tukinQuickAction] : [])
-    // {
-    //   label: "Revisi Kehadiran",
-    //   icon: <CheckBox color="primary" />,
-    //   // badge: pendingRequests?.length,
-    //   onClick: () => navigate("/persetujuan"),
-    // },
+    ...(isTukinMenuEnabled ? [tukinQuickAction] : []),
   ];
+
+  // const kasubagSdmQuickActions = [
+  //   {
+  //     label: "Rekap Sekretariat",
+  //     icon: <Groups color="primary" />,
+  //     onClick: () => navigate("/sekretariat"),
+  //   },
+  //   {
+  //     label: "Pengajuan Cuti",
+  //     icon: <ExitToApp color="primary" />,
+  //     onClick: () => navigate("/leave-request-form"),
+  //   },
+  //   {
+  //     label: "Riwayat Presensi",
+  //     icon: <Description color="primary" />,
+  //     onClick: () => navigate("/history"),
+  //   },
+  //   ...(isTukinMenuEnabled ? [tukinQuickAction] : [])
+  //   // {
+  //   //   label: "Revisi Kehadiran",
+  //   //   icon: <CheckBox color="primary" />,
+  //   //   // badge: pendingRequests?.length,
+  //   //   onClick: () => navigate("/persetujuan"),
+  //   // },
+  // ];
 
   const adminQuickActions = [
     {
@@ -256,17 +275,11 @@ const DashboardPage: React.FC = () => {
       case UserRole.KASUBAG:
         return <QuickActions actions={kasubagQuickActions} />;
 
-      case UserRole.STAF_SPIP:
-        return <QuickActions actions={kasubagQuickActions} />;
-
-      case UserRole.STAF_KUL:
-        return <QuickActions actions={kasubagQuickActions} />;
-
-      case UserRole.KASUBAG_SDM:
-        return <QuickActions actions={kasubagSdmQuickActions} />;
+      case UserRole.STAF_SDM:
+        return <QuickActions actions={stafSdmQuickActions} />;
 
       case UserRole.SEKRETARIS:
-        return <QuickActions actions={kasubagSdmQuickActions} />;
+        return <QuickActions actions={stafSdmQuickActions} />;
 
       default:
         return null;
@@ -284,11 +297,6 @@ const DashboardPage: React.FC = () => {
       {
         name: "Cuti",
         value: statistics.onLeave,
-        color: theme.palette.info.main,
-      },
-      {
-        name: "Remote",
-        value: statistics.remoteWorking,
         color: theme.palette.info.main,
       },
       {

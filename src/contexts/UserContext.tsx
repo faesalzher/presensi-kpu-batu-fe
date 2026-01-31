@@ -1,5 +1,5 @@
 // src/contexts/UsersContext.tsx
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState } from "react";
 import { User, CreateUserDto, UpdateUserDto } from "../types/users";
 import { UserRole } from "../types/enums";
 import UsersService from "../services/UsersService";
@@ -39,7 +39,13 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({
   // Helper functions for role checking
   const isAdminOrKajur = (role: string | undefined): boolean => {
     if (!role) return false;
-    return role === UserRole.ADMIN || role === UserRole.KASUBAG;
+    const normalized = String(role).toLowerCase().trim();
+    return (
+      normalized === UserRole.ADMIN ||
+      normalized === UserRole.KASUBAG ||
+      normalized === UserRole.STAF_SDM ||
+      normalized === UserRole.SEKRETARIS 
+    );
   };
 
   const isAdmin = (role: string | undefined): boolean => {
@@ -47,16 +53,18 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({
     return role === UserRole.ADMIN;
   };
 
-  // Load users data if the current user is an admin or kasubag
-  useEffect(() => {
-    if (isAuthenticated && isAdminOrKajur(currentUser?.role)) {
-      fetchUsers();
-    }
-  }, [isAuthenticated, currentUser]);
+  // // Load users data if the current user is an admin or kasubag
+  // useEffect(() => {
+  //   if (isAuthenticated && isAdminOrKajur(currentUser?.role)) {
+  //     fetchUsers();
+  //   }
+  // }, [isAuthenticated, currentUser]);
 
   const fetchUsers = async (): Promise<void> => {
     if (!isAuthenticated || !isAdminOrKajur(currentUser?.role)) {
-      setError("Unauthorized: Only admins and kasubag can view all users");
+      setError(
+        "Unauthorized: Only admins, kasubag, sekretaris, and staf SDM can view all users"
+      );
       return;
     }
 
