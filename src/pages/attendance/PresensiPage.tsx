@@ -753,7 +753,7 @@ const PresensiPage: React.FC = () => {
             <Typography variant="body2" color="text.secondary" mt={3}>
               {formatDate(now)}
             </Typography>
-            <Typography variant="h4" fontWeight={700} mt={1}>
+            <Typography variant="h4" fontWeight={700} mt={2}>
               {formatTime(now)}{" "}
               <Typography
                 component="span"
@@ -811,16 +811,16 @@ const PresensiPage: React.FC = () => {
                   />
 
                   <Marker position={officeLocation}>
-                    <Tooltip direction="top" offset={[0, -10]} opacity={1} permanent>
-                      Office
+                    <Tooltip direction="top" offset={[-15, 0]} opacity={0.8} permanent>
+                      KPU Kota Batu
                     </Tooltip>
                     <Popup>Kantor (radius {radius} m)</Popup>
                   </Marker>
 
                   {userLocation && (
                     <Marker position={userLocation}>
-                      <Tooltip direction="top" offset={[0, -10]} opacity={1} permanent>
-                        You
+                      <Tooltip direction="top" offset={[-15, 0]} opacity={0.8} permanent>
+                        Anda
                       </Tooltip>
                       <Popup>Lokasi Anda</Popup>
                     </Marker>

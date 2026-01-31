@@ -1,5 +1,5 @@
 // LeaveRequestPage.tsx
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Box,
   Typography,
@@ -10,6 +10,7 @@ import {
   CircularProgress,
   Alert,
   Snackbar,
+  Pagination,
 } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
@@ -122,9 +123,22 @@ const LeaveRequestPage: React.FC = () => {
   const { myRequests, loading, error, fetchMyRequests, clearError } =
     useLeaveRequests();
 
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 5;
+
+  const totalPages = Math.ceil(myRequests.length / itemsPerPage);
+
+  const paginatedRequests = useMemo(() => {
+    return myRequests.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+  }, [myRequests, page]);
+
   useEffect(() => {
     fetchMyRequests();
   }, []);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(1);
+  }, [page, totalPages]);
 
   const handleForm = () => {
     navigate("/leave-request-form");
@@ -141,7 +155,9 @@ const LeaveRequestPage: React.FC = () => {
         minHeight: "100vh",
         width: "100%",
         pb: 8,
-        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        overflowX: "hidden",
       }}
     >
       {/* Header */}
@@ -157,13 +173,13 @@ const LeaveRequestPage: React.FC = () => {
       </Box>
 
       {/* Content */}
-      <Container sx={{ pt: 2, pb: 8 }}>
+      <Container sx={{ pt: 2, pb: 2, flex: 1, overflowY: "auto" }}>
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
             <CircularProgress />
           </Box>
-        ) : myRequests.length > 0 ? (
-          myRequests.map((request) => (
+        ) : paginatedRequests.length > 0 ? (
+          paginatedRequests.map((request) => (
             <LeaveRequestItem
               key={request.guid}
               leaveRequest={request}
@@ -175,6 +191,17 @@ const LeaveRequestPage: React.FC = () => {
             <Typography color="textSecondary">
               Belum ada pengajuan. Klik tombol + untuk membuat pengajuan baru.
             </Typography>
+          </Box>
+        )}
+
+        {totalPages > 1 && (
+          <Box sx={{ display: "flex", justifyContent: "center", my: 3 }}>
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={(_, value) => setPage(value)}
+              size="medium"
+            />
           </Box>
         )}
       </Container>
