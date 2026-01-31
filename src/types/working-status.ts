@@ -10,6 +10,7 @@ export enum WorkingStatusIndonesia {
   KERJA_REMOTE = "Kerja Remote",
   CUTI = "Cuti",
   DINAS_LUAR = "Dinas Luar",
+  SAKIT = "Sakit"
 }
 
 // Mapping dari WorkingStatus enum ke WorkingStatusIndonesia
@@ -22,6 +23,7 @@ export const WorkingStatusLabels: Record<WorkingStatus, string> = {
   [WorkingStatus.REMOTE_WORKING]: "Kerja Remote",
   [WorkingStatus.ON_LEAVE]: "Cuti",
   [WorkingStatus.OFFICIAL_TRAVEL]: "Dinas Luar",
+  [WorkingStatus.SICK]: "Sakit",
 };
 
 // Helper untuk warna status badge (mengikuti pola dari leave-request-enums.ts)
@@ -34,6 +36,7 @@ export const WorkingStatusColors: Record<WorkingStatus, string> = {
   [WorkingStatus.REMOTE_WORKING]: "info",
   [WorkingStatus.ON_LEAVE]: "info",
   [WorkingStatus.OFFICIAL_TRAVEL]: "info",
+  [WorkingStatus.SICK]: "info",
 };
 
 // Fungsi untuk konversi dari WorkingStatus ke WorkingStatusIndonesia
@@ -45,6 +48,8 @@ export function convertToIndonesianStatus(status: string): string {
       return WorkingStatusIndonesia.MASALAH_PRESENSI;
     case "absent":
       return WorkingStatusIndonesia.TIDAK_HADIR;
+    case "sick":
+      return WorkingStatusIndonesia.SAKIT;
     case "late":
       return WorkingStatusIndonesia.TERLAMBAT;
     case "early_departure":
