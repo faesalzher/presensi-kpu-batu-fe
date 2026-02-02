@@ -3,6 +3,7 @@ import {
   Container,
   CircularProgress,
   Alert,
+  Button,
   Grid,
   Box,
   Typography,
@@ -37,12 +38,19 @@ import { formatDate, formatShortTime, formatTime, getNow } from "../../constant/
 // import { useCorrections } from "../../contexts/CorrectionsContext";
 import { UserRole } from "../../types/enums";
 import { useSystem } from "../../contexts/SystemContext";
+import { usePush } from "../../contexts/PushContext";
+import { getToken } from "firebase/messaging";
+import { messaging } from "../../lib/firebase";
+import { useForegroundPush } from "../../hooks/useForegroundPush";
 
 /* ===================================================== */
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
+  const { registerDevice, loading: pushLoading, error: pushError, clearError: clearPushError } = usePush();
+
+  useForegroundPush();
 
   const {
     fetchUserByGuid,
@@ -87,6 +95,73 @@ const DashboardPage: React.FC = () => {
   const [now, setNow] = useState(getNow());
   const [photoURL, setPhotoURL] = useState<string | null>(null);
   const [isTukinMenuEnabled, setIsTukinMenuEnabled] = useState<boolean>(true);
+  const [pushSuccess, setPushSuccess] = useState<string | null>(null);
+
+  const getOrCreateDeviceId = (): string => {
+    const key = "push_device_id";
+    const existing = localStorage.getItem(key);
+    if (existing) return existing;
+
+    const created =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `web-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    localStorage.setItem(key, created);
+    return created;
+  };
+
+  const handleEnableNotifications = async () => {
+    setPushSuccess(null);
+    clearPushError();
+
+    if (typeof window === "undefined") return;
+    if (!("Notification" in window)) {
+      alert("Browser ini tidak mendukung notifikasi.");
+      return;
+    }
+    if (!("serviceWorker" in navigator)) {
+      alert("Browser ini tidak mendukung Service Worker.");
+      return;
+    }
+
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+      alert("Izin notifikasi ditolak. Silakan aktifkan lewat pengaturan browser.");
+      return;
+    }
+
+    const swReg = await navigator.serviceWorker.register(
+      "/firebase-messaging-sw.js"
+    );
+
+    const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+    if (!vapidKey) {
+      alert("VAPID key belum diset (VITE_FIREBASE_VAPID_KEY). ");
+      return;
+    }
+
+    const token = await getToken(messaging, {
+      vapidKey,
+      serviceWorkerRegistration: swReg,
+    });
+
+    if (!token) {
+      alert("Gagal mendapatkan FCM token. Coba refresh dan ulangi.");
+      return;
+    }
+
+    // log sesuai request awal
+    // eslint-disable-next-line no-console
+    console.log("FCM token:", token);
+
+    const deviceId = getOrCreateDeviceId();
+    await registerDevice({
+      fcmToken: token,
+      deviceId,
+    });
+
+    setPushSuccess("Notifikasi berhasil diaktifkan pada perangkat ini.");
+  };
 
   /* ================= EFFECTS ================= */
 
@@ -212,7 +287,7 @@ const DashboardPage: React.FC = () => {
     ...(isTukinMenuEnabled ? [tukinQuickAction] : []),
   ];
 
-    const stafSdmQuickActions = [
+  const stafSdmQuickActions = [
     {
       label: "Rekap Sekretariat",
       icon: <Groups color="primary" />,
@@ -410,7 +485,39 @@ const DashboardPage: React.FC = () => {
                   </>
                 )}
               </Box>
+              {selectedUser?.role == UserRole.ADMIN && (
+                <Box
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="center"
+                  justifyContent="center"
+                  mb={2}
+                >
+                  <Button
+                    variant="contained"
+                    onClick={handleEnableNotifications}
+                    disabled={pushLoading}
+                    sx={{ width: "100%", maxWidth: 420 }}
+                  >
+                    {pushLoading ? "Memproses..." : "Aktifkan Notifikasi"}
+                  </Button>
 
+                  {(pushError || pushSuccess) && (
+                    <Box sx={{ mt: 1, width: "100%", maxWidth: 420 }}>
+                      {pushError && (
+                        <Alert severity="error" onClose={clearPushError}>
+                          {pushError}
+                        </Alert>
+                      )}
+                      {pushSuccess && (
+                        <Alert severity="success" onClose={() => setPushSuccess(null)}>
+                          {pushSuccess}
+                        </Alert>
+                      )}
+                    </Box>
+                  )}
+                </Box>
+              )}
               {selectedUser?.role !== UserRole.ADMIN && (
                 <AttendanceActions
                   onClick={() => navigate("/presensi")}

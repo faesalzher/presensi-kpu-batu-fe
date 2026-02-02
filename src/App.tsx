@@ -7,6 +7,7 @@ import { LeaveRequestsProvider } from "./contexts/LeaveRequestsContext";
 import { CorrectionsProvider } from "./contexts/CorrectionsContext";
 import { FileProvider } from "./contexts/FileContext";
 import { StatisticsProvider } from "./contexts/StatisticsContext";
+import { PushProvider } from "./contexts/PushContext";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoginPage from "./pages/auth/LoginPage";
@@ -52,10 +53,11 @@ function App() {
                 <CorrectionsProvider>
                   <FileProvider>
                     <StatisticsProvider>
-                      <Router>
-                        <Routes>
-                          {/* Public route */}
-                          <Route path="/" element={<PublicRoute><LoginPage /></PublicRoute>} />
+                      <PushProvider>
+                        <Router>
+                          <Routes>
+                            {/* Public route */}
+                            <Route path="/" element={<PublicRoute><LoginPage /></PublicRoute>} />
 
                           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                           <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -170,9 +172,10 @@ function App() {
                             path="/under-development"
                             element={<UnderDevelopmentPage />}
                           />
-                          <Route path="*" element={<NotFoundPage />} />
-                        </Routes>
-                      </Router>
+                            <Route path="*" element={<NotFoundPage />} />
+                          </Routes>
+                        </Router>
+                      </PushProvider>
                     </StatisticsProvider>
                   </FileProvider>
                 </CorrectionsProvider>
