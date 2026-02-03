@@ -26,7 +26,7 @@ import {
   Assignment,
   LogoutRounded,
   SendRounded,
-  // MyLocation,
+  MyLocation,
   // GpsFixed,
   // LocationSearching,
 } from "@mui/icons-material";
@@ -60,6 +60,7 @@ const PresensiPage: React.FC = () => {
     const [distanceToOffice, setDistanceToOffice] = useState<number | null>(null);
     const [isWithinRadius, setIsWithinRadius] = useState<boolean>(false);
     const [locationError, setLocationError] = useState<string | null>(null);
+    const [isRefreshingLocation, setIsRefreshingLocation] = useState<boolean>(false);
     // Haversine formula
     const haversine = (
       lat1: number,
@@ -174,6 +175,44 @@ const PresensiPage: React.FC = () => {
       });
       return () => navigator.geolocation.clearWatch(watchId);
     }, [isGeofenceEnabled]);
+
+    const refreshLocation = () => {
+      if (isGeofenceEnabled !== true) return;
+      if (!navigator.geolocation) {
+        setLocationError("Geolocation tidak didukung browser ini.");
+        return;
+      }
+
+      setIsRefreshingLocation(true);
+      setLocationError(null);
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          setUserLocation([latitude, longitude]);
+          setLocationError(null);
+          setIsRefreshingLocation(false);
+        },
+        (err) => {
+          let message = "Gagal mendapatkan lokasi. Aktifkan layanan lokasi di perangkat Anda.";
+          if (err?.code === err.PERMISSION_DENIED) {
+            message = "Akses lokasi ditolak. Silakan izinkan lokasi di browser.";
+          } else if (err?.code === err.POSITION_UNAVAILABLE) {
+            message = "Lokasi tidak tersedia. Coba nyalakan GPS lalu refresh lokasi.";
+          } else if (err?.code === err.TIMEOUT) {
+            message = "Timeout mendapatkan lokasi. Coba lagi.";
+          }
+
+          setLocationError(message);
+          setIsRefreshingLocation(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0,
+        }
+      );
+    };
     // Hitung jarak ke kantor & validasi radius
     useEffect(() => {
       if (isGeofenceEnabled !== true) {
@@ -780,9 +819,33 @@ const PresensiPage: React.FC = () => {
           {/* VALIDATOR LOKASI (MAP + STATUS) */}
           {isGeofenceEnabled === true && (
             <Box mt={2}>
-              <Typography variant="body2" fontWeight={700} mb={1}>
-                Validasi Lokasi
-              </Typography>
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                mb={1}
+              >
+                <Typography variant="body2" fontWeight={700}>
+                  Validasi Lokasi
+                </Typography>
+
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={refreshLocation}
+                  disabled={isRefreshingLocation}
+                  startIcon={
+                    isRefreshingLocation ? (
+                      <CircularProgress size={14} color="inherit" />
+                    ) : (
+                      <MyLocation />
+                    )
+                  }
+                  sx={{ textTransform: "none" }}
+                >
+                  Refresh Lokasi
+                </Button>
+              </Box>
 
               <Box sx={{ borderRadius: 2, overflow: "hidden" }}>
                 <MapContainer

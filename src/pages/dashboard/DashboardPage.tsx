@@ -582,7 +582,7 @@ const DashboardPage: React.FC = () => {
                       <CircularProgress size={18} />
                     ) : (
                       <><NotificationsActive color="primary" /> 
-                      Aktifkan Notifikasi</>
+                      Aktifkan Notifikasi Presensi</>
                     )}
                   </Button>
 
