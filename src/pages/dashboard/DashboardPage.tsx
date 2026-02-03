@@ -562,7 +562,7 @@ const DashboardPage: React.FC = () => {
                   </>
                 )}
               </Box>
-              {selectedUser?.role == UserRole.ADMIN && !isPushEnabled && (
+              {!isPushEnabled && (
                 <Box
                   display="flex"
                   flexDirection="column"
