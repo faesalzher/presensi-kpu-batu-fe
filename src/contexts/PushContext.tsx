@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
 import PushService, {
   RegisterPushDevicePayload,
+  PushRegistrationStatusResponse,
 } from "../services/PushService";
 
 interface PushContextType {
@@ -8,6 +9,7 @@ interface PushContextType {
   error: string | null;
 
   registerDevice: (payload: RegisterPushDevicePayload) => Promise<void>;
+  getRegistrationStatus: (deviceId: string) => Promise<PushRegistrationStatusResponse>;
   clearError: () => void;
 }
 
@@ -38,6 +40,12 @@ export const PushProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const getRegistrationStatus = async (
+    deviceId: string
+  ): Promise<PushRegistrationStatusResponse> => {
+    return PushService.getRegistrationStatus(deviceId);
+  };
+
   const clearError = () => setError(null);
 
   const value = useMemo(
@@ -45,6 +53,7 @@ export const PushProvider: React.FC<{ children: React.ReactNode }> = ({
       loading,
       error,
       registerDevice,
+      getRegistrationStatus,
       clearError,
     }),
     [loading, error]

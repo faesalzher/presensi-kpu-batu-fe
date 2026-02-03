@@ -7,6 +7,10 @@ export type RegisterPushDevicePayload = {
   deviceId: string;
 };
 
+export type PushRegistrationStatusResponse = {
+  registered: boolean;
+};
+
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });
@@ -39,6 +43,16 @@ API.interceptors.response.use(
 const PushService = {
   registerDevice: async (payload: RegisterPushDevicePayload): Promise<void> => {
     await API.post("/push/register", payload);
+  },
+
+  getRegistrationStatus: async (
+    deviceId: string
+  ): Promise<PushRegistrationStatusResponse> => {
+    const response = await API.get<PushRegistrationStatusResponse>(
+      "/push/register/status",
+      { params: { deviceId } }
+    );
+    return response.data;
   },
 };
 

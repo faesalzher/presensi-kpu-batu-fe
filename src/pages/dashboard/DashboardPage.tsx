@@ -48,7 +48,13 @@ import { useForegroundPush } from "../../hooks/useForegroundPush";
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
-  const { registerDevice, loading: pushLoading, error: pushError, clearError: clearPushError } = usePush();
+  const {
+    registerDevice,
+    getRegistrationStatus,
+    loading: pushLoading,
+    error: pushError,
+    clearError: clearPushError,
+  } = usePush();
 
   useForegroundPush();
 
@@ -96,6 +102,7 @@ const DashboardPage: React.FC = () => {
   const [photoURL, setPhotoURL] = useState<string | null>(null);
   const [isTukinMenuEnabled, setIsTukinMenuEnabled] = useState<boolean>(true);
   const [pushSuccess, setPushSuccess] = useState<string | null>(null);
+  const [isPushEnabled, setIsPushEnabled] = useState<boolean>(false);
 
   const getOrCreateDeviceId = (): string => {
     const key = "push_device_id";
@@ -109,6 +116,37 @@ const DashboardPage: React.FC = () => {
     localStorage.setItem(key, created);
     return created;
   };
+
+  const getPushEnabledKey = (userGuid: string, deviceId: string) =>
+    `push_enabled:${userGuid}:${deviceId}`;
+
+  useEffect(() => {
+    // Check status from backend (source of truth: fcm_tokens table) and hide button.
+    // Fallback to localStorage if endpoint is not available.
+    const run = async () => {
+      const userGuid = authUser?.guid;
+      if (!userGuid) return;
+
+      const deviceId = getOrCreateDeviceId();
+      const localKey = getPushEnabledKey(userGuid, deviceId);
+
+      try {
+        const res = await getRegistrationStatus(deviceId);
+        if (res?.registered) {
+          localStorage.setItem(localKey, "1");
+          setIsPushEnabled(true);
+          return;
+        }
+      } catch {
+        // ignore (endpoint belum ada / error jaringan). Fallback ke local.
+      }
+
+      const local = localStorage.getItem(localKey) === "1";
+      setIsPushEnabled(local);
+    };
+
+    void run();
+  }, [authUser?.guid, getRegistrationStatus]);
 
   const handleEnableNotifications = async () => {
     setPushSuccess(null);
@@ -159,6 +197,11 @@ const DashboardPage: React.FC = () => {
       fcmToken: token,
       deviceId,
     });
+
+    if (authUser?.guid) {
+      localStorage.setItem(getPushEnabledKey(authUser.guid, deviceId), "1");
+    }
+    setIsPushEnabled(true);
 
     setPushSuccess("Notifikasi berhasil diaktifkan pada perangkat ini.");
   };
@@ -485,7 +528,7 @@ const DashboardPage: React.FC = () => {
                   </>
                 )}
               </Box>
-              {selectedUser?.role == UserRole.ADMIN && (
+              {selectedUser?.role == UserRole.ADMIN && !isPushEnabled && (
                 <Box
                   display="flex"
                   flexDirection="column"
