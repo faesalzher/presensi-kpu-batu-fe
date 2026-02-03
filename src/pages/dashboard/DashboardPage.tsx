@@ -18,6 +18,7 @@ import {
   ExitToApp,
   AccessTime,
   AdminPanelSettings
+  , NotificationsActive
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 
@@ -103,6 +104,7 @@ const DashboardPage: React.FC = () => {
   const [isTukinMenuEnabled, setIsTukinMenuEnabled] = useState<boolean>(true);
   const [pushSuccess, setPushSuccess] = useState<string | null>(null);
   const [isPushEnabled, setIsPushEnabled] = useState<boolean>(false);
+  const [isProcessingPush, setIsProcessingPush] = useState<boolean>(false);
 
   const getOrCreateDeviceId = (): string => {
     const key = "push_device_id";
@@ -131,10 +133,18 @@ const DashboardPage: React.FC = () => {
       const localKey = getPushEnabledKey(userGuid, deviceId);
 
       try {
-        const res = await getRegistrationStatus(deviceId);
-        if (res?.registered) {
+        const res: any = await getRegistrationStatus(deviceId);
+        const isRegistered = (res?.registered ?? res?.isRegistered) === true;
+        if (isRegistered) {
           localStorage.setItem(localKey, "1");
           setIsPushEnabled(true);
+          return;
+        } else {
+          // jika backend mengatakan belum terdaftar, pastikan flag lokal dihapus
+          try {
+            localStorage.removeItem(localKey);
+          } catch {}
+          setIsPushEnabled(false);
           return;
         }
       } catch {
@@ -151,6 +161,7 @@ const DashboardPage: React.FC = () => {
   const handleEnableNotifications = async () => {
     setPushSuccess(null);
     clearPushError();
+    setIsProcessingPush(true);
 
     if (typeof window === "undefined") return;
     if (!("Notification" in window)) {
@@ -162,15 +173,32 @@ const DashboardPage: React.FC = () => {
       return;
     }
 
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") {
-      alert("Izin notifikasi ditolak. Silakan aktifkan lewat pengaturan browser.");
-      return;
-    }
+    try {
+      // Jika izin belum diberikan, minta izin. Jika sudah granted, lewati.
+      try {
+        if (Notification.permission !== "granted") {
+          const permission = await Notification.requestPermission();
+          if (permission !== "granted") {
+            alert("Izin notifikasi ditolak. Silakan aktifkan lewat pengaturan browser.");
+            return;
+          }
+        }
+      } catch (err) {
+        // Beberapa browser mungkin me-throw saat requestPermission; tangani aman.
+        alert("Gagal meminta izin notifikasi. Coba lagi.");
+        return;
+      }
 
-    const swReg = await navigator.serviceWorker.register(
-      "/firebase-messaging-sw.js"
-    );
+      // Daftarkan service worker, lalu tunggu sampai service worker benar-benar siap (active)
+      try {
+        await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+      } catch (err) {
+        // Jika registrasi gagal, coba ambil ready (mungkin sudah ter-registrasi sebelumnya)
+        // eslint-disable-next-line no-console
+        console.warn("Service worker register failed, will await ready:", err);
+      }
+
+      const swReg = await navigator.serviceWorker.ready;
 
     const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
     if (!vapidKey) {
@@ -178,6 +206,7 @@ const DashboardPage: React.FC = () => {
       return;
     }
 
+    // Pastikan service worker aktif sebelum meminta token FCM
     const token = await getToken(messaging, {
       vapidKey,
       serviceWorkerRegistration: swReg,
@@ -192,19 +221,24 @@ const DashboardPage: React.FC = () => {
     // eslint-disable-next-line no-console
     console.log("FCM token:", token);
 
-    const deviceId = getOrCreateDeviceId();
-    await registerDevice({
-      fcmToken: token,
-      deviceId,
-    });
+      const deviceId = getOrCreateDeviceId();
+      await registerDevice({
+        fcmToken: token,
+        deviceId,
+      });
 
-    if (authUser?.guid) {
-      localStorage.setItem(getPushEnabledKey(authUser.guid, deviceId), "1");
+      if (authUser?.guid) {
+        localStorage.setItem(getPushEnabledKey(authUser.guid, deviceId), "1");
+      }
+      setIsPushEnabled(true);
+
+      setPushSuccess("Notifikasi berhasil diaktifkan pada perangkat ini.");
+    } finally {
+      setIsProcessingPush(false);
     }
-    setIsPushEnabled(true);
-
-    setPushSuccess("Notifikasi berhasil diaktifkan pada perangkat ini.");
   };
+
+  
 
   /* ================= EFFECTS ================= */
 
@@ -537,12 +571,19 @@ const DashboardPage: React.FC = () => {
                   mb={2}
                 >
                   <Button
-                    variant="contained"
+                    variant="outlined"
+                    size="small"
                     onClick={handleEnableNotifications}
-                    disabled={pushLoading}
-                    sx={{ width: "100%", maxWidth: 420 }}
+                    disabled={pushLoading || isProcessingPush}
+                    aria-label="Aktifkan Notifikasi"
+                    sx={{ width: "auto", maxWidth: 420, px: 1.5, py: 0.5 }}
                   >
-                    {pushLoading ? "Memproses..." : "Aktifkan Notifikasi"}
+                    {pushLoading || isProcessingPush ? (
+                      <CircularProgress size={18} />
+                    ) : (
+                      <><NotificationsActive color="primary" /> 
+                      Aktifkan Notifikasi</>
+                    )}
                   </Button>
 
                   {(pushError || pushSuccess) && (
@@ -561,6 +602,7 @@ const DashboardPage: React.FC = () => {
                   )}
                 </Box>
               )}
+              {/* Removed manual "Periksa Notifikasi" button per request */}
               {selectedUser?.role !== UserRole.ADMIN && (
                 <AttendanceActions
                   onClick={() => navigate("/presensi")}
