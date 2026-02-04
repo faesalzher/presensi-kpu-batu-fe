@@ -142,7 +142,7 @@ const LeaveRequestsService = {
     const response = await API.get<LeaveRequest[]>("/leave-request/pending", {
       params,
     });
-    return response.data;
+    return response.data;  
   },
 
   /**

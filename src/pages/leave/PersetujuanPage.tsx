@@ -35,7 +35,7 @@ const PersetujuanPage: React.FC = () => {
     clearError: clearLeaveError,
   } = useLeaveRequests();
   const {
-    users,
+    // users,
     loading: usersLoading,
     error: usersError,
     // fetchUsers,
@@ -75,17 +75,6 @@ const PersetujuanPage: React.FC = () => {
     navigate(`/persetujuan-detail/${guid}`);
   };
 
-  // Function to get user name by ID
-  const getUserName = (userId: string) => {
-    const user = users.find((user) => user.guid === userId);
-    return user ? user.fullName : "Nama tidak tersedia";
-  };
-
-  // Function to get user name by ID
-  const getUserNIP = (userId: string) => {
-    const user = users.find((user) => user.guid === userId);
-    return user ? user.nip : "NIP tidak tersedia";
-  };
 
   // Get status color based on leave request type
   const getStatusColor = (type: LeaveRequestType) => {
@@ -119,11 +108,6 @@ const PersetujuanPage: React.FC = () => {
       default:
         return type;
     }
-  };
-
-  // Get initial for avatar
-  const getInitial = (name: string) => {
-    return name ? name.charAt(0).toUpperCase() : "U";
   };
 
   // Clear errors from both contexts
