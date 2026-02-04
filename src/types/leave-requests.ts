@@ -42,6 +42,8 @@ export interface LeaveRequest {
 
   // UI helper properties (optional)
   userName?: string;
+  nip?: string;
+  ProfileImageUrl?: string
   departmentName?: string;
   reviewerName?: string;
 }

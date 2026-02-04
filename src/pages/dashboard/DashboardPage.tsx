@@ -18,7 +18,8 @@ import {
   ExitToApp,
   AccessTime,
   AdminPanelSettings
-  , NotificationsActive
+  , NotificationsActive,
+  CheckCircle
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 
@@ -369,6 +370,12 @@ const DashboardPage: React.FC = () => {
       label: "Rekap Sekretariat",
       icon: <Groups color="primary" />,
       onClick: () => navigate("/sekretariat"),
+    },
+    //buat menu persetujuan disini
+    {
+      label: "Persetujuan Cuti",
+      icon: <CheckCircle color="primary" />,
+      onClick: () => navigate("/persetujuan"),
     },
     {
       label: "Pengajuan Cuti",

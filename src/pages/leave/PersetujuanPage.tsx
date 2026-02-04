@@ -1,5 +1,5 @@
 // src/pages/leave/PersetujuanPage.tsx
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Box,
   Container,
@@ -14,6 +14,7 @@ import {
   Toolbar,
   CircularProgress,
   Alert,
+  Pagination,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useNavigate } from "react-router-dom";
@@ -21,15 +22,16 @@ import BottomNav from "../../components/BottomNav";
 import { useLeaveRequests } from "../../contexts/LeaveRequestsContext";
 import { useUsers } from "../../contexts/UserContext"; // Import UserContext
 import { LeaveRequest, LeaveRequestType } from "../../types/leave-requests";
+import FileService from "../../services/FileService";
 import { format } from "date-fns";
 
 const PersetujuanPage: React.FC = () => {
   const navigate = useNavigate();
   const {
-    pendingRequests,
+    leaveRequests,
     loading: leaveLoading,
     error: leaveError,
-    // fetchPendingRequests,
+    fetchLeaveRequests,
     clearError: clearLeaveError,
   } = useLeaveRequests();
   const {
@@ -45,16 +47,25 @@ const PersetujuanPage: React.FC = () => {
   // Combine error messages from both contexts
   const error = leaveError || usersError;
 
+  // Pagination state
+  const [page, setPage] = React.useState<number>(1);
+  const itemsPerPage = 6;
+  const totalPages = Math.max(1, Math.ceil(leaveRequests.length / itemsPerPage));
+
+  const paginatedRequests = React.useMemo(() => {
+    return leaveRequests.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+  }, [leaveRequests, page]);
+
   // Format dates for display
   const formatDate = (date: Date) => {
     return format(new Date(date), "dd MMMM yyyy");
   };
 
-  // useEffect(() => {
-  //   // Fetch both pending requests and users when component mounts
-  //   fetchPendingRequests();
-  //   fetchUsers();
-  // }, []);
+  useEffect(() => {
+    // Fetch leave requests and users when component mounts
+    fetchLeaveRequests();
+    // fetchUsers();
+  }, []);
 
   const handleBack = () => {
     navigate("/dashboard");
@@ -150,7 +161,7 @@ const PersetujuanPage: React.FC = () => {
           <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
             <CircularProgress />
           </Box>
-        ) : pendingRequests.length === 0 ? (
+        ) : leaveRequests.length === 0 ? (
           <Paper
             elevation={1}
             sx={{
@@ -165,21 +176,29 @@ const PersetujuanPage: React.FC = () => {
           </Paper>
         ) : (
           <List sx={{ p: 0 }}>
-            {pendingRequests.map((request: LeaveRequest) => {
+            {paginatedRequests.map((request: LeaveRequest) => {
               // Get user name from users array
-              const userName = getUserName(request.userId);
-              const nip = getUserNIP(request.userId);
+              const userName = request.userName;
+              const nip = request.nip;
 
               return (
                 <Paper
                   onClick={() => handleDetail(request.guid)}
                   key={request.guid}
-                  elevation={1}
+                  elevation={0}
                   sx={{
                     mb: 2,
-                    borderRadius: 2,
+                    borderRadius: 3,
                     overflow: "hidden",
                     cursor: "pointer",
+                    p: 1,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    transition: "box-shadow .18s ease, transform .12s ease",
+                    '&:hover': {
+                      boxShadow: '0 8px 24px rgba(16,24,40,0.06)',
+                      transform: 'translateY(-3px)'
+                    }
                   }}
                 >
                   <ListItem
@@ -187,53 +206,68 @@ const PersetujuanPage: React.FC = () => {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      py: 1.5,
+                      py: 1,
                     }}
                   >
                     <Box sx={{ display: "flex", alignItems: "center" }}>
-                      <Avatar
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          bgcolor: "#ff7043",
-                        }}
-                        imgProps={{
-                          style: {
-                            objectFit: "cover",
-                            // Move the visible crop slightly downward so the top of the head isn't cut off
-                            objectPosition: "center 20%",
+                      {
+                        (() => {
+                          const rawProfile = (request as any).ProfileImageUrl ?? (request as any).profileImageUrl ?? null;
+                          let src: string | undefined;
+                          if (rawProfile && String(rawProfile).trim()) {
+                            const raw = String(rawProfile).trim();
+                            const isHttp = /^https?:\/\//i.test(raw);
+                            src = isHttp ? raw : FileService.getFileViewUrl(raw);
+                            // cache-bust param to avoid stale images when updated
+                            src = src ? `${src}?t=${Date.now()}` : undefined;
                           }
-                        }}
-                      >
-                        {getInitial(userName)}
-                      </Avatar>
-                      <Box sx={{ ml: 2 }}>
-                        <Typography
-                          variant="subtitle1"
-                          sx={{ fontWeight: "medium" }}
-                        >
+
+                          return (
+                            <Avatar
+                              src={src || undefined}
+                              sx={{
+                                width: 44,
+                                height: 44,
+                                bgcolor: "#ff7043",
+                                fontWeight: 700,
+                              }}
+                              imgProps={{
+                                style: {
+                                  objectFit: "cover",
+                                  objectPosition: "center 20%",
+                                },
+                                referrerPolicy: "no-referrer",
+                              }}
+                            >
+                            </Avatar>
+                          );
+                        })()
+                      }
+
+                      <Box sx={{ ml: 2 }}> 
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600, letterSpacing: 0.2 }}>
                           {userName}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                           {nip}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {formatDate(request.startDate)} -{" "}
-                          {formatDate(request.endDate)}
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                          {formatDate(request.startDate)} — {formatDate(request.endDate)}
                         </Typography>
                       </Box>
                     </Box>
-                    <Box sx={{ display: "fix", alignItems: "right", ml: -5 }}>
+
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                       <Chip
                         label={getTypeLabel(request.type)}
+                        size="small"
+                        variant="outlined"
                         sx={{
-                          bgcolor: getStatusColor(request.type),
+                          color: getStatusColor(request.type),
+                          borderColor: getStatusColor(request.type),
                           borderRadius: 2,
-                          color: "white",
-                          fontWeight: "bold",
-                          minWidth: 60,
-                          mb: 4,
-                          mr: "-2px",
+                          fontWeight: 700,
+                          minWidth: 64,
                         }}
                       />
                     </Box>
@@ -243,6 +277,18 @@ const PersetujuanPage: React.FC = () => {
             })}
           </List>
         )}
+
+        {totalPages > 1 && (
+          <Box sx={{ display: "flex", justifyContent: "center", my: 3 }}>
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={(_, value) => setPage(value)}
+              size="medium"
+            />
+          </Box>
+        )}
+        
       </Container>
 
       {/* Bottom Navigation */}

@@ -144,6 +144,15 @@ function App() {
                           <Route
                             element={<ProtectedRoute allowedRoles={[UserRole.SEKRETARIS, UserRole.KASUBAG, UserRole.STAF_SDM]} />}
                           >
+                              <Route
+                              path="/sekretariat"
+                              element={<SekretariatPage />}
+                            />
+                          </Route>
+
+                          <Route
+                            element={<ProtectedRoute allowedRoles={[UserRole.STAF_SDM]} />}
+                          >
                             <Route
                               path="/persetujuan"
                               element={<PersetujuanPage />}
@@ -155,10 +164,6 @@ function App() {
                             <Route
                               path="/reject-pengajuan"
                               element={<RejectApplicationForm />}
-                            />
-                            <Route
-                              path="/sekretariat"
-                              element={<SekretariatPage />}
                             />
                           </Route>
 
