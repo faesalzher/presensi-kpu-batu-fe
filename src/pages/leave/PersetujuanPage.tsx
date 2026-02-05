@@ -162,19 +162,6 @@ const PersetujuanPage: React.FC = () => {
           <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
             <CircularProgress />
           </Box>
-        ) : filteredRequests.length === 0 ? (
-          <Paper
-            elevation={1}
-            sx={{
-              p: 3,
-              borderRadius: 2,
-              textAlign: "center",
-            }}
-          >
-            <Typography variant="body1">
-              Tidak ada permohonan yang cocok untuk filter ini.
-            </Typography>
-          </Paper>
         ) : (
           <>
             <Tabs
