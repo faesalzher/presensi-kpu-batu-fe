@@ -28,7 +28,7 @@ const RejectApplicationForm: React.FC = () => {
   const navigate = useNavigate();
   const query = useQuery();
   const requestId = query.get("id");
-
+  console.log("Request ID:", requestId);
   const [reason, setReason] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);

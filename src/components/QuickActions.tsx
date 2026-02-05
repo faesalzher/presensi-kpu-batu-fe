@@ -18,26 +18,50 @@ const QuickActions = ({ actions }: { actions: Action[] }) => {
         return (
           <Grid size={3} key={i}>
             <Box textAlign="center">
-              <IconButton
-                onClick={a.onClick}
-                sx={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: 4,
-                  bgcolor: "#fff",
-                  boxShadow: "0 6px 16px rgba(0,0,0,0.08)",
-                  transform: "rotate(45deg)",
-                  mb: 1,
+              <Box sx={{ position: "relative", display: "inline-block" }}>
+                <IconButton
+                  onClick={a.onClick}
+                  sx={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 4,
+                    bgcolor: "#fff",
+                    boxShadow: "0 6px 16px rgba(0,0,0,0.08)",
+                    transform: "rotate(45deg)",
+                    mb: 1,
 
-                  "&:hover": {
-                    bgcolor: "#f5f5f5",
-                  },
-                }}
-              >
-                <Box sx={{ transform: "rotate(-45deg)" }}>
-                  {a.icon}
-                </Box>
-              </IconButton>
+                    "&:hover": {
+                      bgcolor: "#f5f5f5",
+                    },
+                  }}
+                >
+                  <Box sx={{ transform: "rotate(-45deg)" }}>
+                    {a.icon}
+                  </Box>
+                </IconButton>
+
+                {a.badge && a.badge > 0 && (
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: 8,
+                      right: 8,
+                      bgcolor: "error.main",
+                      color: "white",
+                      fontSize: 10,
+                      minWidth: 10,
+                      height: 18,
+                      borderRadius: "50%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      px: 0.5,
+                    }}
+                  >
+                    {a.badge > 99 ? "99+" : a.badge}
+                  </Box>
+                )}
+              </Box>
 
               <Typography
                 variant="body2"

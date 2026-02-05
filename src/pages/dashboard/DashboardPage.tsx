@@ -36,7 +36,7 @@ import DashboardHeader from "../../components/DashboardHeader";
 import DashboardLayout from "../../components/DashboardLayout";
 import QuickActions from "../../components/QuickActions";
 import { formatDate, formatShortTime, formatTime, getNow } from "../../constant/time.constant";
-// import { useLeaveRequests } from "../../contexts/LeaveRequestsContext";
+import { useLeaveRequests } from "../../contexts/LeaveRequestsContext";
 // import { useCorrections } from "../../contexts/CorrectionsContext";
 import { UserRole } from "../../types/enums";
 import { useSystem } from "../../contexts/SystemContext";
@@ -83,10 +83,11 @@ const DashboardPage: React.FC = () => {
     clearError: clearStatisticsError,
   } = useStatistics();
 
-  // const {
-  //   pendingRequests,
-  //   fetchPendingRequests,
-  // } = useLeaveRequests();
+
+    const {
+    pendingRequests,
+    fetchPendingRequests,
+  } = useLeaveRequests();
 
   const {
     workingDayToday,
@@ -144,7 +145,7 @@ const DashboardPage: React.FC = () => {
           // jika backend mengatakan belum terdaftar, pastikan flag lokal dihapus
           try {
             localStorage.removeItem(localKey);
-          } catch {}
+          } catch { }
           setIsPushEnabled(false);
           return;
         }
@@ -201,26 +202,26 @@ const DashboardPage: React.FC = () => {
 
       const swReg = await navigator.serviceWorker.ready;
 
-    const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
-    if (!vapidKey) {
-      alert("VAPID key belum diset (VITE_FIREBASE_VAPID_KEY). ");
-      return;
-    }
+      const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+      if (!vapidKey) {
+        alert("VAPID key belum diset (VITE_FIREBASE_VAPID_KEY). ");
+        return;
+      }
 
-    // Pastikan service worker aktif sebelum meminta token FCM
-    const token = await getToken(messaging, {
-      vapidKey,
-      serviceWorkerRegistration: swReg,
-    });
+      // Pastikan service worker aktif sebelum meminta token FCM
+      const token = await getToken(messaging, {
+        vapidKey,
+        serviceWorkerRegistration: swReg,
+      });
 
-    if (!token) {
-      alert("Gagal mendapatkan FCM token. Coba refresh dan ulangi.");
-      return;
-    }
+      if (!token) {
+        alert("Gagal mendapatkan FCM token. Coba refresh dan ulangi.");
+        return;
+      }
 
-    // log sesuai request awal
-    // eslint-disable-next-line no-console
-    console.log("FCM token:", token);
+      // log sesuai request awal
+      // eslint-disable-next-line no-console
+      // console.log("FCM token:", token);
 
       const deviceId = getOrCreateDeviceId();
       await registerDevice({
@@ -239,7 +240,7 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  
+
 
   /* ================= EFFECTS ================= */
 
@@ -264,7 +265,7 @@ const DashboardPage: React.FC = () => {
 
     fetchUserByGuid(authUser.guid);
     fetchTodayAttendance();
-    // fetchPendingRequests();
+    fetchPendingRequests();
     // fetchPendingCorrections();
     fetchWorkingDayToday();
 
@@ -375,6 +376,7 @@ const DashboardPage: React.FC = () => {
     {
       label: "Persetujuan Cuti",
       icon: <CheckCircle color="primary" />,
+      badge: pendingRequests?.length,
       onClick: () => navigate("/persetujuan"),
     },
     {
@@ -588,8 +590,8 @@ const DashboardPage: React.FC = () => {
                     {pushLoading || isProcessingPush ? (
                       <CircularProgress size={18} />
                     ) : (
-                      <><NotificationsActive color="primary" /> 
-                      Aktifkan Notifikasi Presensi</>
+                      <><NotificationsActive color="primary" />
+                        Aktifkan Notifikasi Presensi</>
                     )}
                   </Button>
 

@@ -200,11 +200,13 @@ const PersetujuanDetailPage: React.FC = () => {
       case LeaveRequestType.LEAVE:
         return "Cuti";
       // case LeaveRequestType.WFH:
-        // return "Work From Home";
+      // return "Work From Home";
       case LeaveRequestType.DL:
         return "Dinas Luar";
+      case LeaveRequestType.SICK:
+        return "Sakit";
       // case LeaveRequestType.WFA:
-        // return "Work From Anywhere";
+      // return "Work From Anywhere";
       default:
         return type;
     }
@@ -235,7 +237,7 @@ const PersetujuanDetailPage: React.FC = () => {
       img.src = cacheBust(url);
     });
   };
-  
+
 
   const loadProfilePhoto = async () => {
     try {
@@ -253,10 +255,10 @@ const PersetujuanDetailPage: React.FC = () => {
           const driveId = tryGetGoogleDriveId(rawUrl);
           const candidates = driveId
             ? [
-                `https://drive.google.com/uc?export=view&id=${driveId}`,
-                `https://drive.google.com/thumbnail?id=${driveId}&sz=w1000`,
-                `https://drive.google.com/uc?export=download&id=${driveId}`,
-              ]
+              `https://drive.google.com/uc?export=view&id=${driveId}`,
+              `https://drive.google.com/thumbnail?id=${driveId}&sz=w1000`,
+              `https://drive.google.com/uc?export=download&id=${driveId}`,
+            ]
             : [rawUrl];
 
           for (const candidate of candidates) {
@@ -291,10 +293,10 @@ const PersetujuanDetailPage: React.FC = () => {
           const driveId = tryGetGoogleDriveId(raw);
           const candidates = driveId
             ? [
-                `https://drive.google.com/uc?export=view&id=${driveId}`,
-                `https://drive.google.com/thumbnail?id=${driveId}&sz=w1000`,
-                `https://drive.google.com/uc?export=download&id=${driveId}`,
-              ]
+              `https://drive.google.com/uc?export=view&id=${driveId}`,
+              `https://drive.google.com/thumbnail?id=${driveId}&sz=w1000`,
+              `https://drive.google.com/uc?export=download&id=${driveId}`,
+            ]
             : [raw];
 
           for (const candidate of candidates) {
@@ -396,7 +398,7 @@ const PersetujuanDetailPage: React.FC = () => {
                   position: "relative",
                 }}
               >
-                
+
                 {/* Updated Avatar to use photoURL or default image */}
                 <Avatar
                   key={photoURL || "default-image"}
@@ -526,15 +528,29 @@ const PersetujuanDetailPage: React.FC = () => {
                         selectedRequest.status === "APPROVED"
                           ? "success.main"
                           : selectedRequest.status === "REJECTED"
-                          ? "error.main"
-                          : "warning.main",
+                            ? "error.main"
+                            : "warning.main",
                     }}
                   >
                     {selectedRequest.status === "APPROVED"
                       ? "Disetujui"
                       : selectedRequest.status === "REJECTED"
-                      ? "Ditolak"
-                      : "Menunggu Persetujuan"}
+                        ? "Ditolak"
+                        : "Pengajuan"}
+                  </Typography>
+                </Box>
+
+                <Divider sx={{ width: "100%", my: 1 }} />
+
+                {/* Komentar */}
+                <Box sx={{ width: "100%", px: 2, py: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: "medium" }}>
+                    Komentar
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedRequest.comments && String(selectedRequest.comments).trim()
+                      ? selectedRequest.comments
+                      : "-"}
                   </Typography>
                 </Box>
 
@@ -587,46 +603,46 @@ const PersetujuanDetailPage: React.FC = () => {
               </Box>
             </Paper>
 
-                {/* Action Buttons: show when request is pending */}
-                {selectedRequest.status !== "APPROVED" && selectedRequest.status !== "REJECTED" && (
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      mt: 2,
-                      gap: 2,
-                    }}
-                  >
-                    <Button
-                      variant="contained"
-                      fullWidth
-                      sx={{
-                        bgcolor: "#f44336",
-                        "&:hover": { bgcolor: "#d32f2f" },
-                        py: 1.5,
-                        borderRadius: 1,
-                      }}
-                      onClick={handleReject}
-                      disabled={isLoading}
-                    >
-                      Tolak
-                    </Button>
-                    <Button
-                      variant="contained"
-                      fullWidth
-                      sx={{
-                        bgcolor: "success.main",
-                        "&:hover": { bgcolor: "success.dark" },
-                        py: 1.5,
-                        borderRadius: 1,
-                      }}
-                      onClick={handleApprove}
-                      disabled={isLoading}
-                    >
-                      {isLoading ? "Processing..." : "Setuju"}
-                    </Button>
-                  </Box>
-                )}
+            {/* Action Buttons: show when request is pending */}
+            {selectedRequest.status !== "APPROVED" && selectedRequest.status !== "REJECTED" && (
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  mt: 2,
+                  gap: 2,
+                }}
+              >
+                <Button
+                  variant="contained"
+                  fullWidth
+                  sx={{
+                    bgcolor: "#f44336",
+                    "&:hover": { bgcolor: "#d32f2f" },
+                    py: 1.5,
+                    borderRadius: 1,
+                  }}
+                  onClick={handleReject}
+                  disabled={isLoading}
+                >
+                  Tolak
+                </Button>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  sx={{
+                    bgcolor: "success.main",
+                    "&:hover": { bgcolor: "success.dark" },
+                    py: 1.5,
+                    borderRadius: 1,
+                  }}
+                  onClick={handleApprove}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Processing..." : "Setuju"}
+                </Button>
+              </Box>
+            )}
           </>
         )}
       </Container>

@@ -65,10 +65,10 @@ export interface UpdateLeaveRequestDto {
   attachment?: File; // For form handling
 }
 
-export interface ReviewLeaveRequestDto {
-  status: LeaveRequestStatus;
-  comments?: string;
-}
+  export interface ReviewLeaveRequestDto {
+    status: LeaveRequestStatus;
+    comments?: string;
+  }
 
 export interface QueryLeaveRequestsDto {
   userId?: string;

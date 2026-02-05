@@ -15,13 +15,15 @@ import {
   CircularProgress,
   Alert,
   Pagination,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useNavigate } from "react-router-dom";
 import BottomNav from "../../components/BottomNav";
 import { useLeaveRequests } from "../../contexts/LeaveRequestsContext";
 import { useUsers } from "../../contexts/UserContext"; // Import UserContext
-import { LeaveRequest, LeaveRequestType } from "../../types/leave-requests";
+import { LeaveRequest, LeaveRequestType, LeaveRequestStatus } from "../../types/leave-requests";
 import FileService from "../../services/FileService";
 import { format } from "date-fns";
 
@@ -50,11 +52,21 @@ const PersetujuanPage: React.FC = () => {
   // Pagination state
   const [page, setPage] = React.useState<number>(1);
   const itemsPerPage = 6;
-  const totalPages = Math.max(1, Math.ceil(leaveRequests.length / itemsPerPage));
+  // Tab/filter state (default to PENDING)
+  const [selectedTab, setSelectedTab] = React.useState<LeaveRequestStatus>(
+    LeaveRequestStatus.PENDING
+  );
+
+  // Filter requests based on selected tab/status
+  const filteredRequests = React.useMemo(() => {
+    return leaveRequests.filter((r) => r.status === selectedTab);
+  }, [leaveRequests, selectedTab]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRequests.length / itemsPerPage));
 
   const paginatedRequests = React.useMemo(() => {
-    return leaveRequests.slice((page - 1) * itemsPerPage, page * itemsPerPage);
-  }, [leaveRequests, page]);
+    return filteredRequests.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+  }, [filteredRequests, page]);
 
   // Format dates for display
   const formatDate = (date: Date) => {
@@ -66,6 +78,11 @@ const PersetujuanPage: React.FC = () => {
     fetchLeaveRequests();
     // fetchUsers();
   }, []);
+
+  // Reset page when tab changes
+  useEffect(() => {
+    setPage(1);
+  }, [selectedTab]);
 
   const handleBack = () => {
     navigate("/dashboard");
@@ -80,13 +97,13 @@ const PersetujuanPage: React.FC = () => {
   const getStatusColor = (type: LeaveRequestType) => {
     switch (type) {
       case LeaveRequestType.LEAVE:
-        return "primary.main"; // Blue for Cuti
+        return "info.main"; // Blue for Cuti
       // case LeaveRequestType.WFH:
       //   return "success.main"; // Green for Work From Home
       case LeaveRequestType.DL:
-        return "#F44336"; // Red for Dinas Luar
+        return "info.main"; // Red for Dinas Luar
       case LeaveRequestType.SICK:
-        return "#FFC107"; // Yellow/Amber for Work From Anywhere
+        return "info.main"; // Yellow/Amber for Work From Anywhere
       default:
         return "primary.main"; // Default blue
     }
@@ -145,7 +162,7 @@ const PersetujuanPage: React.FC = () => {
           <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
             <CircularProgress />
           </Box>
-        ) : leaveRequests.length === 0 ? (
+        ) : filteredRequests.length === 0 ? (
           <Paper
             elevation={1}
             sx={{
@@ -155,11 +172,36 @@ const PersetujuanPage: React.FC = () => {
             }}
           >
             <Typography variant="body1">
-              Tidak ada permohonan yang perlu disetujui saat ini.
+              Tidak ada permohonan yang cocok untuk filter ini.
             </Typography>
           </Paper>
         ) : (
-          <List sx={{ p: 0 }}>
+          <>
+            <Tabs
+              value={selectedTab}
+              onChange={(_, v) => setSelectedTab(v as LeaveRequestStatus)}
+              variant="fullWidth"
+              sx={{
+                mb: 2,
+                minHeight: 36,
+                "& .MuiTab-root": {
+                  minHeight: 32,
+                  py: 0.5,
+                  px: 1,
+                  fontSize: 13,
+                  textTransform: "none",
+                },
+                "& .MuiTabs-flexContainer": {
+                  gap: 2,
+                },
+              }}
+            >
+              <Tab sx={{ minWidth: 0 }} label={`Pengajuan (${leaveRequests.filter(r => r.status === LeaveRequestStatus.PENDING).length})`} value={LeaveRequestStatus.PENDING} />
+              <Tab sx={{ minWidth: 0 }} label={`Disetujui (${leaveRequests.filter(r => r.status === LeaveRequestStatus.APPROVED).length})`} value={LeaveRequestStatus.APPROVED} />
+              <Tab sx={{ minWidth: 0 }} label={`Ditolak (${leaveRequests.filter(r => r.status === LeaveRequestStatus.REJECTED).length})`} value={LeaveRequestStatus.REJECTED} />
+            </Tabs>
+
+            <List sx={{ p: 0 }}>
             {paginatedRequests.map((request: LeaveRequest) => {
               // Get user name from users array
               const userName = request.userName;
@@ -260,6 +302,7 @@ const PersetujuanPage: React.FC = () => {
               );
             })}
           </List>
+          </>
         )}
 
         {totalPages > 1 && (
