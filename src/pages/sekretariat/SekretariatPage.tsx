@@ -29,6 +29,16 @@ import {
   Avatar,
   Divider,
   useTheme,
+  Tabs,
+  Tab,
+  Table,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  Paper,
+  Chip,
 } from "@mui/material";
 import {
   ArrowBack,
@@ -42,9 +52,11 @@ import BottomNav from "../../components/BottomNav";
 import { useNavigate } from "react-router-dom";
 import { useUsers } from "../../contexts/UserContext";
 import { useAuth } from "../../contexts/AuthContext";
+import { useAttendance } from "../../contexts/AttendanceContext";
 import { useStatistics } from "../../contexts/StatisticsContext";
 import { User } from "../../types/users";
-import { UserRole } from "../../types/enums";
+import { UserRole, WorkingStatus } from "../../types/enums";
+import { WorkingStatusColors, WorkingStatusLabels } from "../../types/working-status";
 import {
   ReportPeriod,
   ReportFormat,
@@ -74,7 +86,18 @@ const SekretariatPage: React.FC = () => {
     clearError: clearStatsError,
   } = useStatistics();
 
+  // Attendance context for monitoring tab
+  const {
+    attendanceReportItems,
+    fetchAttendanceRecords,
+    loading: attendanceLoading,
+    error: attendanceError,
+    clearError: clearAttendanceError,
+  } = useAttendance();
+
   const [departmentMembers, setDepartmentMembers] = useState<User[]>([]);
+  const [activeTab, setActiveTab] = useState(0);
+  const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [reportParams, setReportParams] = useState<GenerateBulkReportParams>({
     format: ReportFormat.EXCEL,
@@ -89,10 +112,29 @@ const SekretariatPage: React.FC = () => {
   });
   const [userSelectionDialog, setUserSelectionDialog] = useState(false);
 
-  const normalizedRole = String(currentUser?.role ?? "").toLowerCase().trim();
+  const normalizedRole = String(currentUser?.role ?? "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "_");
   const isSekretariatWideRole =
     normalizedRole === UserRole.SEKRETARIS ||
-    normalizedRole === UserRole.STAF_SDM
+    normalizedRole === UserRole.STAF_SDM ||
+    normalizedRole === UserRole.KASUBAG_SDM;
+
+  const buildAttendanceParams = React.useCallback(() => {
+    return isSekretariatWideRole
+      ? {
+          startDate: selectedDate,
+          endDate: selectedDate,
+          scope: BulkReportScope.ALL_USERS,
+        }
+      : {
+          startDate: selectedDate,
+          endDate: selectedDate,
+          scope: BulkReportScope.DEPARTMENT,
+          departmentName: currentUser?.department,
+        };
+  }, [isSekretariatWideRole, selectedDate, currentUser?.department]);
 
   useEffect(() => {
     clearUsersError();
@@ -120,7 +162,7 @@ const SekretariatPage: React.FC = () => {
 
     fetchMembers();
 
-    // Set default date range (current month)
+    // Set default date range (current month) and selected date (today)
     const now = getNow();
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -129,12 +171,23 @@ const SekretariatPage: React.FC = () => {
       ...prev,
       startDate: firstDay.toISOString().split("T")[0],
       endDate: lastDay.toISOString().split("T")[0],
-      title: `Laporan Kehadiran ${""
-        } - ${now.toLocaleString("id-ID", { month: "long", year: "numeric" })}`,
+      title: `Laporan Kehadiran ${""} - ${now.toLocaleString("id-ID", { month: "long", year: "numeric" })}`,
       scope: isSekretariatWideRole ? BulkReportScope.ALL_USERS : BulkReportScope.DEPARTMENT,
       departmentName: isSekretariatWideRole ? undefined : currentUser?.department,
     }));
+
+    // default selected date = today
+    setSelectedDate(now.toISOString().split("T")[0]);
   }, [currentUser, isSekretariatWideRole]);
+
+  useEffect(() => {
+    if (activeTab !== 0) return;
+    if (!selectedDate) return;
+    if (!currentUser) return;
+
+    const params = buildAttendanceParams();
+    fetchAttendanceRecords(params);
+  }, [activeTab, selectedDate, currentUser, buildAttendanceParams, fetchAttendanceRecords]);
 
   useEffect(() => {
     if (!isSekretariatWideRole) return;
@@ -282,6 +335,50 @@ const SekretariatPage: React.FC = () => {
   const error = usersError || statsError;
 
   const theme = useTheme();
+
+  const toWorkingStatus = (status: string): WorkingStatus | null => {
+    const raw = String(status ?? "").trim();
+    if (!raw) return null;
+
+    const normalized = raw.toLowerCase().replace(/[-\s]+/g, "_");
+    switch (normalized) {
+      case "present":
+      case "hadir":
+        return WorkingStatus.PRESENT;
+      case "absent":
+      case "tidak_hadir":
+        return WorkingStatus.ABSENT;
+      case "late":
+      case "terlambat":
+        return WorkingStatus.LATE;
+      case "problem":
+      case "masalah_presensi":
+        return WorkingStatus.PROBLEM;
+      case "early_departure":
+      case "jam_kerja_kurang":
+        return WorkingStatus.EARLY_DEPARTURE;
+      case "remote_working":
+      case "kerja_remote":
+        return WorkingStatus.REMOTE_WORKING;
+      case "on_leave":
+      case "cuti":
+        return WorkingStatus.ON_LEAVE;
+      case "official_travel":
+      case "dinas_luar":
+        return WorkingStatus.OFFICIAL_TRAVEL;
+      case "sick":
+      case "sakit":
+        return WorkingStatus.SICK;
+      default: {
+        const upper = raw.toUpperCase().replace(/[-\s]+/g, "_");
+        if ((Object.values(WorkingStatus) as string[]).includes(upper)) {
+          return upper as WorkingStatus;
+        }
+        return null;
+      }
+    }
+  };
+
   return (
     <Box sx={{ bgcolor: "#f5f5f5", width: "100%", minHeight: "100vh", pb: 7 }}>
       {/* Header */}
@@ -292,14 +389,14 @@ const SekretariatPage: React.FC = () => {
           </IconButton>
           <Typography
             variant="h6"
-            sx={{ flexGrow: 1, textAlign: "center", mr: 4 }}
+            sx={{ flexGrow: 1, textAlign: "center", mr: 4, fontWeight: 700 }}
           >
             Laporan Sekretariat
           </Typography>
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="md" sx={{ mt: 2 }}>
+  <Container maxWidth="md" sx={{ mt: 2 }}>
         {/* Error Display */}
         {error && (
           <Alert
@@ -314,240 +411,354 @@ const SekretariatPage: React.FC = () => {
           </Alert>
         )}
 
-        {/* Department Info */}
-        {currentUser?.department && (
-          <Card sx={{ mb: 2, bgcolor: theme.palette.primary.main, color: "white" }}>
-            <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Group sx={{ fontSize: 35 }} />
-              <Box>
-                <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                  {departmentMembers.length} anggota terdaftar
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Report Generation Form */}
-        <Card>
+        {/* Attendance / Tabs */}
+        <Card sx={{ mb: 2 }}>
           <CardContent>
-            <Typography
-              variant="h6"
-              sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}
+            <Tabs
+              value={activeTab}
+              onChange={(_, v) => setActiveTab(v)}
+              aria-label="Sekretariat Tabs"
+              sx={{ mb: 2 }}
             >
-              <Assessment />
-              Generate Laporan
-            </Typography>
+              <Tab label="Harian" />
+              <Tab label="Rekap" />
+            </Tabs>
 
-            <Grid>
-              {/* Report Title */}
-              <Grid>
-                <TextField
-                  fullWidth
-                  label="Judul Laporan"
-                  value={reportParams.title}
-                  onChange={(e) => handleParamChange("title", e.target.value)}
-                  placeholder="Masukkan judul laporan..."
-                  sx={{ mb: 2 }}
-                />
-              </Grid>
-
-              {/* Format and Period */}
-              <Grid>
-                <FormControl fullWidth sx={{ mb: 2 }}>
-                  <InputLabel>Format</InputLabel>
-                  <Select
-                    value={reportParams.format}
-                    label="Format"
-                    onChange={(e) =>
-                      handleParamChange("format", e.target.value)
-                    }
+            {/* Tab 0: Monitoring Kehadiran */}
+            {activeTab === 0 && (
+              <Box>
+                <Box sx={{ display: "flex", gap: 2, alignItems: "center", mb: 2 }}>
+                  <TextField
+                    label="Pilih Tanggal"
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    sx={{ width: 220 }}
+                  />
+                  {/* <Button
+                    variant="contained"
+                    onClick={async () => {
+                      // fetch attendance for selected date
+                      const params = buildAttendanceParams();
+                      await fetchAttendanceRecords(params);
+                    }}
                   >
-                    <MenuItem value={ReportFormat.EXCEL}>
-                      Excel (.xlsx)
-                    </MenuItem>
-                    {/* <MenuItem value={ReportFormat.PDF}>PDF</MenuItem>
-                    <MenuItem value={ReportFormat.CSV}>CSV</MenuItem> */}
-                  </Select>
-                </FormControl>
-              </Grid>
+                    Tampilkan
+                  </Button> */}
+                </Box>
 
-              <Grid>
-                <FormControl fullWidth sx={{ mb: 2 }}>
-                  <InputLabel>Periode</InputLabel>
-                  <Select
-                    value={reportParams.period}
-                    label="Periode"
-                    onChange={(e) =>
-                      handleParamChange("period", e.target.value)
-                    }
-                  >
-                    <MenuItem value={ReportPeriod.DAILY}>Harian</MenuItem>
-                    <MenuItem value={ReportPeriod.WEEKLY}>Mingguan</MenuItem>
-                    <MenuItem value={ReportPeriod.MONTHLY}>Bulanan</MenuItem>
-                    <MenuItem value={ReportPeriod.CUSTOM}>Custom</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              {/* Date Range */}
-              <Grid>
-                <TextField
-                  fullWidth
-                  type="date"
-                  label="Tanggal Mulai"
-                  value={reportParams.startDate}
-                  onChange={(e) =>
-                    handleParamChange("startDate", e.target.value)
-                  }
-                  InputLabelProps={{ shrink: true }}
-                  sx={{ mb: 2 }}
-                />
-              </Grid>
-
-              <Grid>
-                <TextField
-                  fullWidth
-                  type="date"
-                  label="Tanggal Selesai"
-                  value={reportParams.endDate}
-                  onChange={(e) => handleParamChange("endDate", e.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                  sx={{ mb: 2 }}
-                />
-              </Grid>
-
-              {/* Scope Selection */}
-              <Grid>
-                <FormControl fullWidth sx={{ mb: 2 }}>
-                  <InputLabel>Cakupan Laporan</InputLabel>
-                  <Select
-                    value={reportParams.scope}
-                    label="Cakupan Laporan"
-                    onChange={(e) => handleParamChange("scope", e.target.value)}
-                  >
-                    <MenuItem
-                      value={
-                        isSekretariatWideRole
-                          ? BulkReportScope.ALL_USERS
-                          : BulkReportScope.DEPARTMENT
-                      }
-                    >
-                      {isSekretariatWideRole
-                        ? `Seluruh Sekretariat (${departmentMembers.length} orang)`
-                        : `Seluruh Sub Bagian (${departmentMembers.length} orang)`}
-                    </MenuItem>
-                    <MenuItem value={BulkReportScope.SPECIFIC_USERS}>
-                      Pilih Pengguna Tertentu
-                    </MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              {/* User Selection Button */}
-              {reportParams.scope === BulkReportScope.SPECIFIC_USERS && (
-                <Grid>
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    startIcon={<People />}
-                    onClick={() => setUserSelectionDialog(true)}
-                    sx={{ py: 1.5 }}
-                  >
-                    Pilih Pengguna ({selectedUsers.length} dipilih)
-                  </Button>
-                </Grid>
-              )}
-
-              {/* Advanced Options */}
-              <Grid>
-                <Divider sx={{ my: 2 }} />
-                <Typography
-                  variant="subtitle2"
-                  sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}
+                <TableContainer
+                  component={Paper}
+                  sx={{ width: "100%", overflowX: "auto" }}
                 >
-                  <Settings fontSize="small" />
-                  Opsi Lanjutan
+                  <Table size="small" sx={{ minWidth: 650 }}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Nama / NIP</TableCell>
+                        <TableCell>Jam Masuk</TableCell>
+                        <TableCell>Jam Keluar</TableCell>
+                        <TableCell>Status</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {(!attendanceLoading && attendanceReportItems.length === 0) ? (
+                        <TableRow>
+                          <TableCell colSpan={4}>
+                            <Typography
+                              align="center"
+                              variant="body2"
+                              sx={{ py: 2, color: "text.secondary" }}
+                            >
+                              Tidak ada data kehadiran untuk hari ini
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        attendanceReportItems.map((att) => {
+                          const fullName = att.name || att.userId;
+                          const nip = att.nip || "-";
+                          const profileImageUrl = att.profileImageUrl || undefined;
+
+                          const formatTime = (t?: any) => {
+                            if (!t) return "-";
+                            const d = new Date(t);
+                            if (isNaN(d.getTime())) return "-";
+                            return d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+                          };
+
+                          return (
+                            <TableRow key={`${att.userId}-${String(att.date ?? "")}` }>
+                              <TableCell>
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                  <Avatar
+                                    src={profileImageUrl}
+                                    sx={{ width: 36, height: 36 }}
+                                  >
+                                    {fullName ? String(fullName).charAt(0).toUpperCase() : "U"}
+                                  </Avatar>
+                                  <Box>
+                                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                      {fullName}
+                                    </Typography>
+                                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                                      {nip}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              </TableCell>
+                              <TableCell>{formatTime(att.checkInTime)}</TableCell>
+                              <TableCell>{formatTime(att.checkOutTime)}</TableCell>
+                              <TableCell>
+                                {(() => {
+                                  const ws = toWorkingStatus(att.status);
+                                  const label = ws ? (WorkingStatusLabels[ws] ?? att.status) : (att.status || "-");
+                                  const color = ws ? (WorkingStatusColors[ws] as any) : "default";
+                                  return (
+                                    <Chip
+                                      size="small"
+                                      label={label}
+                                      color={color}
+                                      variant={ws ? "filled" : "outlined"}
+                                    />
+                                  );
+                                })()}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                {attendanceLoading && (
+                  <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+                    <CircularProgress size={20} />
+                  </Box>
+                )}
+                {attendanceError && (
+                  <Alert severity="error" sx={{ mt: 2 }} onClose={() => clearAttendanceError()}>{attendanceError}</Alert>
+                )}
+
+                {currentUser?.department && (
+                  <Card sx={{ mt: 2, bgcolor: theme.palette.primary.main, color: "white" }}>
+                    <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      <Group sx={{ fontSize: 35 }} />
+                      <Box>
+                        <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                          {departmentMembers.length} anggota terdaftar
+                        </Typography>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                )}
+              </Box>
+            )}
+
+            {/* Tab 1: Rekap Sekretariat - existing report form will be shown below when tab=1 */}
+            {activeTab === 1 && (
+              <Box>
+                <Typography
+                  variant="h6"
+                  sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}
+                >
+                  <Assessment />
+                  Generate Laporan
                 </Typography>
 
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 0,
-                    mb: 2,
-                  }}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <Checkbox
-                      checked={reportParams.separateSheets || false}
-                      onChange={(e) =>
-                        handleParamChange("separateSheets", e.target.checked)
-                      }
+                <Grid>
+                  {/* Report Title */}
+                  <Grid>
+                    <TextField
+                      fullWidth
+                      label="Judul Laporan"
+                      value={reportParams.title}
+                      onChange={(e) => handleParamChange("title", e.target.value)}
+                      placeholder="Masukkan judul laporan..."
+                      sx={{ mb: 2 }}
                     />
-                    <Typography variant="body2">
-                      Pisahkan sheet untuk setiap pengguna
-                    </Typography>
-                  </Box>
+                  </Grid>
 
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <Checkbox
-                      checked={reportParams.includeSummary || false}
-                      onChange={(e) =>
-                        handleParamChange("includeSummary", e.target.checked)
-                      }
-                    />
-                    <Typography variant="body2">
-                      Sertakan ringkasan laporan
-                    </Typography>
-                  </Box>
+                  {/* Format and Period */}
+                  <Grid>
+                    <FormControl fullWidth sx={{ mb: 2 }}>
+                      <InputLabel>Format</InputLabel>
+                      <Select
+                        value={reportParams.format}
+                        label="Format"
+                        onChange={(e) => handleParamChange("format", e.target.value)}
+                      >
+                        <MenuItem value={ReportFormat.EXCEL}>Excel (.xlsx)</MenuItem>
+                        {/* <MenuItem value={ReportFormat.PDF}>PDF</MenuItem>
+                        <MenuItem value={ReportFormat.CSV}>CSV</MenuItem> */}
+                      </Select>
+                    </FormControl>
+                  </Grid>
 
-                  {/* <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <Checkbox
-                      checked={reportParams.includeInactive || false}
-                      onChange={(e) =>
-                        handleParamChange("includeInactive", e.target.checked)
-                      }
+                  <Grid>
+                    <FormControl fullWidth sx={{ mb: 2 }}>
+                      <InputLabel>Periode</InputLabel>
+                      <Select
+                        value={reportParams.period}
+                        label="Periode"
+                        onChange={(e) => handleParamChange("period", e.target.value)}
+                      >
+                        <MenuItem value={ReportPeriod.DAILY}>Harian</MenuItem>
+                        <MenuItem value={ReportPeriod.WEEKLY}>Mingguan</MenuItem>
+                        <MenuItem value={ReportPeriod.MONTHLY}>Bulanan</MenuItem>
+                        <MenuItem value={ReportPeriod.CUSTOM}>Custom</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  {/* Date Range */}
+                  <Grid>
+                    <TextField
+                      fullWidth
+                      type="date"
+                      label="Tanggal Mulai"
+                      value={reportParams.startDate}
+                      onChange={(e) => handleParamChange("startDate", e.target.value)}
+                      InputLabelProps={{ shrink: true }}
+                      sx={{ mb: 2 }}
                     />
-                    <Typography variant="body2">
-                      Sertakan pengguna tidak aktif
+                  </Grid>
+
+                  <Grid>
+                    <TextField
+                      fullWidth
+                      type="date"
+                      label="Tanggal Selesai"
+                      value={reportParams.endDate}
+                      onChange={(e) => handleParamChange("endDate", e.target.value)}
+                      InputLabelProps={{ shrink: true }}
+                      sx={{ mb: 2 }}
+                    />
+                  </Grid>
+
+                  {/* Scope Selection */}
+                  <Grid>
+                    <FormControl fullWidth sx={{ mb: 2 }}>
+                      <InputLabel>Cakupan Laporan</InputLabel>
+                      <Select
+                        value={reportParams.scope}
+                        label="Cakupan Laporan"
+                        onChange={(e) => handleParamChange("scope", e.target.value)}
+                      >
+                        <MenuItem
+                          value={
+                            isSekretariatWideRole
+                              ? BulkReportScope.ALL_USERS
+                              : BulkReportScope.DEPARTMENT
+                          }
+                        >
+                          {isSekretariatWideRole
+                            ? `Seluruh Sekretariat (${departmentMembers.length} orang)`
+                            : `Seluruh Sub Bagian (${departmentMembers.length} orang)`}
+                        </MenuItem>
+                        <MenuItem value={BulkReportScope.SPECIFIC_USERS}>
+                          Pilih Pengguna Tertentu
+                        </MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  {/* User Selection Button */}
+                  {reportParams.scope === BulkReportScope.SPECIFIC_USERS && (
+                    <Grid>
+                      <Button
+                        variant="outlined"
+                        fullWidth
+                        startIcon={<People />}
+                        onClick={() => setUserSelectionDialog(true)}
+                        sx={{ py: 1.5 }}
+                      >
+                        Pilih Pengguna ({selectedUsers.length} dipilih)
+                      </Button>
+                    </Grid>
+                  )}
+
+                  {/* Advanced Options */}
+                  <Grid>
+                    <Divider sx={{ my: 2 }} />
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}
+                    >
+                      <Settings fontSize="small" />
+                      Opsi Lanjutan
                     </Typography>
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 0,
+                        mb: 2,
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                        <Checkbox
+                          checked={reportParams.separateSheets || false}
+                          onChange={(e) => handleParamChange("separateSheets", e.target.checked)}
+                        />
+                        <Typography variant="body2">
+                          Pisahkan sheet untuk setiap pengguna
+                        </Typography>
+                      </Box>
+
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                        <Checkbox
+                          checked={reportParams.includeSummary || false}
+                          onChange={(e) => handleParamChange("includeSummary", e.target.checked)}
+                        />
+                        <Typography variant="body2">Sertakan ringkasan laporan</Typography>
+                      </Box>
+
+                      {/* <Box sx={{ display: "flex", alignItems: "center" }}>
+                        <Checkbox
+                          checked={reportParams.includeInactive || false}
+                          onChange={(e) => handleParamChange("includeInactive", e.target.checked)}
+                        />
+                        <Typography variant="body2">
+                          Sertakan pengguna tidak aktif
+                        </Typography>
+                      </Box> */}
+                    </Box>
+                  </Grid>
+
+                  {/* Generate Button */}
+                  <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      size="large"
+                      startIcon={loading ? <CircularProgress size={20} /> : <Assessment />}
+                      onClick={handleGenerateReport}
+                      disabled={loading}
+                      sx={{ py: 1.5 }}
+                    >
+                      {loading ? "Generating..." : "Generate Laporan Kehadiran"}
+                    </Button>
+                  </Box>
+                  {/* <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      size="large"
+                      startIcon={
+                        loading ? <CircularProgress size={20} /> : <RequestQuote />
+                      }
+                      onClick={handleGenerateReport}
+                      disabled={loading}
+                      sx={{ py: 1.5 }}
+                    >
+                      {loading ? "Generating..." : "Generate Laporan Tukin"}
+                    </Button>
                   </Box> */}
-                </Box>
-              </Grid>
-
-              {/* Generate Button */}
-              <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  size="large"
-                  startIcon={
-                    loading ? <CircularProgress size={20} /> : <Assessment />
-                  }
-                  onClick={handleGenerateReport}
-                  disabled={loading}
-                  sx={{ py: 1.5 }}
-                >
-                  {loading ? "Generating..." : "Generate Laporan Kehadiran"}
-                </Button>
+                </Grid>
               </Box>
-              {/* <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  size="large"
-                  startIcon={
-                    loading ? <CircularProgress size={20} /> : <RequestQuote />
-                  }
-                  onClick={handleGenerateReport}
-                  disabled={loading}
-                  sx={{ py: 1.5 }}
-                >
-                  {loading ? "Generating..." : "Generate Laporan Tukin"}
-                </Button>
-              </Box> */}
-            </Grid>
+            )}
           </CardContent>
         </Card>
       </Container>

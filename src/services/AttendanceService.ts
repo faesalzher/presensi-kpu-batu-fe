@@ -7,6 +7,7 @@ import {
   VerifyAttendanceDto,
   AttendanceQueryParams,
   AttendanceSummary,
+  AttendanceReportItemResponse,
 } from "../types/attendance";
 import AuthService from "./AuthService";
 import { supabase } from "../lib/supabase";
@@ -125,9 +126,12 @@ const AttendanceService = {
    */
   getAllAttendance: async (
     params: AttendanceQueryParams
-  ): Promise<Attendance[]> => {
-    const response = await API.get<Attendance[]>("/attendance", { params });
-    return response.data;
+  ): Promise<AttendanceReportItemResponse[]> => {
+    const response = await API.get<AttendanceReportItemResponse[] | null>(
+      "/attendance",
+      { params }
+    );
+    return Array.isArray(response.data) ? response.data : [];
   },
 
   /**

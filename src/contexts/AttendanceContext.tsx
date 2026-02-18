@@ -13,6 +13,7 @@ import {
   VerifyAttendanceDto,
   AttendanceQueryParams,
   AttendanceSummary,
+  AttendanceReportItemResponse,
 } from "../types/attendance";
 import AttendanceService from "../services/AttendanceService";
 import { useAuth } from "./AuthContext";
@@ -21,6 +22,7 @@ import { UserRole } from "../types/enums";
 interface AttendanceContextType {
   todayAttendance: Attendance | null;
   attendanceRecords: Attendance[];
+  attendanceReportItems: AttendanceReportItemResponse[];
   selectedAttendance: Attendance | null;
   attendanceSummary: AttendanceSummary | null;
   loading: boolean;
@@ -29,7 +31,9 @@ interface AttendanceContextType {
   checkIn: (checkInData: CheckInDto, photo?: File) => Promise<void>;
   checkOut: (checkOutData: CheckOutDto, photo?: File) => Promise<void>;
   fetchTodayAttendance: () => Promise<void>;
-  fetchAttendanceRecords: (params: AttendanceQueryParams) => Promise<void>;
+  fetchAttendanceRecords: (
+    params: AttendanceQueryParams
+  ) => Promise<AttendanceReportItemResponse[]>;
   fetchMyAttendanceRecords: (params: AttendanceQueryParams) => Promise<void>;
   fetchAttendanceById: (guid: string) => Promise<void>;
   verifyAttendance: (
@@ -61,6 +65,9 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({
     null
   );
   const [attendanceRecords, setAttendanceRecords] = useState<Attendance[]>([]);
+  const [attendanceReportItems, setAttendanceReportItems] = useState<
+    AttendanceReportItemResponse[]
+  >([]);
   const [selectedAttendance, setSelectedAttendance] =
     useState<Attendance | null>(null);
   const [attendanceSummary, setAttendanceSummary] =
@@ -130,31 +137,43 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const fetchAttendanceRecords = async (
-    params: AttendanceQueryParams
-  ): Promise<void> => {
-    if (
-      !user ||
-      (user.role !== UserRole.ADMIN && user.role !== UserRole.KASUBAG)
-    ) {
-      setError(
-        "Unauthorized: Only admins and department heads can view all attendance records"
-      );
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      const records = await AttendanceService.getAllAttendance(params);
-      setAttendanceRecords(records);
-    } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.message || "Failed to fetch attendance records";
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fetchAttendanceRecords = useCallback(
+    async (params: AttendanceQueryParams): Promise<AttendanceReportItemResponse[]> => {
+      const canonicalRole = String(user?.role ?? "")
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, "_");
+
+      if (
+        !user ||
+        (canonicalRole !== UserRole.ADMIN &&
+          canonicalRole !== UserRole.KASUBAG &&
+          canonicalRole !== UserRole.KASUBAG_SDM &&
+          canonicalRole !== UserRole.STAF_SDM &&
+          canonicalRole !== UserRole.SEKRETARIS)
+      ) {
+        setError(
+          "Unauthorized: Only admins and department heads can view all attendance records"
+        );
+        return [];
+      }
+      setLoading(true);
+      setError(null);
+      try {
+        const records = await AttendanceService.getAllAttendance(params);
+        setAttendanceReportItems(records);
+        return records;
+      } catch (err: any) {
+        const errorMessage =
+          err.response?.data?.message || "Failed to fetch attendance records";
+        setError(errorMessage);
+        return [];
+      } finally {
+        setLoading(false);
+      }
+    },
+    [user]
+  );
 
   const fetchMyAttendanceRecords = useCallback(
     async (params: AttendanceQueryParams): Promise<void> => {
@@ -317,6 +336,7 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({
   const value = {
     todayAttendance,
     attendanceRecords,
+    attendanceReportItems,
     selectedAttendance,
     attendanceSummary,
     loading,

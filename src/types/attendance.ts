@@ -1,4 +1,6 @@
 // src/types/attendance.ts
+import { BulkReportScope } from "./statistics";
+
 export interface GeoLocation {
   latitude: number;
   longitude: number;
@@ -32,6 +34,18 @@ export interface Attendance {
   lateMinutes?: number;
 }
 
+// Shape for monitoring/report endpoint response (matches BE AttendanceReportItemResponse)
+export interface AttendanceReportItemResponse {
+  userId: string;
+  name: string;
+  nip?: string | null;
+  profileImageUrl?: string | null;
+  date: string;
+  checkInTime?: string | null;
+  checkOutTime?: string | null;
+  status: string;
+}
+
 export interface CheckInDto {
   latitude: number;
   longitude: number;
@@ -56,7 +70,8 @@ export interface AttendanceQueryParams {
   startDate?: string;
   endDate?: string;
   userId?: string;
-  departmentId?: string;
+  scope?: BulkReportScope;
+  departmentName?: string;
   status?: string;
 }
 

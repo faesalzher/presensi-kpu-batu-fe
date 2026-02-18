@@ -263,6 +263,10 @@ const PresensiPage: React.FC = () => {
   // const [isWithinRadius, setIsWithinRadius] = useState<boolean | null>(null);
   // const [distanceToOffice, setDistanceToOffice] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [actionLocked, setActionLocked] = useState<boolean>(false);
+  const [pendingRedirect, setPendingRedirect] = useState<boolean>(false);
+  const redirectTimerRef = useRef<number | null>(null);
+  const redirectedRef = useRef<boolean>(false);
   // const [imageFile, setImageFile] = useState<File | null>(null);
   const [isCheckOut, setIsCheckOut] = useState<boolean>(false);
   const [showOutsideRadiusDialog, setShowOutsideRadiusDialog] = useState(false);
@@ -443,6 +447,10 @@ const PresensiPage: React.FC = () => {
     return () => {
       // isMounted.current = false;
       // stopCameraStream();
+      if (redirectTimerRef.current !== null) {
+        window.clearTimeout(redirectTimerRef.current);
+        redirectTimerRef.current = null;
+      }
     };
   }, []);
 
@@ -504,6 +512,35 @@ const PresensiPage: React.FC = () => {
     setAlertMessage(message);
     setAlertSeverity(severity);
     setShowAlert(true);
+  };
+
+  const TOAST_DURATION_MS = 4000;
+
+  const redirectOnce = () => {
+    if (redirectedRef.current) return;
+    redirectedRef.current = true;
+
+    if (redirectTimerRef.current !== null) {
+      window.clearTimeout(redirectTimerRef.current);
+      redirectTimerRef.current = null;
+    }
+
+    setPendingRedirect(false);
+    if (isMounted.current) {
+      navigate("/dashboard");
+    }
+  };
+
+  const handleToastClose = (
+    _event?: React.SyntheticEvent | Event,
+    reason?: string
+  ) => {
+    if (reason === "clickaway") return;
+    setShowAlert(false);
+
+    if (pendingRedirect) {
+      redirectOnce();
+    }
   };
 
   const handleBackClick = () => {
@@ -594,9 +631,12 @@ const PresensiPage: React.FC = () => {
       return;
     }
 
+    if (isSubmitting || actionLocked) return;
     setIsSubmitting(true);
 
     try {
+      // allow redirect again for this submission
+      redirectedRef.current = false;
       if (isCheckOut) {
         const checkOutData: CheckOutDto = {
           latitude: userLocation?.[0] ?? 0,
@@ -615,16 +655,24 @@ const PresensiPage: React.FC = () => {
         showNotification("Check-in successful!", "success");
       }
 
-      setTimeout(() => {
-        if (isMounted.current) {
-          // stopCameraStream();
-          navigate("/dashboard");
-        }
-      }, 2000);
+      // Stop showing loading spinner, but keep the action locked
+      // until the toast is closed (auto-hide or manual close).
+      setIsSubmitting(false);
+      setActionLocked(true);
+      setPendingRedirect(true);
+
+      if (redirectTimerRef.current !== null) {
+        window.clearTimeout(redirectTimerRef.current);
+      }
+      redirectTimerRef.current = window.setTimeout(() => {
+        redirectOnce();
+      }, TOAST_DURATION_MS);
     } catch (error) {
       // Error handling
-    } finally {
       setIsSubmitting(false);
+      setActionLocked(false);
+    } finally {
+      // no-op: isSubmitting is managed above
     }
   };
 
@@ -719,6 +767,7 @@ const PresensiPage: React.FC = () => {
     systemLoading ||
     // !capturedImage ||
     isSubmitting ||
+    actionLocked ||
     (isCheckOut ? !canCheckOut : !canCheckIn) ||
     (!canCheckIn && !canCheckOut) ||
     (!isCheckOut && (
@@ -1085,12 +1134,12 @@ const PresensiPage: React.FC = () => {
 
       <Snackbar
         open={showAlert}
-        autoHideDuration={4000}
-        onClose={() => setShowAlert(false)}
+        autoHideDuration={TOAST_DURATION_MS}
+        onClose={handleToastClose}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
         <Alert
-          onClose={() => setShowAlert(false)}
+          onClose={handleToastClose}
           severity={alertSeverity}
           sx={{ width: "100%" }}
         >
