@@ -1,59 +1,86 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Box,
   Container,
   Typography,
-  Paper,
-  IconButton,
+  Card,
+  CardContent,
   Button,
   TextField,
   MenuItem,
-  FormControl,
-  Select,
-  SelectChangeEvent,
-  InputAdornment,
-  styled,
+  IconButton,
   CircularProgress,
   Alert,
+  Snackbar,
 } from "@mui/material";
+import { TimePicker } from "@mui/x-date-pickers/TimePicker";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import EditIcon from "@mui/icons-material/Edit";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import BottomNav from "../../components/BottomNav";
 import { useCorrections } from "../../contexts/CorrectionsContext";
 import { useAttendance } from "../../contexts/AttendanceContext";
 import { format } from "date-fns";
 import { CreateCorrectionDto } from "../../types/corrections";
-import { getNow } from "../../constant/time.constant";
 
-// Custom styled MenuItem for wrapping text
-const StyledMenuItem = styled(MenuItem)({
-  whiteSpace: "normal",
-  wordBreak: "break-word",
-  lineHeight: "1.25",
-  padding: "12px 16px",
-  minHeight: "unset",
-});
+const REVISION_REASON_OPTIONS = [
+  {
+    value: "MISSED_CHECK_IN",
+    label: "Lupa Absen Masuk",
+    correctionType: "MISSED_CHECK_IN",
+  },
+  {
+    value: "MISSED_CHECK_OUT",
+    label: "Lupa Absen Pulang",
+    correctionType: "MISSED_CHECK_OUT",
+  },
+  {
+    value: "LATE_ARRIVAL",
+    label: "Koreksi Keterlambatan",
+    correctionType: "LATE_ARRIVAL",
+  },
+  {
+    value: "TECHNICAL_ISSUE_CHECK_IN",
+    label: "Kendala Teknis Masuk",
+    correctionType: "TECHNICAL_ISSUE_CHECK_IN",
+  },
+  {
+    value: "TECHNICAL_ISSUE_CHECK_OUT",
+    label: "Kendala Teknis Pulang",
+    correctionType: "TECHNICAL_ISSUE_CHECK_OUT",
+  },
+] as const;
 
-// Custom styled Typography for Select's displayed value
-const SelectDisplayText = styled(Typography)({
-  display: "-webkit-box",
-  WebkitLineClamp: 2,
-  WebkitBoxOrient: "vertical",
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  lineHeight: "1.2",
-});
+type RevisionReasonValue = (typeof REVISION_REASON_OPTIONS)[number]["value"];
 
-// Define correction types mapping
-const CORRECTION_TYPES = {
-  BREAK_TIME_AS_WORK: "Penggunaan Jam Istirahat sebagai Jam Kerja",
-  EARLY_DEPARTURE: "Izin Cepat Pulang",
-  LATE_ARRIVAL: "Izin Terlambat Datang",
-  MISSED_CHECK_IN: "Lupa Absen Check-in",
-  MISSED_CHECK_OUT: "Lupa Absen Check-out",
+const inputFieldSx = {
+  "& .MuiOutlinedInput-root": {
+    borderRadius: 2,
+  },
+};
+
+const isCheckOutReason = (reason: RevisionReasonValue): boolean => {
+  return (
+    reason === "MISSED_CHECK_OUT" || reason === "TECHNICAL_ISSUE_CHECK_OUT"
+  );
+};
+
+const toIsoDateTime = (value?: Date | string | null): string | null => {
+  if (!value) return null;
+  return new Date(value).toISOString();
+};
+
+const combineAttendanceDateWithTime = (
+  attendanceDate: Date | string,
+  timeValue: Date
+): string => {
+  const baseDate = new Date(attendanceDate);
+  const result = new Date(baseDate);
+
+  result.setHours(timeValue.getHours(), timeValue.getMinutes(), 0, 0);
+
+  return result.toISOString();
 };
 
 const AttendanceCorrectionPage: React.FC = () => {
@@ -62,41 +89,118 @@ const AttendanceCorrectionPage: React.FC = () => {
   const { createCorrection, loading, error, clearError } = useCorrections();
   const { selectedAttendance, fetchAttendanceById } = useAttendance();
 
-  const [type, setPermissionType] = useState<string>("BREAK_TIME_AS_WORK");
-  const [date, setRequestDate] = useState<string>(
-    format(getNow(), "yyyy-MM-dd")
-  );
-  const [reason, setDescription] = useState<string>("");
+  const [revisionReason, setRevisionReason] =
+    useState<RevisionReasonValue>("MISSED_CHECK_IN");
+  const [revisedTime, setRevisedTime] = useState<Date | null>(null);
+  const [detailDescription, setDetailDescription] = useState<string>("");
+  const [validationError, setValidationError] = useState<string>("");
 
-  // Fetch attendance data if attendanceId is provided
   useEffect(() => {
     if (attendanceId) {
       fetchAttendanceById(attendanceId);
     }
   }, [attendanceId, fetchAttendanceById]);
 
-  // Set request date based on selected attendance
   useEffect(() => {
-    if (selectedAttendance) {
-      setRequestDate(format(new Date(selectedAttendance.date), "yyyy-MM-dd"));
+    if (!selectedAttendance) return;
+
+    if (!selectedAttendance.checkInTime) {
+      setRevisionReason("MISSED_CHECK_IN");
+      return;
     }
+
+    if (!selectedAttendance.checkOutTime) {
+      setRevisionReason("MISSED_CHECK_OUT");
+      return;
+    }
+
+    setRevisionReason("TECHNICAL_ISSUE_CHECK_IN");
   }, [selectedAttendance]);
+
+  const attendanceDate = useMemo(() => {
+    if (!selectedAttendance) return "-";
+    return format(new Date(selectedAttendance.date), "dd MMMM yyyy");
+  }, [selectedAttendance]);
+
+  const originalTime = useMemo(() => {
+    if (!selectedAttendance) return "--:--";
+
+    const sourceTime =
+      isCheckOutReason(revisionReason)
+        ? selectedAttendance.checkOutTime
+        : selectedAttendance.checkInTime;
+
+    if (!sourceTime) return "--:--";
+    return format(new Date(sourceTime), "HH:mm");
+  }, [selectedAttendance, revisionReason]);
+
+  useEffect(() => {
+    if (!selectedAttendance) return;
+
+    const sourceTime = isCheckOutReason(revisionReason)
+      ? selectedAttendance.checkOutTime
+      : selectedAttendance.checkInTime;
+
+    setRevisedTime(sourceTime ? new Date(sourceTime) : null);
+  }, [selectedAttendance, revisionReason]);
+
+  const handleCloseError = () => {
+    setValidationError("");
+    clearError();
+  };
 
   const handleBack = () => {
     navigate(-1);
   };
 
   const handleSubmit = async () => {
+    setValidationError("");
+
     if (!attendanceId) {
-      console.error("No attendance ID found");
+      setValidationError("Attendance tidak ditemukan.");
       return;
     }
 
+    if (!revisedTime) {
+      setValidationError("Jam Revisi wajib diisi.");
+      return;
+    }
+
+    if (!detailDescription.trim()) {
+      setValidationError("Rincian Keterangan wajib diisi.");
+      return;
+    }
+
+    const selectedOption = REVISION_REASON_OPTIONS.find(
+      (option) => option.value === revisionReason
+    );
+
+    if (!selectedOption) {
+      setValidationError("Tipe alasan revisi tidak valid.");
+      return;
+    }
+
+    const checkInTimeOld = toIsoDateTime(selectedAttendance?.checkInTime);
+    const checkOutTimeOld = toIsoDateTime(selectedAttendance?.checkOutTime);
+    const revisedTimeValue = combineAttendanceDateWithTime(
+      selectedAttendance ? selectedAttendance.date : new Date(),
+      revisedTime
+    );
+    const isCheckOutRevision = isCheckOutReason(revisionReason);
+
     const correctionData: CreateCorrectionDto = {
       attendanceId,
-      type: type,
-      date: new Date(date),
-      reason,
+      type: selectedOption.correctionType,
+      date: format(
+        selectedAttendance ? new Date(selectedAttendance.date) : new Date(),
+        "yyyy-MM-dd"
+      ),
+      reasonCode: selectedOption.correctionType,
+      reasonDescription: detailDescription.trim(),
+      checkInTimeOld,
+      checkInTimeNew: isCheckOutRevision ? checkInTimeOld : revisedTimeValue,
+      checkOutTimeOld,
+      checkOutTimeNew: isCheckOutRevision ? revisedTimeValue : checkOutTimeOld,
     };
 
     try {
@@ -104,27 +208,12 @@ const AttendanceCorrectionPage: React.FC = () => {
       navigate("/history", {
         state: {
           success: true,
-          message: "Pengajuan izin berhasil dikirim",
+          message: "Pengajuan revisi kehadiran berhasil dikirim",
         },
       });
-    } catch (err) {
-      console.error("Failed to submit correction request", err);
-      // Error is handled by the context and displayed in the UI
+    } catch {
+      // Error from context is shown in snackbar
     }
-  };
-
-  const handlePermissionTypeChange = (event: SelectChangeEvent) => {
-    setPermissionType(event.target.value);
-  };
-
-  // Function to shorten displayed text for mobile
-  const getDisplayText = (text: string) => {
-    // For mobile display, we'll use the styled component with ellipsis
-    return (
-      <SelectDisplayText>
-        {CORRECTION_TYPES[text as keyof typeof CORRECTION_TYPES] || text}
-      </SelectDisplayText>
-    );
   };
 
   return (
@@ -133,6 +222,7 @@ const AttendanceCorrectionPage: React.FC = () => {
         bgcolor: "#f5f5f5",
         minHeight: "100vh",
         width: "100%",
+        pb: 8,
         display: "flex",
         flexDirection: "column",
       }}
@@ -141,216 +231,153 @@ const AttendanceCorrectionPage: React.FC = () => {
       <Box
         sx={{
           bgcolor: "primary.main",
-          height: "4vh",
-          p: 2,
           color: "white",
+          py: 2,
           display: "flex",
           alignItems: "center",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
+          px: 1,
         }}
       >
-        <IconButton onClick={handleBack} sx={{ color: "white", padding: 0.5 }}>
+        <IconButton onClick={handleBack} sx={{ color: "white", mr: 1 }}>
           <ArrowBackIcon />
         </IconButton>
-        <Typography
-          variant="h6"
-          sx={{ flexGrow: 1, textAlign: "center", mr: 4 }}
-        >
-          Pengajuan Izin
+        <Typography variant="h6" fontWeight="bold" sx={{ flexGrow: 1, textAlign: "center", mr: 5 }}>
+          Revisi Kehadiran
         </Typography>
       </Box>
 
-      {/* Form Content */}
-      <Container
-        maxWidth="sm"
-        sx={{
-          mt: 2,
-          mb: 10,
-          px: { xs: 2, sm: 3 },
-          flexGrow: 1,
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={clearError}>
-            {error}
-          </Alert>
-        )}
-
-        {/* Permission Type */}
-        <Box sx={{ mb: 3 }}>
-          <Typography
-            variant="body2"
-            sx={{ fontWeight: "bold", mb: 1 }}
-            color="textSecondary"
+      {/* Content */}
+      <Container sx={{ pt: 2, pb: 2, flex: 1, overflowY: "auto" }}>
+        {(loading && !selectedAttendance) ? (
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <Card
+            sx={{
+              borderRadius: 2,
+              boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)",
+            }}
           >
-            Jenis Pengajuan
-          </Typography>
-          <FormControl fullWidth>
-            <Select
-              value={type}
-              onChange={handlePermissionTypeChange}
-              displayEmpty
-              variant="outlined"
-              renderValue={(value) => getDisplayText(value as string)}
-              MenuProps={{
-                PaperProps: {
-                  style: {
-                    maxHeight: 300,
-                  },
-                },
-              }}
-              sx={{
-                bgcolor: "white",
-                borderRadius: 1,
-                boxShadow: "0px 2px 4px rgba(0,0,0,0.05)",
-                ".MuiOutlinedInput-notchedOutline": { border: "none" },
-                height: { xs: "auto", sm: "56px" },
-                minHeight: "56px",
-                ".MuiSelect-select": {
+            <CardContent>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  Tanggal Absensi
+                </Typography>
+                <TextField
+                  fullWidth
+                  value={attendanceDate}
+                  InputProps={{ readOnly: true }}
+                  sx={inputFieldSx}
+                  disabled  
+                />
+              </Box>
+
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  Alasan Revisi
+                </Typography>
+                <TextField
+                  select
+                  fullWidth
+                  value={revisionReason}
+                  onChange={(event) =>
+                    setRevisionReason(event.target.value as RevisionReasonValue)
+                  }
+                  sx={inputFieldSx}
+                >
+                  {REVISION_REASON_OPTIONS.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Box>
+
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  Jam Sebelum Revisi
+                </Typography>
+                <TextField
+                  fullWidth
+                  value={originalTime}
+                  InputProps={{ readOnly: true }}
+                  sx={inputFieldSx}
+                  disabled
+                />
+              </Box>
+
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  Jam Revisi
+                </Typography>
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                  <TimePicker
+                    ampm={false}
+                    value={revisedTime}
+                    onChange={(value) => setRevisedTime(value)}
+                    views={["hours", "minutes"]}
+                    format="HH:mm"
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        required: true,
+                        sx: inputFieldSx,
+                      },
+                    }}
+                  />
+                </LocalizationProvider>
+              </Box>
+
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  Rincian Keterangan
+                </Typography>
+                <TextField
+                  fullWidth
+                  required
+                  multiline
+                  minRows={3}
+                  value={detailDescription}
+                  onChange={(event) => setDetailDescription(event.target.value)}
+                  placeholder="Tuliskan rincian alasan revisi"
+                  sx={inputFieldSx}
+                />
+              </Box>
+
+              <Button
+                fullWidth
+                variant="contained"
+                disabled={loading}
+                onClick={handleSubmit}
+                sx={{
                   py: 1.5,
-                  display: "flex",
-                  alignItems: "center",
-                },
-              }}
-              IconComponent={KeyboardArrowDownIcon}
-            >
-              <StyledMenuItem value="BREAK_TIME_AS_WORK">
-                {CORRECTION_TYPES.BREAK_TIME_AS_WORK}
-              </StyledMenuItem>
-              <StyledMenuItem value="EARLY_DEPARTURE">
-                {CORRECTION_TYPES.EARLY_DEPARTURE}
-              </StyledMenuItem>
-              <StyledMenuItem value="LATE_ARRIVAL">
-                {CORRECTION_TYPES.LATE_ARRIVAL}
-              </StyledMenuItem>
-              <StyledMenuItem value="MISSED_CHECK_IN">
-                {CORRECTION_TYPES.MISSED_CHECK_IN}
-              </StyledMenuItem>
-              <StyledMenuItem value="MISSED_CHECK_OUT">
-                {CORRECTION_TYPES.MISSED_CHECK_OUT}
-              </StyledMenuItem>
-            </Select>
-          </FormControl>
-        </Box>
-
-        {/* Date */}
-        <Box sx={{ mb: 3 }}>
-          <Typography
-            variant="body2"
-            sx={{ fontWeight: "bold", mb: 1 }}
-            color="textSecondary"
-          >
-            Tanggal Pengajuan
-          </Typography>
-          <TextField
-            fullWidth
-            type="date"
-            value={date}
-            onChange={(e) => setRequestDate(e.target.value)}
-            sx={{
-              bgcolor: "white",
-              borderRadius: 1,
-              boxShadow: "0px 2px 4px rgba(0,0,0,0.05)",
-              "& .MuiOutlinedInput-notchedOutline": { border: "none" },
-            }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <CalendarTodayIcon sx={{ color: "#999", fontSize: 20 }} />
-                </InputAdornment>
-              ),
-              sx: { height: "56px" },
-            }}
-          />
-        </Box>
-
-        {/* Description */}
-        <Box sx={{ mb: 4 }}>
-          <Typography
-            variant="body2"
-            sx={{ fontWeight: "bold", mb: 1 }}
-            color="textSecondary"
-          >
-            Keterangan Izin
-          </Typography>
-          <Paper
-            sx={{
-              borderRadius: 1,
-              boxShadow: "0px 2px 4px rgba(0,0,0,0.05)",
-              position: "relative",
-            }}
-          >
-            <TextField
-              fullWidth
-              multiline
-              rows={4}
-              value={reason}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Masukan keterangan izin ..."
-              sx={{
-                "& .MuiOutlinedInput-notchedOutline": { border: "none" },
-                "& .MuiInputBase-input": { fontSize: "0.95rem" },
-              }}
-            />
-            <IconButton
-              sx={{
-                position: "absolute",
-                right: 8,
-                bottom: 8,
-                color: "primary.main",
-                padding: "4px",
-              }}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </Paper>
-        </Box>
-
-        {/* Submit Button */}
-        <Button
-          fullWidth
-          variant="contained"
-          disabled={loading}
-          sx={{
-            bgcolor: "primary.main",
-            color: "white",
-            py: { xs: 1.5, sm: 2 },
-            borderRadius: 1,
-            textTransform: "none",
-            fontWeight: "bold",
-            boxShadow: "0px 4px 8px rgba(0,115,230,0.3)",
-            fontSize: "1rem",
-            "&:hover": {
-              bgcolor: "primary.dark",
-            },
-            mt: "auto",
-          }}
-          onClick={handleSubmit}
-        >
-          {loading ? (
-            <CircularProgress size={24} sx={{ color: "white" }} />
-          ) : (
-            "Kirim"
-          )}
-        </Button>
+                  textTransform: "none",
+                  fontWeight: "bold",
+                  borderRadius: 2,
+                }}
+              >
+                {loading ? <CircularProgress size={20} sx={{ color: "white" }} /> : "Ajukan Revisi"}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </Container>
 
-      {/* Bottom Navigation */}
-      <Box
-        sx={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: 10,
-        }}
+      {/* Error Snackbar */}
+      <Snackbar
+        open={Boolean(error || validationError)}
+        autoHideDuration={6000}
+        onClose={handleCloseError}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <BottomNav />
-      </Box>
+        <Alert onClose={handleCloseError} severity="error" sx={{ width: "100%" }}>
+          {validationError || error}
+        </Alert>
+      </Snackbar>
+
+      {/* Bottom Navigation */}
+      <BottomNav />
     </Box>
   );
 };

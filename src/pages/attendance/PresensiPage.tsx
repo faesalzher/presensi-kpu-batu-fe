@@ -952,6 +952,15 @@ const PresensiPage: React.FC = () => {
                       ? `Lokasi valid. Jarak ke kantor: ${distanceToOffice?.toFixed(0)} m`
                       : `Di luar radius ${radius} m. Jarak: ${distanceToOffice?.toFixed(0)} m`}
               </Typography>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+                mt={0.5}
+                textAlign="left"
+              >
+                Toleransi keterlambatan {lateToleranceMinutes} menit
+              </Typography>
             </Box>
           )}
 
@@ -959,7 +968,7 @@ const PresensiPage: React.FC = () => {
           <Box mt={2}>
             {showLateWithinToleranceInfo && (
               <Alert severity="info" sx={{ mb: 1.5, borderRadius: 2 }}>
-                Anda telat {effectiveLateMinutesForCheckout} menit (dalam toleransi).{suggestedCheckoutTime ? ` Disarankan pulang pada: ${suggestedCheckoutTime} WIB.` : ""}
+                Anda telat {effectiveLateMinutesForCheckout} menit (toleransi {lateToleranceMinutes} menit).{suggestedCheckoutTime ? ` Disarankan pulang pada: ${suggestedCheckoutTime} WIB untuk mengganti.` : ""}
               </Alert>
             )}
             <Button

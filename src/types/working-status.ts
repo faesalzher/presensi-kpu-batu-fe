@@ -5,6 +5,7 @@ export enum WorkingStatusIndonesia {
   HADIR = "Hadir",
   TIDAK_HADIR = "Tidak Hadir",
   MASALAH_PRESENSI = "Masalah Presensi",
+  REVISI = "Revisi",
   TERLAMBAT = "Terlambat",
   JAM_KERJA_KURANG = "Jam Kerja Kurang",
   KERJA_REMOTE = "Kerja Remote",
@@ -20,6 +21,7 @@ export const WorkingStatusLabels: Record<WorkingStatus, string> = {
   [WorkingStatus.LATE]: "Terlambat",
   [WorkingStatus.EARLY_DEPARTURE]: "Jam Kerja Kurang",
   [WorkingStatus.PROBLEM]: "Masalah Presensi",
+  [WorkingStatus.REVISION]: "Revisi",
   [WorkingStatus.REMOTE_WORKING]: "Kerja Remote",
   [WorkingStatus.ON_LEAVE]: "Cuti",
   [WorkingStatus.OFFICIAL_TRAVEL]: "Dinas Luar",
@@ -33,6 +35,7 @@ export const WorkingStatusColors: Record<WorkingStatus, string> = {
   [WorkingStatus.LATE]: "warning",
   [WorkingStatus.PROBLEM]: "warning",
   [WorkingStatus.EARLY_DEPARTURE]: "warning",
+  [WorkingStatus.REVISION]: "info",
   [WorkingStatus.REMOTE_WORKING]: "info",
   [WorkingStatus.ON_LEAVE]: "info",
   [WorkingStatus.OFFICIAL_TRAVEL]: "info",
@@ -46,6 +49,9 @@ export function convertToIndonesianStatus(status: string): string {
       return WorkingStatusIndonesia.HADIR;
     case "PROBLEM":
       return WorkingStatusIndonesia.MASALAH_PRESENSI;
+    case "REVISION":
+    case "revision":
+      return WorkingStatusIndonesia.REVISI;
     case "absent":
       return WorkingStatusIndonesia.TIDAK_HADIR;
     case "sick":

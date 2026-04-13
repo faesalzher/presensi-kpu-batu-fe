@@ -1,5 +1,5 @@
 // src/pages/correction/PersetujuanKoreksiPage.tsx
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Box,
   Container,
@@ -13,41 +13,78 @@ import {
   Toolbar,
   CircularProgress,
   Alert,
+  Pagination,
+  Tabs,
+  Tab,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
+  FormControl,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useNavigate } from "react-router-dom";
 import BottomNav from "../../components/BottomNav";
 import { useCorrections } from "../../contexts/CorrectionsContext";
-import { useUsers } from "../../contexts/UserContext";
 import {
   Correction,
   CORRECTION_TYPE_LABELS,
   CorrectionType,
+  CorrectionStatus,
+  CORRECTION_STATUS_LABELS,
 } from "../../types/corrections";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachMonthOfInterval } from "date-fns";
 import { id } from "date-fns/locale";
-import { User } from "../../types/users";
+import { getNow } from "../../constant/time.constant";
+import FileService from "../../services/FileService";
+
+interface MonthMapEntry {
+  startDate: string;
+  endDate: string;
+}
+
+// Backend may return `id` or `guid` — handle both
+const getCorrectionId = (c: Correction): string =>
+  (c as any).id ?? c.guid;
 
 const PersetujuanKoreksiPage: React.FC = () => {
   const navigate = useNavigate();
   const {
-    pendingCorrections,
+    corrections,
     loading: correctionsLoading,
     error: correctionsError,
-    // fetchPendingCorrections,
+    fetchCorrections,
     clearError: clearCorrectionsError,
   } = useCorrections();
 
-  const {
-    users,
-    loading: usersLoading,
-    error: usersError,
-    fetchUsers,
-    clearError: clearUsersError,
-  } = useUsers();
+  const loading = correctionsLoading;
+  const error = correctionsError;
 
-  const loading = correctionsLoading || usersLoading;
-  const error = correctionsError || usersError;
+  const [page, setPage] = useState<number>(1);
+  const itemsPerPage = 6;
+  const [selectedTab, setSelectedTab] = useState<CorrectionStatus>(
+    CorrectionStatus.PENDING
+  );
+  const [month, setMonth] = useState<string>(
+    format(getNow(), "MMMM yyyy", { locale: id })
+  );
+
+  const now = getNow();
+  const currentYear = now.getFullYear();
+  const startDate = new Date(currentYear, 0, 1);
+  const endDate = new Date(currentYear, 11, 31);
+  const monthsInYear = eachMonthOfInterval({ start: startDate, end: endDate });
+
+  const monthMap: { [key: string]: MonthMapEntry } = monthsInYear.reduce(
+    (acc, monthDate) => {
+      const monthYear = format(monthDate, "MMMM yyyy", { locale: id });
+      acc[monthYear] = {
+        startDate: format(startOfMonth(monthDate), "yyyy-MM-dd"),
+        endDate: format(endOfMonth(monthDate), "yyyy-MM-dd"),
+      };
+      return acc;
+    },
+    {} as { [key: string]: MonthMapEntry }
+  );
 
   // Format dates for display in Indonesian
   const formatDate = (date: string | Date) => {
@@ -59,10 +96,16 @@ const PersetujuanKoreksiPage: React.FC = () => {
   };
 
   useEffect(() => {
-    // Fetch users when component mounts
-    fetchUsers();
-    // fetchPendingCorrections();
-  }, []);
+    const range = monthMap[month] || monthMap[Object.keys(monthMap)[0]];
+    fetchCorrections({
+      startDate: range.startDate,
+      endDate: range.endDate,
+    });
+  }, [month]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [selectedTab, month]);
 
   const handleBack = () => {
     navigate("/dashboard");
@@ -72,29 +115,22 @@ const PersetujuanKoreksiPage: React.FC = () => {
     navigate(`/persetujuan-koreksi-detail/${guid}`);
   };
 
-  // Function to get user by ID
-  const getUserById = (userId: string): User | undefined => {
-    return users.find((user) => user.guid === userId);
+  const handleMonthChange = (event: SelectChangeEvent) => {
+    setMonth(event.target.value);
+    setPage(1);
   };
 
-  // Function to get user data with default fallbacks
-  const getUserData = (userId: string) => {
-    const user = getUserById(userId);
-    if (!user) {
-      return {
-        name: "Unknown",
-        nip: "Unknown",
-        position: "Unknown",
-        department: "Unknown",
-      };
-    }
-    return {
-      name: user.fullName || "Unknown",
-      nip: user.nip || "Unknown",
-      position: user.position || "Unknown",
-      department: user.department || "Unknown",
-    };
-  };
+  const filteredCorrections = useMemo(() => {
+    return corrections.filter(
+      (correction) => correction.status === selectedTab
+    );
+  }, [corrections, selectedTab]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredCorrections.length / itemsPerPage));
+
+  const paginatedCorrections = useMemo(() => {
+    return filteredCorrections.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+  }, [filteredCorrections, page]);
 
   // Get initial for avatar
   const getInitial = (name: string) => {
@@ -112,7 +148,6 @@ const PersetujuanKoreksiPage: React.FC = () => {
   // Clear errors from both contexts
   const handleClearError = () => {
     clearCorrectionsError();
-    clearUsersError();
   };
 
   return (
@@ -127,7 +162,7 @@ const PersetujuanKoreksiPage: React.FC = () => {
             variant="h6"
             sx={{ flexGrow: 1, textAlign: "center", mr: 4 }}
           >
-            Persetujuan Koreksi
+            Persetujuan Revisi
           </Typography>
         </Toolbar>
       </AppBar>
@@ -146,84 +181,161 @@ const PersetujuanKoreksiPage: React.FC = () => {
           <Box sx={{ display: "flex", justifyContent: "center", mt: 4, overflow: "hidden" }}>
             <CircularProgress />
           </Box>
-        ) : pendingCorrections.length === 0 ? (
-          <Paper
-            elevation={1}
-            sx={{
-              p: 3,
-              borderRadius: 2,
-              textAlign: "center",
-            }}
-          >
-            <Typography variant="body1">
-              Tidak ada koreksi yang perlu disetujui saat ini.
-            </Typography>
-          </Paper>
         ) : (
-          <List sx={{ p: 0 }}>
-            {pendingCorrections.map((correction: Correction) => {
-              // Get user data from users array
-              const userData = getUserData(correction.userId);
+          <>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <Select
+                value={month}
+                onChange={handleMonthChange}
+                sx={{
+                  bgcolor: "primary.main",
+                  color: "white",
+                  borderRadius: 2,
+                  ".MuiOutlinedInput-notchedOutline": {
+                    borderColor: "transparent",
+                  },
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "transparent",
+                  },
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "transparent",
+                  },
+                  ".MuiSvgIcon-root": { color: "white" },
+                }}
+              >
+                {Object.keys(monthMap).map((monthYear) => (
+                  <MenuItem key={monthYear} value={monthYear}>
+                    {monthYear}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-              return (
-                <Paper
-                  onClick={() => handleDetail(correction.guid)}
-                  key={correction.guid}
-                  elevation={1}
-                  sx={{
-                    mb: 2,
-                    borderRadius: 2,
-                    overflow: "hidden",
-                    cursor: "pointer",
-                  }}
-                >
-                  <ListItem
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "flex-start",
-                      py: 2,
-                    }}
-                  >
-                    <Box
+            <Tabs
+              value={selectedTab}
+              onChange={(_, v) => setSelectedTab(v as CorrectionStatus)}
+              variant="fullWidth"
+              sx={{
+                mb: 2,
+                minHeight: 36,
+                "& .MuiTab-root": {
+                  minHeight: 32,
+                  py: 0.5,
+                  px: 1,
+                  fontSize: 13,
+                  textTransform: "none",
+                },
+                "& .MuiTabs-flexContainer": {
+                  gap: 2,
+                },
+              }}
+            >
+              <Tab
+                sx={{ minWidth: 0 }}
+                label={`Pengajuan (${corrections.filter(c => c.status === CorrectionStatus.PENDING).length})`}
+                value={CorrectionStatus.PENDING}
+              />
+              <Tab
+                sx={{ minWidth: 0 }}
+                label={`Disetujui (${corrections.filter(c => c.status === CorrectionStatus.APPROVED).length})`}
+                value={CorrectionStatus.APPROVED}
+              />
+              <Tab
+                sx={{ minWidth: 0 }}
+                label={`Ditolak (${corrections.filter(c => c.status === CorrectionStatus.REJECTED).length})`}
+                value={CorrectionStatus.REJECTED}
+              />
+            </Tabs>
+
+            {paginatedCorrections.length === 0 ? (
+              <Paper
+                elevation={1}
+                sx={{
+                  p: 3,
+                  borderRadius: 2,
+                  textAlign: "center",
+                }}
+              >
+                <Typography variant="body1">
+                  Tidak ada koreksi dengan status {CORRECTION_STATUS_LABELS[selectedTab].toLowerCase()}.
+                </Typography>
+              </Paper>
+            ) : (
+              <List sx={{ p: 0 }}>
+                {paginatedCorrections.map((correction: Correction) => {
+                  const rawProfile = correction.profileImageUrl?.trim() || "";
+                  const src = rawProfile
+                    ? /^https?:\/\//.test(rawProfile)
+                      ? `${rawProfile}?t=${Date.now()}`
+                      : FileService.getFileViewUrl(rawProfile)
+                    : undefined;
+
+                  return (
+                    <Paper
+                      onClick={() => handleDetail(getCorrectionId(correction))}
+                      key={getCorrectionId(correction)}
+                      elevation={1}
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        width: "100%",
+                        mb: 2,
+                        borderRadius: 3,
+                        overflow: "hidden",
+                        cursor: "pointer",
+                        border: "1px solid",
+                        borderColor: "divider",
                       }}
                     >
-                      <Avatar
+                      <ListItem
                         sx={{
-                          width: 40,
-                          height: 40,
-                          bgcolor: "#ff7043",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          py: 2,
                         }}
                       >
-                        {getInitial(userData.name)}
-                      </Avatar>
-                      <Box sx={{ ml: 2 }}>
-                        <Typography
-                          variant="subtitle1"
-                          sx={{ fontWeight: "medium" }}
-                        >
-                          {userData.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {userData.nip}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {getCorrectionTypeLabel(correction.type)}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {formatDate(correction.createdAt)}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </ListItem>
-                </Paper>
-              );
-            })}
-          </List>
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <Avatar
+                            src={src || undefined}
+                            sx={{ width: 44, height: 44, bgcolor: "#ff7043" }}
+                            imgProps={{
+                              style: { objectFit: "cover", objectPosition: "center 20%" },
+                              referrerPolicy: "no-referrer",
+                            }}
+                          >
+                            {getInitial(correction.username || "Unknown")}
+                          </Avatar>
+                          <Box sx={{ ml: 2 }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                              {correction.username || "Unknown"}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                              {correction.nip || "Unknown"}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                              {getCorrectionTypeLabel(correction.type)}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                              {formatDate(correction.createdAt)}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </ListItem>
+                    </Paper>
+                  );
+                })}
+              </List>
+            )}
+
+            {totalPages > 1 && (
+              <Box sx={{ display: "flex", justifyContent: "center", my: 3 }}>
+                <Pagination
+                  count={totalPages}
+                  page={page}
+                  onChange={(_, value) => setPage(value)}
+                  size="medium"
+                />
+              </Box>
+            )}
+          </>
         )}
       </Container>
 

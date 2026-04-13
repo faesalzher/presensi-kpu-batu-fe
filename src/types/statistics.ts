@@ -70,6 +70,8 @@ export interface StatisticsSummary {
   problem: number;
   remoteWorking: number;
   onLeave: number;
+  sick?: number;
+  revision?: number;
   officialTravel: number;
   totalWorkHours: number;
   averageWorkHours: number;

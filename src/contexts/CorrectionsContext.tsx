@@ -28,7 +28,7 @@ interface CorrectionsContextType {
   reviewCorrection: (
     guid: string,
     reviewData: UpdateCorrectionDto
-  ) => Promise<void>;
+  ) => Promise<Correction>;
   fetchMonthlyUsage: () => Promise<void>;
   clearSelectedCorrection: () => void;
   clearError: () => void;
@@ -105,7 +105,9 @@ export const CorrectionsProvider: React.FC<{ children: React.ReactNode }> = ({
   ): Promise<void> => {
     if (
       !isAuthenticated ||
-      (user?.role !== UserRole.KASUBAG && user?.role !== "ADMIN")
+      (user?.role !== UserRole.KASUBAG &&
+        user?.role !== UserRole.KASUBAG_SDM &&
+        user?.role !== "ADMIN")
     ) {
       setError(
         "Unauthorized: Only department heads can view pending corrections"
@@ -134,7 +136,9 @@ export const CorrectionsProvider: React.FC<{ children: React.ReactNode }> = ({
   ): Promise<void> => {
     if (
       !isAuthenticated ||
-      (user?.role !== UserRole.KASUBAG && user?.role !== "ADMIN")
+      (user?.role !== UserRole.KASUBAG &&
+        user?.role !== UserRole.KASUBAG_SDM &&
+        user?.role !== "ADMIN")
     ) {
       setError(
         "Unauthorized: Only department heads can view pending corrections"
@@ -206,13 +210,15 @@ export const CorrectionsProvider: React.FC<{ children: React.ReactNode }> = ({
   const reviewCorrection = async (
     guid: string,
     reviewData: UpdateCorrectionDto
-  ): Promise<void> => {
+  ): Promise<Correction> => {
     if (
       !isAuthenticated ||
-      (user?.role !== UserRole.KASUBAG && user?.role !== "ADMIN")
+      (user?.role !== UserRole.KASUBAG && user?.role !== UserRole.KASUBAG_SDM && user?.role !== "ADMIN")
     ) {
-      setError("Unauthorized: Only department heads can review corrections");
-      return;
+      const errorMessage =
+        "Unauthorized: Only department heads can review corrections";
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
 
     setLoading(true);
@@ -223,6 +229,10 @@ export const CorrectionsProvider: React.FC<{ children: React.ReactNode }> = ({
         guid,
         reviewData
       );
+
+      if (!updatedCorrection) {
+        throw new Error("Failed to review correction");
+      }
 
       // Update the selected correction if it's the one being reviewed
       if (selectedCorrection && selectedCorrection.guid === guid) {
@@ -240,6 +250,8 @@ export const CorrectionsProvider: React.FC<{ children: React.ReactNode }> = ({
       setPendingCorrections((prevPendingCorrections) =>
         prevPendingCorrections.filter((correction) => correction.guid !== guid)
       );
+
+      return updatedCorrection;
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message || "Failed to review correction";

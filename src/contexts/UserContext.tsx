@@ -43,6 +43,7 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({
     return (
       normalized === UserRole.ADMIN ||
       normalized === UserRole.KASUBAG ||
+      normalized === UserRole.KASUBAG_SDM ||
       normalized === UserRole.STAF_SDM ||
       normalized === UserRole.SEKRETARIS 
     );

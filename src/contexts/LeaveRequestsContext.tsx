@@ -246,7 +246,7 @@ export const LeaveRequestsProvider: React.FC<{ children: React.ReactNode }> = ({
     if (
       !isAuthenticated ||
       !user ||
-      (user.role !== UserRole.ADMIN && user.role !== UserRole.STAF_SDM)
+      (user.role !== UserRole.ADMIN && user.role !== UserRole.KASUBAG_SDM)
     ) {
       setError(
         "Unauthorized: Only department heads and admins can review requests"

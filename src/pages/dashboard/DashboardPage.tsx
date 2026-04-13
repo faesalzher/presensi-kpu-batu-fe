@@ -19,7 +19,8 @@ import {
   AccessTime,
   AdminPanelSettings
   , NotificationsActive,
-  CheckCircle
+  CheckCircle,
+  FactCheck
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 
@@ -37,7 +38,7 @@ import DashboardLayout from "../../components/DashboardLayout";
 import QuickActions from "../../components/QuickActions";
 import { formatDate, formatShortTime, formatTime, getNow } from "../../constant/time.constant";
 import { useLeaveRequests } from "../../contexts/LeaveRequestsContext";
-// import { useCorrections } from "../../contexts/CorrectionsContext";
+import { useCorrections } from "../../contexts/CorrectionsContext";
 import { UserRole } from "../../types/enums";
 import { useSystem } from "../../contexts/SystemContext";
 import { usePush } from "../../contexts/PushContext";
@@ -95,6 +96,8 @@ const DashboardPage: React.FC = () => {
     error: systemError,
     fetchWorkingDayToday
   } = useSystem();
+
+  const { pendingCorrections, fetchPendingCorrections } = useCorrections();
 
   // const {
   //   // pendingCorrections,
@@ -266,7 +269,9 @@ const DashboardPage: React.FC = () => {
     fetchUserByGuid(authUser.guid);
     fetchTodayAttendance();
     fetchPendingRequests();
-    // fetchPendingCorrections();
+    if (authUser.role === UserRole.KASUBAG_SDM) {
+      fetchPendingCorrections();
+    }
     fetchWorkingDayToday();
 
     const d = getNow();
@@ -279,7 +284,7 @@ const DashboardPage: React.FC = () => {
         .split("T")[0],
       period: ReportPeriod.MONTHLY,
     });
-  }, [authUser?.guid]);
+  }, [authUser?.guid, authUser?.role]);
 
 
   useEffect(() => {
@@ -343,6 +348,11 @@ const DashboardPage: React.FC = () => {
       icon: <Description color="primary" />,
       onClick: () => navigate("/history"),
     },
+    {
+      label: "Riwayat Revisi",
+      icon: <FactCheck color="primary" />,
+      onClick: () => navigate("/riwayat-revisi"),
+    },
     ...(isTukinMenuEnabled ? [tukinQuickAction] : []),
   ];
 
@@ -362,6 +372,11 @@ const DashboardPage: React.FC = () => {
       label: "Riwayat Presensi",
       icon: <Description color="primary" />,
       onClick: () => navigate("/history"),
+    },
+    {
+      label: "Riwayat Revisi",
+      icon: <FactCheck color="primary" />,
+      onClick: () => navigate("/riwayat-revisi"),
     },
     ...(isTukinMenuEnabled ? [tukinQuickAction] : []),
   ];
@@ -389,33 +404,23 @@ const DashboardPage: React.FC = () => {
       icon: <Description color="primary" />,
       onClick: () => navigate("/history"),
     },
+    {
+      label: "Riwayat Revisi",
+      icon: <FactCheck color="primary" />,
+      onClick: () => navigate("/riwayat-revisi"),
+    },
     ...(isTukinMenuEnabled ? [tukinQuickAction] : []),
   ];
 
-  // const kasubagSdmQuickActions = [
-  //   {
-  //     label: "Rekap Sekretariat",
-  //     icon: <Groups color="primary" />,
-  //     onClick: () => navigate("/sekretariat"),
-  //   },
-  //   {
-  //     label: "Pengajuan Cuti",
-  //     icon: <ExitToApp color="primary" />,
-  //     onClick: () => navigate("/leave-request-form"),
-  //   },
-  //   {
-  //     label: "Riwayat Presensi",
-  //     icon: <Description color="primary" />,
-  //     onClick: () => navigate("/history"),
-  //   },
-  //   ...(isTukinMenuEnabled ? [tukinQuickAction] : [])
-  //   // {
-  //   //   label: "Revisi Kehadiran",
-  //   //   icon: <CheckBox color="primary" />,
-  //   //   // badge: pendingRequests?.length,
-  //   //   onClick: () => navigate("/persetujuan"),
-  //   // },
-  // ];
+  const kasubagSdmQuickActions = [
+    ...stafSdmQuickActions,
+    {
+      label: "Persetujuan Revisi",
+      icon: <CheckCircle color="primary" />,
+      badge: pendingCorrections?.length,
+      onClick: () => navigate("/persetujuan-koreksi"),
+    },
+  ];
 
   const adminQuickActions = [
     {
@@ -439,6 +444,9 @@ const DashboardPage: React.FC = () => {
       case UserRole.STAF_SDM:
         return <QuickActions actions={stafSdmQuickActions} />;
 
+      case UserRole.KASUBAG_SDM:
+        return <QuickActions actions={kasubagSdmQuickActions} />;
+
       case UserRole.SEKRETARIS:
         return <QuickActions actions={stafSdmQuickActions} />;
 
@@ -461,8 +469,18 @@ const DashboardPage: React.FC = () => {
         color: theme.palette.info.main,
       },
       {
+        name: "Sakit",
+        value: statistics.sick || 0,
+        color: theme.palette.info.main,
+      },
+      {
         name: "DL",
         value: statistics.officialTravel,
+        color: theme.palette.info.main,
+      },
+      {
+        name: "Revisi",
+        value: statistics.revision || 0,
         color: theme.palette.info.main,
       },
       {

@@ -103,6 +103,7 @@ const HistoryPage: React.FC = () => {
       case "on_leave":
       case "official_travel":
       case "remote_working":
+      case "revision":
         navigate(`/attendance-present/${guid}`);
         break;
       case "absent":
@@ -127,6 +128,7 @@ const HistoryPage: React.FC = () => {
       case "sick":
       case "official_travel":
       case "remote_working":
+      case "revision":
         return <CheckIcon style={{ color: theme.palette.success.main }} />;
       case "absent":
         return <CloseIcon style={{ color: "#F44336" }} />;

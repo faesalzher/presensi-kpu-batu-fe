@@ -7,7 +7,7 @@ import {
   CorrectionQueryParams,
   MonthlyUsage,
 } from "../types/corrections";
-import { dummyCorrection, dummyCorrections, isDemoMode } from "../mocks/demoData";
+import { dummyCorrection, isDemoMode } from "../mocks/demoData";
 import { supabase } from "../lib/supabase";
 
 // Create API instance with base configuration
@@ -65,10 +65,22 @@ const CorrectionsService = {
   getMyCorrections: async (
     queryParams?: CorrectionQueryParams
   ): Promise<Correction[]> => {
-    if (isDemoMode) return dummyCorrections;
-
     const response = await API.get<Correction[]>("/corrections/my-requests", {
       params: queryParams,
+    });
+    return response.data;
+  },
+
+  /**
+   * Get corrections for a specific attendance record
+   * @param attendanceId The attendance ID to filter by
+   * @returns Array of corrections for that attendance
+   */
+  getCorrectionByAttendanceId: async (
+    attendanceId: string
+  ): Promise<Correction[]> => {
+    const response = await API.get<Correction[]>("/corrections/my-requests", {
+      params: { attendanceId },
     });
     return response.data;
   },
@@ -135,6 +147,11 @@ const CorrectionsService = {
       `/corrections/${guid}/review`,
       reviewData
     );
+
+    if (response.status !== 200 || !response.data) {
+      throw new Error("Failed to review correction");
+    }
+
     return response.data;
   },
 };

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Box,
@@ -7,6 +7,7 @@ import {
   Paper,
   IconButton,
   CircularProgress,
+  Button,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CloseIcon from "@mui/icons-material/Close";
@@ -14,12 +15,17 @@ import BottomNav from "../../../components/BottomNav";
 import { useAttendance } from "../../../contexts/AttendanceContext";
 import { format } from "date-fns";
 import { id } from "date-fns/locale/id";
+import { Correction, CorrectionStatus } from "../../../types/corrections";
+import CorrectionsService from "../../../services/CorrectionsService";
 
 const AttendanceDetailAbsent: React.FC = () => {
   const navigate = useNavigate();
   const { guid } = useParams<{ guid: string }>();
   const { fetchAttendanceById, selectedAttendance, loading, error } =
     useAttendance();
+  const [attendanceCorrections, setAttendanceCorrections] = useState<Correction[]>([]);
+  const [correctionsLoading, setCorrectionsLoading] = useState(false);
+  const hasFetchedCorrectionsRef = useRef(false);
 
   useEffect(() => {
     if (guid) {
@@ -33,9 +39,49 @@ const AttendanceDetailAbsent: React.FC = () => {
     }
   }, [guid, fetchAttendanceById]);
 
+  useEffect(() => {
+    if (!guid || hasFetchedCorrectionsRef.current) return;
+    hasFetchedCorrectionsRef.current = true;
+
+    setCorrectionsLoading(true);
+    CorrectionsService.getCorrectionByAttendanceId(guid)
+      .then((data) => setAttendanceCorrections(data))
+      .catch(() => setAttendanceCorrections([]))
+      .finally(() => setCorrectionsLoading(false));
+  }, [guid]);
+
   const handleBack = () => {
     navigate("/history");
   };
+
+  const handleAttendanceCorrection = () => {
+    if (!guid) return;
+    navigate(`/attendance-correction/${guid}`);
+  };
+
+  const activeCorrection = useMemo(() => {
+    return (
+      attendanceCorrections.find(
+        (correction) => correction.status === CorrectionStatus.PENDING
+      ) ||
+      attendanceCorrections.find(
+        (correction) => correction.status === CorrectionStatus.APPROVED
+      ) ||
+      null
+    );
+  }, [attendanceCorrections]);
+
+  const correctionButtonLabel =
+    activeCorrection?.status === CorrectionStatus.PENDING
+      ? "Revisi Pending"
+      : activeCorrection?.status === CorrectionStatus.APPROVED
+        ? "Revisi Disetujui"
+        : "Revisi Kehadiran";
+
+  const isCorrectionDisabled =
+    correctionsLoading ||
+    activeCorrection?.status === CorrectionStatus.PENDING ||
+    activeCorrection?.status === CorrectionStatus.APPROVED;
 
   if (loading) {
     return (
@@ -135,6 +181,35 @@ const AttendanceDetailAbsent: React.FC = () => {
             </Box>
           </Box>
         </Paper>
+      </Container>
+      <Container maxWidth="sm" sx={{ mt: 2 }}>
+        <Button
+          fullWidth
+          variant="contained"
+          disabled={isCorrectionDisabled}
+          sx={{
+            bgcolor: "#E5323E",
+            color: "white",
+            py: 1.5,
+            borderRadius: 2,
+            textTransform: "none",
+            fontWeight: "bold",
+            "&:hover": { bgcolor: "#cb1f2f" },
+            "&.Mui-disabled": {
+              bgcolor:
+                activeCorrection?.status === CorrectionStatus.APPROVED
+                  ? "#D7F5DB"
+                  : "#FDE7A1",
+              color:
+                activeCorrection?.status === CorrectionStatus.APPROVED
+                  ? "#2E7D32"
+                  : "#8A6D1D",
+            },
+          }}
+          onClick={handleAttendanceCorrection}
+        >
+          {correctionButtonLabel}
+        </Button>
       </Container>
       <Box sx={{ flexGrow: 1 }} />
       <BottomNav />

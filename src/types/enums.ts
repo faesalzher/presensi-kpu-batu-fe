@@ -20,6 +20,7 @@ export enum WorkingStatus {
   ON_LEAVE = "ON_LEAVE",
   OFFICIAL_TRAVEL = "OFFICIAL_TRAVEL",
   SICK = "SICK",
+  REVISION = "REVISION",
 }
 
 export enum FileCategory {

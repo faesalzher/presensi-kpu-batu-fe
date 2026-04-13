@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   Box,
@@ -16,6 +16,7 @@ import {
   Alert,
   Snackbar,
   Chip,
+  Button,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import WarningIcon from "@mui/icons-material/Warning";
@@ -26,6 +27,8 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale/id";
 import { WorkingStatus } from "../../../types/enums";
 import { WorkingStatusLabels, WorkingStatusColors } from "../../../types/working-status";
+import { Correction, CorrectionStatus } from "../../../types/corrections";
+import CorrectionsService from "../../../services/CorrectionsService";
 
 const AttendanceDetailProblem: React.FC = () => {
   const navigate = useNavigate();
@@ -34,11 +37,14 @@ const AttendanceDetailProblem: React.FC = () => {
   const { fetchAttendanceById, selectedAttendance, loading, error } =
     useAttendance();
   const { user } = useAuth();
+  const [attendanceCorrections, setAttendanceCorrections] = useState<Correction[]>([]);
+  const [correctionsLoading, setCorrectionsLoading] = useState(false);
 
   // Handle success message from correction submission
   const [showSuccessMessage, setShowSuccessMessage] =
     React.useState<boolean>(false);
   const [successMessage, setSuccessMessage] = React.useState<string>("");
+  const hasFetchedCorrectionsRef = useRef(false);
 
   useEffect(() => {
     // Check if there's a success message in the location state
@@ -60,21 +66,53 @@ const AttendanceDetailProblem: React.FC = () => {
     }
   }, [guid, fetchAttendanceById]);
 
+  useEffect(() => {
+    if (!guid || hasFetchedCorrectionsRef.current) return;
+    hasFetchedCorrectionsRef.current = true;
+
+    setCorrectionsLoading(true);
+    CorrectionsService.getCorrectionByAttendanceId(guid)
+      .then((data) => setAttendanceCorrections(data))
+      .catch(() => setAttendanceCorrections([]))
+      .finally(() => setCorrectionsLoading(false));
+  }, [guid]);
+
   const handleBack = () => {
     navigate(-1);
   };
 
-  // const handleRequestPermission = () => {
-  //   if (guid) {
-  //     navigate(`/attendance-correction/${guid}`);
-  //   } else {
-  //     console.error("No attendance GUID available");
-  //   }
-  // };
+  const handleAttendanceCorrection = () => {
+    if (!guid) return;
+    navigate(`/attendance-correction/${guid}`);
+  };
 
   const handleCloseSnackbar = () => {
     setShowSuccessMessage(false);
   };
+
+  const activeCorrection = useMemo(() => {
+    return (
+      attendanceCorrections.find(
+        (correction) => correction.status === CorrectionStatus.PENDING
+      ) ||
+      attendanceCorrections.find(
+        (correction) => correction.status === CorrectionStatus.APPROVED
+      ) ||
+      null
+    );
+  }, [attendanceCorrections]);
+
+  const correctionButtonLabel =
+    activeCorrection?.status === CorrectionStatus.PENDING
+      ? "Revisi Pending"
+      : activeCorrection?.status === CorrectionStatus.APPROVED
+        ? "Revisi Disetujui"
+        : "Revisi Kehadiran";
+
+  const isCorrectionDisabled =
+    correctionsLoading ||
+    activeCorrection?.status === CorrectionStatus.PENDING ||
+    activeCorrection?.status === CorrectionStatus.APPROVED;
 
   if (loading) {
     return (
@@ -298,9 +336,10 @@ const AttendanceDetailProblem: React.FC = () => {
             </Table>
           </TableContainer>
         </Paper>
-        {/* <Button
+        <Button
           fullWidth
           variant="contained"
+          disabled={isCorrectionDisabled}
           sx={{
             bgcolor: "#FFC107",
             color: "black",
@@ -309,11 +348,21 @@ const AttendanceDetailProblem: React.FC = () => {
             textTransform: "none",
             fontWeight: "bold",
             "&:hover": { bgcolor: "#e6ad00" },
+            "&.Mui-disabled": {
+              bgcolor:
+                activeCorrection?.status === CorrectionStatus.APPROVED
+                  ? "#D7F5DB"
+                  : "#FFEBBC",
+              color:
+                activeCorrection?.status === CorrectionStatus.APPROVED
+                  ? "#2E7D32"
+                  : "#8A6D1D",
+            },
           }}
-          onClick={handleRequestPermission}
+          onClick={handleAttendanceCorrection}
         >
-          Ajukan Izin
-        </Button> */}
+          {correctionButtonLabel}
+        </Button>
       </Container>
       <Box sx={{ flexGrow: 1 }} />
       <BottomNav />
