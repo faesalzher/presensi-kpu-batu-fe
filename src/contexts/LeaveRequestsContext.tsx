@@ -246,12 +246,16 @@ export const LeaveRequestsProvider: React.FC<{ children: React.ReactNode }> = ({
     if (
       !isAuthenticated ||
       !user ||
-      (user.role !== UserRole.ADMIN && user.role !== UserRole.KASUBAG_SDM)
+      (
+        user.role !== UserRole.ADMIN &&
+        user.role !== UserRole.KASUBAG_SDM &&
+        user.role !== UserRole.STAF_SDM
+      )
     ) {
-      setError(
-        "Unauthorized: Only department heads and admins can review requests"
-      );
-      return;
+      const errorMessage =
+        "Unauthorized: You do not have permission to review requests";
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
     setLoading(true);
     setError(null);

@@ -123,7 +123,7 @@ const PersetujuanDetailPage: React.FC = () => {
         status: LeaveRequestStatus.APPROVED,
         comments: "Disetujui",
       });
-      navigate("/dashboard");
+      navigate("/persetujuan");
     } catch (err: any) {
       setError(err.message || "Failed to approve request");
     } finally {
