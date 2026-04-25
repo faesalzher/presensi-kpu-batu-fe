@@ -2,7 +2,16 @@
 import axios from "axios";
 import AuthService from "./AuthService";
 import { supabase } from "../lib/supabase";
-import { WorkingDayResponse } from "../types/system";
+import { GeneralSetting, WorkingDayResponse } from "../types/system";
+
+const normalizeGeneralSetting = (item: any): GeneralSetting => ({
+  id: String(item?.id ?? item?.guid ?? item?.key ?? ""),
+  key: String(item?.key ?? item?.name ?? ""),
+  description: item?.description ?? item?.label ?? null,
+  value: String(item?.value ?? ""),
+  createdAt: item?.createdAt ?? item?.created_at ?? null,
+  updatedAt: item?.updatedAt ?? item?.updated_at ?? null,
+});
 
 // Create API instance with base configuration
 const API = axios.create({
@@ -48,6 +57,23 @@ const SystemService = {
   getGeneralSetting: async (key: string): Promise<string> => {
     const response = await API.get<string>(`/system/general-setting/${key}`);
     return response.data;
+  },
+
+  getGeneralSettings: async (): Promise<GeneralSetting[]> => {
+    const response = await API.get<unknown>("/system/general-setting");
+    const responseData = response.data as any;
+    const items = Array.isArray(responseData)
+      ? responseData
+      : Array.isArray(responseData?.data)
+        ? responseData.data
+        : [];
+
+    return items.map(normalizeGeneralSetting);
+  },
+
+  updateGeneralSetting: async (key: string, value: string): Promise<GeneralSetting> => {
+    const response = await API.put(`/system/general-setting/${key}`, { value });
+    return normalizeGeneralSetting(response.data?.data ?? response.data ?? { key, value });
   },
  
 

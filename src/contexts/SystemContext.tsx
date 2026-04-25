@@ -8,7 +8,7 @@ import React, {
 } from "react";
 import { useAuth } from "./AuthContext";
 import SystemService from "../services/SystemService";
-import type { SchedulerLog, WorkingDayResponse } from "../types/system";
+import type { GeneralSetting, SchedulerLog, WorkingDayResponse } from "../types/system";
 
 interface SystemContextType {
   workingDayToday: WorkingDayResponse | null;
@@ -23,6 +23,11 @@ interface SystemContextType {
   schedulerLoading: boolean;
   fetchSchedulerLogs: (params?: any) => Promise<void>;
   runSchedulerJob: (jobName: string, scheduledAt?: string | null) => Promise<void>;
+
+  generalSettings: GeneralSetting[] | null;
+  generalSettingsLoading: boolean;
+  fetchGeneralSettings: () => Promise<void>;
+  updateGeneralSetting: (key: string, value: string) => Promise<void>;
 }
 
 const SystemContext = createContext<SystemContextType | undefined>(undefined);
@@ -36,6 +41,8 @@ export const SystemProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   );
   const [schedulerLogs, setSchedulerLogs] = useState<SchedulerLog[] | null>(null);
   const [schedulerLoading, setSchedulerLoading] = useState<boolean>(false);
+  const [generalSettings, setGeneralSettings] = useState<GeneralSetting[] | null>(null);
+  const [generalSettingsLoading, setGeneralSettingsLoading] = useState<boolean>(false);
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
@@ -106,6 +113,42 @@ export const SystemProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [fetchSchedulerLogs]);
 
+  const fetchGeneralSettings = useCallback(async (): Promise<void> => {
+    setGeneralSettingsLoading(true);
+    setError(null);
+    try {
+      const data = await SystemService.getGeneralSettings();
+      setGeneralSettings(data || []);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to fetch general settings");
+    } finally {
+      setGeneralSettingsLoading(false);
+    }
+  }, []);
+
+  const updateGeneralSetting = useCallback(async (key: string, value: string): Promise<void> => {
+    setGeneralSettingsLoading(true);
+    setError(null);
+    try {
+      const updated = await SystemService.updateGeneralSetting(key, value);
+      setGeneralSettings((prev) => {
+        const current = prev || [];
+        const existingIndex = current.findIndex((item) => item.key === key);
+
+        if (existingIndex === -1) {
+          return [...current, updated];
+        }
+
+        return current.map((item) => (item.key === key ? { ...item, ...updated } : item));
+      });
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to update general setting");
+      throw err;
+    } finally {
+      setGeneralSettingsLoading(false);
+    }
+  }, []);
+
   const value = {
     workingDayToday,
     loading,
@@ -118,6 +161,11 @@ export const SystemProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     schedulerLoading,
     fetchSchedulerLogs,
     runSchedulerJob,
+
+    generalSettings,
+    generalSettingsLoading,
+    fetchGeneralSettings,
+    updateGeneralSetting,
   };
 
   return (

@@ -27,3 +27,12 @@ export interface SchedulerLog {
   message?: string | null;
   createdAt?: string | null;
 }
+
+export interface GeneralSetting {
+  id: string;
+  key: string;
+  description: string | null;
+  value: string;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}

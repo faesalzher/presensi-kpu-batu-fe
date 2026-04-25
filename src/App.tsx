@@ -44,6 +44,7 @@ import SekretariatPage from "./pages/sekretariat/SekretariatPage";
 import { SystemProvider } from "./contexts/SystemContext";
 import SchedulerMonitoringPage from "./pages/system/SchedulerMonitoringPage";
 import ManualPushNotificationPage from "./pages/system/ManualPushNotificationPage";
+import GeneralSettingsPage from "./pages/system/GeneralSettingsPage";
 
 function App() {
   return (
@@ -187,6 +188,7 @@ function App() {
                             <Route element={<ProtectedRoute allowedRoles={[UserRole.ADMIN]} />}>
                               <Route path="/admin/scheduler" element={<SchedulerMonitoringPage />} />
                               <Route path="/admin/push-notification" element={<ManualPushNotificationPage />} />
+                              <Route path="/admin/general-settings" element={<GeneralSettingsPage />} />
                             </Route>
 
                             {/* Other routes */}

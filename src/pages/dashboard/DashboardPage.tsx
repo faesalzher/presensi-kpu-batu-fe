@@ -18,7 +18,8 @@ import {
   ExitToApp,
   AccessTime,
   AdminPanelSettings,
-  Send
+  Send,
+  Tune
   , NotificationsActive,
   CheckCircle,
   FactCheck
@@ -433,6 +434,11 @@ const DashboardPage: React.FC = () => {
       label: "Manual Push",
       icon: <Send color="primary" />,
       onClick: () => navigate("/admin/push-notification"),
+    },
+    {
+      label: "General Setting",
+      icon: <Tune color="primary" />,
+      onClick: () => navigate("/admin/general-settings"),
     },
   ];
 
