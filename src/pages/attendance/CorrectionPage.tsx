@@ -25,21 +25,21 @@ import { format } from "date-fns";
 import { CreateCorrectionDto } from "../../types/corrections";
 
 const REVISION_REASON_OPTIONS = [
-  {
-    value: "MISSED_CHECK_IN",
-    label: "Lupa Absen Masuk",
-    correctionType: "MISSED_CHECK_IN",
-  },
+  // {
+  //   value: "MISSED_CHECK_IN",
+  //   label: "Lupa Absen Masuk",
+  //   correctionType: "MISSED_CHECK_IN",
+  // },
   {
     value: "MISSED_CHECK_OUT",
     label: "Lupa Absen Pulang",
     correctionType: "MISSED_CHECK_OUT",
   },
-  {
-    value: "LATE_ARRIVAL",
-    label: "Koreksi Keterlambatan",
-    correctionType: "LATE_ARRIVAL",
-  },
+  // {
+  //   value: "LATE_ARRIVAL",
+  //   label: "Koreksi Keterlambatan",
+  //   correctionType: "LATE_ARRIVAL",
+  // },
   {
     value: "TECHNICAL_ISSUE_CHECK_IN",
     label: "Kendala Teknis Masuk",
@@ -90,7 +90,7 @@ const AttendanceCorrectionPage: React.FC = () => {
   const { selectedAttendance, fetchAttendanceById } = useAttendance();
 
   const [revisionReason, setRevisionReason] =
-    useState<RevisionReasonValue>("MISSED_CHECK_IN");
+    useState<RevisionReasonValue>("TECHNICAL_ISSUE_CHECK_IN");
   const [revisedTime, setRevisedTime] = useState<Date | null>(null);
   const [detailDescription, setDetailDescription] = useState<string>("");
   const [validationError, setValidationError] = useState<string>("");
@@ -105,7 +105,7 @@ const AttendanceCorrectionPage: React.FC = () => {
     if (!selectedAttendance) return;
 
     if (!selectedAttendance.checkInTime) {
-      setRevisionReason("MISSED_CHECK_IN");
+      setRevisionReason("TECHNICAL_ISSUE_CHECK_IN");
       return;
     }
 
