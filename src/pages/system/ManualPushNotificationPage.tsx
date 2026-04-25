@@ -13,7 +13,7 @@ import {
 import SendIcon from "@mui/icons-material/Send";
 import SmartphoneIcon from "@mui/icons-material/Smartphone";
 import LanguageIcon from "@mui/icons-material/Language";
-import EdgeSensorHighIcon from "@mui/icons-material/EdgeSensorHigh";
+import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import { useAuth } from "../../contexts/AuthContext";
 import { usePush } from "../../contexts/PushContext";
 import { UserRole } from "../../types/enums";
@@ -35,7 +35,7 @@ const PRESET_TOKENS = [
     label: "Trigger Edge",
     token:
       "flzC3TwZmcwrANz9eT3ddb:APA91bFthklI5I-WIUqpcHSn4_3tH21pQZlFU-eSK46lAoA_C7R7h7WO2OrqcmLr79Q_GW50Nq2pV2ZjgTfwNaIIfj0VrBLAqvC1Siu-URERf7vrvKve1RI",
-    icon: <EdgeSensorHighIcon />,
+    icon: <NotificationsActiveIcon />,
   },
 ] as const;
 
