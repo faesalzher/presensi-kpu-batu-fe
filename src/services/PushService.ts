@@ -11,6 +11,10 @@ export type PushRegistrationStatusResponse = {
   registered: boolean;
 };
 
+export type TestPushPayload = {
+  token: string;
+};
+
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });
@@ -52,6 +56,13 @@ const PushService = {
       "/push/register/status",
       { params: { deviceId } }
     );
+    return response.data;
+  },
+
+  triggerTestPush: async (payload: TestPushPayload): Promise<unknown> => {
+    const response = await API.post("/push/test", null, {
+      params: { token: payload.token },
+    });
     return response.data;
   },
 };

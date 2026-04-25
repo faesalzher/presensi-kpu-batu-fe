@@ -43,6 +43,7 @@ import { UserRole } from "./types/enums";
 import SekretariatPage from "./pages/sekretariat/SekretariatPage";
 import { SystemProvider } from "./contexts/SystemContext";
 import SchedulerMonitoringPage from "./pages/system/SchedulerMonitoringPage";
+import ManualPushNotificationPage from "./pages/system/ManualPushNotificationPage";
 
 function App() {
   return (
@@ -185,6 +186,7 @@ function App() {
                             {/* Admin-only scheduler monitoring */}
                             <Route element={<ProtectedRoute allowedRoles={[UserRole.ADMIN]} />}>
                               <Route path="/admin/scheduler" element={<SchedulerMonitoringPage />} />
+                              <Route path="/admin/push-notification" element={<ManualPushNotificationPage />} />
                             </Route>
 
                             {/* Other routes */}

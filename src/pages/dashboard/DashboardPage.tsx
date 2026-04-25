@@ -17,7 +17,8 @@ import {
   Groups,
   ExitToApp,
   AccessTime,
-  AdminPanelSettings
+  AdminPanelSettings,
+  Send
   , NotificationsActive,
   CheckCircle,
   FactCheck
@@ -427,6 +428,11 @@ const DashboardPage: React.FC = () => {
       label: "Monitoring Scheduler",
       icon: <AdminPanelSettings color="primary" />,
       onClick: () => navigate("/admin/scheduler"),
+    },
+    {
+      label: "Manual Push",
+      icon: <Send color="primary" />,
+      onClick: () => navigate("/admin/push-notification"),
     },
   ];
 
