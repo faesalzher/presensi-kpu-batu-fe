@@ -145,7 +145,7 @@ const TukinPage: React.FC = () => {
           variant="h6"
           sx={{ flexGrow: 1, textAlign: "center", mr: 4 }}
         >
-          Penerimaan Tunjangan Kinerja
+          Simulasi Tunjangan Kinerja
         </Typography>
       </Box>
       <Container maxWidth="sm" sx={{ mt: 2, mb: 2 }}>

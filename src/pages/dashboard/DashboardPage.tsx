@@ -328,7 +328,7 @@ const DashboardPage: React.FC = () => {
 
   /* ================= DATA ================= */
   const tukinQuickAction = {
-    label: "Tunjangan Kinerja",
+    label: "Simulasi Tukin",
     icon: <RequestQuote color="primary" />,
     onClick: () => navigate("/daftar-tukin"),
   };

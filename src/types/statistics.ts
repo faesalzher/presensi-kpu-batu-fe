@@ -50,6 +50,7 @@ export interface GenerateBulkReportParams {
   includeInactive?: boolean;
   separateSheets?: boolean; // Whether to create separate sheets for each user/department
   includeSummary?: boolean; // Whether to include summary sheet
+  includeTukin?: boolean;
 }
 
 export interface AttendanceRecord {

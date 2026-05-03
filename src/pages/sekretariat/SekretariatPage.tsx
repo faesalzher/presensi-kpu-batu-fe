@@ -109,6 +109,7 @@ const SekretariatPage: React.FC = () => {
     includeInactive: false,
     separateSheets: true,
     includeSummary: true,
+    includeTukin: false,
   });
   const [userSelectionDialog, setUserSelectionDialog] = useState(false);
 
@@ -214,6 +215,15 @@ const SekretariatPage: React.FC = () => {
         setSelectedUsers([]);
       }
 
+      return;
+    }
+
+    if ((field === "separateSheets" || field === "includeSummary") && !value) {
+      setReportParams((prev) => ({
+        ...prev,
+        [field]: false,
+        includeTukin: false,
+      }));
       return;
     }
 
@@ -714,6 +724,18 @@ const SekretariatPage: React.FC = () => {
                         />
                         <Typography variant="body2">Sertakan ringkasan laporan</Typography>
                       </Box>
+
+                      {reportParams.separateSheets && reportParams.includeSummary && (
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <Checkbox
+                            checked={reportParams.includeTukin || false}
+                            onChange={(e) => handleParamChange("includeTukin", e.target.checked)}
+                          />
+                          <Typography variant="body2">
+                            Tunjangan kinerja
+                          </Typography>
+                        </Box>
+                      )}
 
                       {/* <Box sx={{ display: "flex", alignItems: "center" }}>
                         <Checkbox
