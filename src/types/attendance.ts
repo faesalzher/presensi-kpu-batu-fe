@@ -49,7 +49,8 @@ export interface AttendanceReportItemResponse {
 export interface CheckInDto {
   latitude: number;
   longitude: number;
-  accuracy?: number;
+  accuracy: number;
+  timestamp: string;
   provider?: string;
   notes?: string;
 }
@@ -57,7 +58,8 @@ export interface CheckInDto {
 export interface CheckOutDto {
   latitude: number;
   longitude: number;
-  accuracy?: number;
+  accuracy: number;
+  timestamp: string;
   provider?: string;
   notes?: string;
 }

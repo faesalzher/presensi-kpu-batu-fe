@@ -38,6 +38,7 @@ import SystemService from "../../services/SystemService";
 import { CheckInDto, CheckOutDto } from "../../types/attendance";
 import { formatDate, formatTime, getNow } from "../../constant/time.constant";
 import BottomNav from "../../components/BottomNav";
+import useGpsStabilityValidation from "../../hooks/useGpsStabilityValidation";
 
 // Fix Leaflet icon issue in React
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -51,16 +52,39 @@ L.Icon.Default.mergeOptions({
 });
 
 const PresensiPage: React.FC = () => {
+  const MIN_VALID_ACCURACY = 1;
+  const MAX_VALID_ACCURACY = 150;
+  const parseOnOffSetting = (rawValue: unknown, defaultValue: boolean): boolean => {
+    const raw = String(rawValue ?? "").trim().toLowerCase();
+    const isOff = raw === "off" || raw === "false" || raw === "0" || raw === "no";
+    const isOn = raw === "on" || raw === "true" || raw === "1" || raw === "yes";
+    if (isOff) return false;
+    if (isOn) return true;
+    return defaultValue;
+  };
     // Lokasi kantor (bisa diambil dari backend/general_setting, hardcode fallback)
     const [officeLocation, setOfficeLocation] = useState<[number, number]>([-7.880554548953023, 112.52737963655478]); // fallback: KPU Batu
     const [radius, setRadius] = useState<number>(500); // default 500m
   const [isGeofenceEnabled, setIsGeofenceEnabled] = useState<boolean | null>(null);
+  const [isFakeGpsDetectionEnabled, setIsFakeGpsDetectionEnabled] = useState<boolean>(true);
+  const [isGpsDebugInfoVisible, setIsGpsDebugInfoVisible] = useState<boolean>(false);
   const [lateToleranceMinutes, setLateToleranceMinutes] = useState<number>(0);
     const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+    const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
+    const [locationTimestamp, setLocationTimestamp] = useState<number | null>(null);
     const [distanceToOffice, setDistanceToOffice] = useState<number | null>(null);
     const [isWithinRadius, setIsWithinRadius] = useState<boolean>(false);
     const [locationError, setLocationError] = useState<string | null>(null);
     const [isRefreshingLocation, setIsRefreshingLocation] = useState<boolean>(false);
+    const setGeolocationState = (
+      location: [number, number] | null,
+      accuracy: number | null,
+      timestamp: number | null
+    ) => {
+      setUserLocation(location);
+      setLocationAccuracy(accuracy);
+      setLocationTimestamp(timestamp);
+    };
     // Haversine formula
     const haversine = (
       lat1: number,
@@ -85,25 +109,41 @@ const PresensiPage: React.FC = () => {
     // - LATITUDE_LONGITUDE: "-7.870000;112.525000"
     // - MAX_RADIUS: "100" (meter)
     // - IS_LOCATION_GEOFENCE_ENABLED: "ON" | "OFF" (atau "true/false", "1/0")
+    // - IS_FAKE_GPS_DETECTION_ENABLED: "ON" | "OFF"
+    // - IS_GPS_DEBUG_INFO_VISIBLE: "ON" | "OFF"
     // - LATE_TOLERANCE_MINUTES: "10" (menit)
     useEffect(() => {
       const fetchSettings = async () => {
-        const [geofenceResult, radiusResult, officeResult, lateToleranceResult] = await Promise.allSettled([
+        const [
+          geofenceResult,
+          radiusResult,
+          officeResult,
+          lateToleranceResult,
+          fakeGpsDetectionResult,
+          gpsDebugInfoResult,
+        ] = await Promise.allSettled([
           SystemService.getGeneralSetting("IS_LOCATION_GEOFENCE_ENABLED"),
           SystemService.getGeneralSetting("MAX_RADIUS"),
           SystemService.getGeneralSetting("LATITUDE_LONGITUDE"),
           SystemService.getGeneralSetting("LATE_TOLERANCE_MINUTES"),
+          SystemService.getGeneralSetting("IS_FAKE_GPS_DETECTION_ENABLED"),
+          SystemService.getGeneralSetting("IS_GPS_DEBUG_INFO_VISIBLE"),
         ]);
 
         // Geofence enabled
         if (geofenceResult.status === "fulfilled") {
-          const raw = String(geofenceResult.value).trim().toLowerCase();
-          const isOff = raw === "off" || raw === "false" || raw === "0" || raw === "no";
-          const isOn = raw === "on" || raw === "true" || raw === "1" || raw === "yes";
-          setIsGeofenceEnabled(isOff ? false : isOn ? true : true);
+          setIsGeofenceEnabled(parseOnOffSetting(geofenceResult.value, true));
         } else {
           // default aman: aktifkan validasi jika setting gagal dibaca
           setIsGeofenceEnabled(true);
+        }
+
+        if (fakeGpsDetectionResult.status === "fulfilled") {
+          setIsFakeGpsDetectionEnabled(parseOnOffSetting(fakeGpsDetectionResult.value, true));
+        }
+
+        if (gpsDebugInfoResult.status === "fulfilled") {
+          setIsGpsDebugInfoVisible(parseOnOffSetting(gpsDebugInfoResult.value, false));
         }
 
         // Radius
@@ -139,82 +179,62 @@ const PresensiPage: React.FC = () => {
       fetchSettings();
     }, []);
 
-    // Fetch lokasi user
-    useEffect(() => {
-      // Kalau geofence dimatikan, jangan minta izin lokasi & reset state.
-      if (isGeofenceEnabled === false) {
-        setUserLocation(null);
-        setDistanceToOffice(null);
-        setIsWithinRadius(false);
-        setLocationError(null);
-        return;
-      }
+  const {
+    gpsSamples,
+    gpsLooksNatural,
+    gpsValidationLoading,
+    gpsValidationMessage,
+    currentLatitude,
+    currentLongitude,
+    currentAccuracy,
+    trackingActive,
+    gpsLastUpdated,
+    locationError: gpsWatcherError,
+    refreshTracking,
+  } = useGpsStabilityValidation({
+    enabled: true,
+    maxSamples: 15,
+    minSamplesToValidate: 7,
+  });
 
-      // Belum tahu settingnya (loading) => jangan minta izin lokasi dulu.
-      if (isGeofenceEnabled === null) {
-        return;
-      }
-
-      if (!navigator.geolocation) {
-        setLocationError("Geolocation tidak didukung browser ini.");
-        return;
-      }
-      const geoSuccess = (pos: GeolocationPosition) => {
-        const { latitude, longitude } = pos.coords;
-        setUserLocation([latitude, longitude]);
-        setLocationError(null);
-      };
-      const geoError = (_err: GeolocationPositionError) => {
-        setLocationError("Gagal mendapatkan lokasi. Aktifkan layanan lokasi di perangkat Anda.");
-        setUserLocation(null);
-      };
-      const watchId = navigator.geolocation.watchPosition(geoSuccess, geoError, {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
-      });
-      return () => navigator.geolocation.clearWatch(watchId);
-    }, [isGeofenceEnabled]);
-
-    const refreshLocation = () => {
-      if (isGeofenceEnabled !== true) return;
-      if (!navigator.geolocation) {
-        setLocationError("Geolocation tidak didukung browser ini.");
-        return;
-      }
-
-      setIsRefreshingLocation(true);
+  useEffect(() => {
+    if (isGeofenceEnabled === false) {
+      setGeolocationState(null, null, null);
+      setDistanceToOffice(null);
+      setIsWithinRadius(false);
       setLocationError(null);
+      return;
+    }
 
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const { latitude, longitude } = pos.coords;
-          setUserLocation([latitude, longitude]);
-          setLocationError(null);
-          setIsRefreshingLocation(false);
-        },
-        (err) => {
-          let message = "Gagal mendapatkan lokasi. Aktifkan layanan lokasi di perangkat Anda.";
-          if (err?.code === err.PERMISSION_DENIED) {
-            message = "Akses lokasi ditolak. Silakan izinkan lokasi di browser.";
-          } else if (err?.code === err.POSITION_UNAVAILABLE) {
-            message = "Lokasi tidak tersedia. Coba nyalakan GPS lalu refresh lokasi.";
-          } else if (err?.code === err.TIMEOUT) {
-            message = "Timeout mendapatkan lokasi. Coba lagi.";
-          }
+    if (gpsWatcherError) {
+      setLocationError(gpsWatcherError);
+      return;
+    }
 
-          setLocationError(message);
-          setIsRefreshingLocation(false);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 0,
-        }
-      );
-    };
-    // Hitung jarak ke kantor & validasi radius
-    useEffect(() => {
+    if (currentLatitude !== null && currentLongitude !== null) {
+      setGeolocationState([currentLatitude, currentLongitude], currentAccuracy, gpsLastUpdated);
+      setLocationError(null);
+    }
+  }, [
+    isGeofenceEnabled,
+    gpsWatcherError,
+    currentLatitude,
+    currentLongitude,
+    currentAccuracy,
+    gpsLastUpdated,
+  ]);
+
+  const refreshLocation = () => {
+    if (isGeofenceEnabled !== true) return;
+
+    setIsRefreshingLocation(true);
+    refreshRequestedAtRef.current = Date.now();
+    setLocationError(null);
+    refreshTracking();
+  };
+
+  // Hitung jarak ke kantor & validasi radius
+  useEffect(() => {
       if (isGeofenceEnabled !== true) {
         setDistanceToOffice(null);
         setIsWithinRadius(false);
@@ -230,6 +250,26 @@ const PresensiPage: React.FC = () => {
         setIsWithinRadius(false);
       }
     }, [userLocation, officeLocation, radius, isGeofenceEnabled]);
+
+  useEffect(() => {
+    if (!isRefreshingLocation) return;
+
+    if (gpsWatcherError || locationError) {
+      setIsRefreshingLocation(false);
+      refreshRequestedAtRef.current = null;
+      return;
+    }
+
+    if (
+      gpsLastUpdated !== null &&
+      refreshRequestedAtRef.current !== null &&
+      gpsLastUpdated >= refreshRequestedAtRef.current
+    ) {
+      setIsRefreshingLocation(false);
+      refreshRequestedAtRef.current = null;
+    }
+  }, [isRefreshingLocation, gpsLastUpdated, gpsWatcherError, locationError]);
+
   const navigate = useNavigate();
   const {
     checkIn,
@@ -276,6 +316,7 @@ const PresensiPage: React.FC = () => {
 
   // const videoRef = useRef<HTMLVideoElement | null>(null);
   const isMounted = useRef<boolean>(true);
+  const refreshRequestedAtRef = useRef<number | null>(null);
   // // const isInitializing = useRef<boolean>(false);
   // const mapRef = useRef<L.Map | null>(null);
 
@@ -619,7 +660,19 @@ const PresensiPage: React.FC = () => {
       return;
     }
 
-    if (!isCheckOut && isGeofenceEnabled === true && (!userLocation || !isWithinRadius)) {
+    if (
+      isGeofenceEnabled === true &&
+      isFakeGpsDetectionEnabled &&
+      (gpsValidationLoading || !gpsLooksNatural)
+    ) {
+      showNotification(
+        gpsValidationMessage || "Memvalidasi kestabilan lokasi...",
+        "error"
+      );
+      return;
+    }
+
+    if (isGeofenceEnabled === true && (!userLocation || !isWithinRadius)) {
       showNotification(
         locationError
           ? locationError
@@ -635,20 +688,69 @@ const PresensiPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
+      let latestLocation = userLocation;
+      let latestAccuracy = locationAccuracy;
+      let latestTimestamp = locationTimestamp;
+
+      if (navigator.geolocation) {
+        const latestPosition = await new Promise<GeolocationPosition | null>((resolve) => {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => resolve(pos),
+            () => resolve(null),
+            {
+              enableHighAccuracy: true,
+              timeout: 15000,
+              maximumAge: 0,
+            }
+          );
+        });
+
+        if (latestPosition) {
+          const { latitude, longitude, accuracy } = latestPosition.coords;
+          const { timestamp } = latestPosition;
+          latestLocation = [latitude, longitude];
+          latestAccuracy = accuracy;
+          latestTimestamp = timestamp;
+          setGeolocationState(latestLocation, latestAccuracy, latestTimestamp);
+          setLocationError(null);
+        }
+      }
+
+      const hasInvalidLatestAccuracy =
+        latestAccuracy === null ||
+        !Number.isFinite(latestAccuracy) ||
+        latestAccuracy <= MIN_VALID_ACCURACY ||
+        latestAccuracy > MAX_VALID_ACCURACY;
+      const hasInvalidLatestTimestamp =
+        latestTimestamp === null ||
+        !Number.isFinite(latestTimestamp) ||
+        Number.isNaN(new Date(latestTimestamp).getTime());
+
+      if (hasInvalidLatestAccuracy || hasInvalidLatestTimestamp) {
+        showNotification("Lokasi harus valid.", "error");
+        setIsSubmitting(false);
+        return;
+      }
+
       // allow redirect again for this submission
       redirectedRef.current = false;
+      const payloadTimestamp = new Date(latestTimestamp ?? Date.now()).toISOString();
       if (isCheckOut) {
         const checkOutData: CheckOutDto = {
-          latitude: userLocation?.[0] ?? 0,
-          longitude: userLocation?.[1] ?? 0,
+          latitude: latestLocation?.[0] ?? 0,
+          longitude: latestLocation?.[1] ?? 0,
+          accuracy: latestAccuracy ?? 0,
+          timestamp: payloadTimestamp,
           notes: "", // Empty string instead of notes
         };
         await checkOut(checkOutData);
         showNotification("Check-out successful!", "success");
       } else {
         const checkInData: CheckInDto = {
-          latitude: userLocation?.[0] ?? 0,
-          longitude: userLocation?.[1] ?? 0,
+          latitude: latestLocation?.[0] ?? 0,
+          longitude: latestLocation?.[1] ?? 0,
+          accuracy: latestAccuracy ?? 0,
+          timestamp: payloadTimestamp,
           notes: "", // Empty string instead of notes
         };
         await checkIn(checkInData);
@@ -729,6 +831,32 @@ const PresensiPage: React.FC = () => {
     return lateMinutesForCheckout;
   }, [isCheckOut, todayAttendance?.lateMinutes, lateMinutesForCheckout]);
 
+  const hasInvalidLocationMetadata = React.useMemo(() => {
+    if (isGeofenceEnabled !== true) return false;
+
+    const invalidAccuracy =
+      locationAccuracy !== null &&
+      (!Number.isFinite(locationAccuracy) ||
+        locationAccuracy <= MIN_VALID_ACCURACY ||
+        locationAccuracy > MAX_VALID_ACCURACY);
+
+    const invalidTimestamp =
+      locationTimestamp !== null &&
+      (!Number.isFinite(locationTimestamp) ||
+        Number.isNaN(new Date(locationTimestamp).getTime()));
+
+    return invalidAccuracy || invalidTimestamp;
+  }, [isGeofenceEnabled, locationAccuracy, locationTimestamp]);
+
+  const locationValidationMessage = hasInvalidLocationMetadata
+    ? "Lokasi harus valid."
+    : null;
+
+  const activeGpsValidationMessage =
+    isFakeGpsDetectionEnabled && gpsValidationMessage
+      ? gpsValidationMessage
+      : null;
+
   const showLateWithinToleranceInfo =
     isCheckOut &&
     lateToleranceMinutes > 0 &&
@@ -762,6 +890,12 @@ const PresensiPage: React.FC = () => {
     suggested.setMinutes(suggested.getMinutes() + effectiveLateMinutesForCheckout);
     return formatTime(suggested);
   }, [showLateWithinToleranceInfo, workingDayToday?.workEnd, effectiveLateMinutesForCheckout, now]);
+
+  const checkInGpsStabilityBlocked =
+    isGeofenceEnabled === true &&
+    isFakeGpsDetectionEnabled &&
+    (gpsValidationLoading || !gpsLooksNatural);
+
   const actionButtonDisabled =
     attendanceLoading ||
     systemLoading ||
@@ -770,10 +904,12 @@ const PresensiPage: React.FC = () => {
     actionLocked ||
     (isCheckOut ? !canCheckOut : !canCheckIn) ||
     (!canCheckIn && !canCheckOut) ||
-    (!isCheckOut && (
+    hasInvalidLocationMetadata ||
+    checkInGpsStabilityBlocked ||
+    (
       isGeofenceEnabled === null ||
       (isGeofenceEnabled === true && (!userLocation || !isWithinRadius))
-    ));
+    );
 
   return (
     <Box
@@ -882,7 +1018,7 @@ const PresensiPage: React.FC = () => {
                   variant="outlined"
                   size="small"
                   onClick={refreshLocation}
-                  disabled={isRefreshingLocation}
+                  disabled={isGeofenceEnabled !== true || isRefreshingLocation}
                   startIcon={
                     isRefreshingLocation ? (
                       <CircularProgress size={14} color="inherit" />
@@ -941,17 +1077,81 @@ const PresensiPage: React.FC = () => {
                 display="block"
                 mt={1}
                 color={
-                  isWithinRadius ? theme.palette.success.main : theme.palette.error.main
+                  locationError || activeGpsValidationMessage || locationValidationMessage
+                    ? theme.palette.error.main
+                    : isWithinRadius
+                      ? theme.palette.success.main
+                      : theme.palette.error.main
                 }
               >
                 {locationError
                   ? locationError
+                  : activeGpsValidationMessage
+                    ? activeGpsValidationMessage
+                  : locationValidationMessage
+                    ? locationValidationMessage
                   : !userLocation
                     ? "Mencari lokasi... (aktifkan layanan lokasi untuk MASUK)"
                     : isWithinRadius
                       ? `Lokasi valid. Jarak ke kantor: ${distanceToOffice?.toFixed(0)} m`
                       : `Di luar radius ${radius} m. Jarak: ${distanceToOffice?.toFixed(0)} m`}
               </Typography>
+              <Typography
+                variant="caption"
+                display="block"
+                mt={0.5}
+                textAlign="left"
+                color={
+                  !trackingActive
+                    ? "warning.main"
+                    : gpsValidationLoading
+                      ? "warning.main"
+                      : gpsLooksNatural
+                        ? "success.main"
+                        : "error.main"
+                }
+              >
+                {!trackingActive
+                  ? "Tracking Dijeda"
+                  : !isFakeGpsDetectionEnabled
+                    ? "GPS Aktif"
+                  : gpsValidationLoading
+                    ? "GPS Tidak Stabil"
+                    : gpsLooksNatural
+                      ? "GPS Aktif"
+                      : "GPS Tidak Stabil"}
+              </Typography>
+              {isGpsDebugInfoVisible && (
+                <>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    display="block"
+                    mt={0.5}
+                    textAlign="left"
+                  >
+                    Lat: {currentLatitude !== null ? currentLatitude.toFixed(6) : "-"} | Lng: {currentLongitude !== null ? currentLongitude.toFixed(6) : "-"}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    display="block"
+                    mt={0.25}
+                    textAlign="left"
+                  >
+                    Akurasi: {currentAccuracy !== null ? `${currentAccuracy.toFixed(2)} m` : "-"} | Sampel: {gpsSamples.length}/15
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    display="block"
+                    mt={0.25}
+                    textAlign="left"
+                  >
+                    Update terakhir: {gpsLastUpdated ? new Date(gpsLastUpdated).toLocaleTimeString("id-ID") : "-"}
+                  </Typography>
+                </>
+              )}
               <Typography
                 variant="caption"
                 color="text.secondary"
