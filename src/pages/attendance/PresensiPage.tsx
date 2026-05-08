@@ -27,6 +27,7 @@ import {
   LogoutRounded,
   SendRounded,
   MyLocation,
+  InfoOutlined,
   // GpsFixed,
   // LocationSearching,
 } from "@mui/icons-material";
@@ -39,6 +40,7 @@ import { CheckInDto, CheckOutDto } from "../../types/attendance";
 import { formatDate, formatTime, getNow } from "../../constant/time.constant";
 import BottomNav from "../../components/BottomNav";
 import useGpsStabilityValidation from "../../hooks/useGpsStabilityValidation";
+import detectMobileLikeDevice from "../../utils/device";
 
 // Fix Leaflet icon issue in React
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -53,7 +55,6 @@ L.Icon.Default.mergeOptions({
 
 const PresensiPage: React.FC = () => {
   const MIN_VALID_ACCURACY = 1;
-  const MAX_VALID_ACCURACY = 500;
   const parseOnOffSetting = (rawValue: unknown, defaultValue: boolean): boolean => {
     const raw = String(rawValue ?? "").trim().toLowerCase();
     const isOff = raw === "off" || raw === "false" || raw === "0" || raw === "no";
@@ -68,6 +69,7 @@ const PresensiPage: React.FC = () => {
   const [isGeofenceEnabled, setIsGeofenceEnabled] = useState<boolean | null>(null);
   const [isFakeGpsDetectionEnabled, setIsFakeGpsDetectionEnabled] = useState<boolean>(true);
   const [isGpsDebugInfoVisible, setIsGpsDebugInfoVisible] = useState<boolean>(false);
+  const [showTechnicalInfoDialog, setShowTechnicalInfoDialog] = useState<boolean>(false);
   const [lateToleranceMinutes, setLateToleranceMinutes] = useState<number>(0);
     const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
     const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
@@ -182,6 +184,7 @@ const PresensiPage: React.FC = () => {
   const {
     gpsSamples,
     gpsLooksNatural,
+    gpsSuspicious,
     gpsValidationLoading,
     gpsValidationMessage,
     currentLatitude,
@@ -194,7 +197,7 @@ const PresensiPage: React.FC = () => {
   } = useGpsStabilityValidation({
     enabled: true,
     maxSamples: 15,
-    minSamplesToValidate: 7,
+    minSamplesToValidate: 3,
   });
 
   useEffect(() => {
@@ -663,11 +666,8 @@ const PresensiPage: React.FC = () => {
       return;
     }
 
-    if (shouldApplyFakeGpsValidation && (gpsValidationLoading || !gpsLooksNatural)) {
-      showNotification(
-        gpsValidationMessage || "Memvalidasi kestabilan lokasi...",
-        "error"
-      );
+    if (shouldApplyFakeGpsValidation && gpsSuspicious) {
+      showNotification(gpsValidationMessage || "Sinyal lokasi belum stabil.", "error");
       return;
     }
 
@@ -690,7 +690,7 @@ const PresensiPage: React.FC = () => {
       let latestLocation = userLocation;
       let latestAccuracy = locationAccuracy;
       let latestTimestamp = locationTimestamp;
-      const shouldValidateLocationMetadata = shouldApplyFakeGpsValidation;
+      const shouldValidateLocationMetadata = isGeofenceEnabled === true;
 
       if (shouldValidateLocationMetadata && navigator.geolocation) {
         const latestPosition = await new Promise<GeolocationPosition | null>((resolve) => {
@@ -719,8 +719,7 @@ const PresensiPage: React.FC = () => {
       const hasInvalidLatestAccuracy =
         latestAccuracy === null ||
         !Number.isFinite(latestAccuracy) ||
-        latestAccuracy <= MIN_VALID_ACCURACY ||
-        latestAccuracy > MAX_VALID_ACCURACY;
+        latestAccuracy <= MIN_VALID_ACCURACY;
       const hasInvalidLatestTimestamp =
         latestTimestamp === null ||
         !Number.isFinite(latestTimestamp) ||
@@ -835,13 +834,12 @@ const PresensiPage: React.FC = () => {
   }, [isCheckOut, todayAttendance?.lateMinutes, lateMinutesForCheckout]);
 
   const hasInvalidLocationMetadata = React.useMemo(() => {
-    if (isGeofenceEnabled !== true || !isFakeGpsDetectionEnabled) return false;
+    if (isGeofenceEnabled !== true) return false;
 
     const invalidAccuracy =
       locationAccuracy !== null &&
       (!Number.isFinite(locationAccuracy) ||
-        locationAccuracy <= MIN_VALID_ACCURACY ||
-        locationAccuracy > MAX_VALID_ACCURACY);
+        locationAccuracy <= MIN_VALID_ACCURACY);
 
     const invalidTimestamp =
       locationTimestamp !== null &&
@@ -849,14 +847,20 @@ const PresensiPage: React.FC = () => {
         Number.isNaN(new Date(locationTimestamp).getTime()));
 
     return invalidAccuracy || invalidTimestamp;
-  }, [isGeofenceEnabled, isFakeGpsDetectionEnabled, locationAccuracy, locationTimestamp]);
+  }, [isGeofenceEnabled, locationAccuracy, locationTimestamp]);
 
   const locationValidationMessage = hasInvalidLocationMetadata
     ? "Lokasi harus valid."
     : null;
 
+  const deviceValidation = React.useMemo(() => detectMobileLikeDevice(), []);
+  const isAttendanceDeviceAllowed = deviceValidation.isMobileLikeDevice;
+  const deviceValidationMessage = isAttendanceDeviceAllowed
+    ? null
+    : "Presensi hanya dapat dilakukan melalui perangkat mobile.";
+
   const activeGpsValidationMessage =
-    isFakeGpsDetectionEnabled && gpsValidationMessage
+    isFakeGpsDetectionEnabled && gpsSuspicious && gpsValidationMessage
       ? gpsValidationMessage
       : null;
 
@@ -897,7 +901,7 @@ const PresensiPage: React.FC = () => {
   const checkInGpsStabilityBlocked =
     isGeofenceEnabled === true &&
     isFakeGpsDetectionEnabled &&
-    (gpsValidationLoading || !gpsLooksNatural);
+    gpsSuspicious;
 
   const actionButtonDisabled =
     attendanceLoading ||
@@ -907,6 +911,7 @@ const PresensiPage: React.FC = () => {
     actionLocked ||
     (isCheckOut ? !canCheckOut : !canCheckIn) ||
     (!canCheckIn && !canCheckOut) ||
+    !isAttendanceDeviceAllowed ||
     hasInvalidLocationMetadata ||
     checkInGpsStabilityBlocked ||
     (
@@ -1017,22 +1022,34 @@ const PresensiPage: React.FC = () => {
                   Validasi Lokasi
                 </Typography>
 
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={refreshLocation}
-                  disabled={isGeofenceEnabled !== true || isRefreshingLocation}
-                  startIcon={
-                    isRefreshingLocation ? (
-                      <CircularProgress size={14} color="inherit" />
-                    ) : (
-                      <MyLocation />
-                    )
-                  }
-                  sx={{ textTransform: "none" }}
-                >
-                  Refresh Lokasi
-                </Button>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  {isGpsDebugInfoVisible && (
+                    <IconButton
+                      size="small"
+                      color="primary"
+                      aria-label="Lihat informasi teknis"
+                      onClick={() => setShowTechnicalInfoDialog(true)}
+                    >
+                      <InfoOutlined fontSize="small" />
+                    </IconButton>
+                  )}
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={refreshLocation}
+                    disabled={isGeofenceEnabled !== true || isRefreshingLocation}
+                    startIcon={
+                      isRefreshingLocation ? (
+                        <CircularProgress size={14} color="inherit" />
+                      ) : (
+                        <MyLocation />
+                      )
+                    }
+                    sx={{ textTransform: "none" }}
+                  >
+                    Refresh Lokasi
+                  </Button>
+                </Box>
               </Box>
 
               <Box sx={{ borderRadius: 2, overflow: "hidden" }}>
@@ -1074,14 +1091,15 @@ const PresensiPage: React.FC = () => {
                   )}
                 </MapContainer>
               </Box>
-
               <Typography
                 variant="caption"
                 display="block"
                 mt={1}
                 color={
-                  locationError || activeGpsValidationMessage || locationValidationMessage
+                  locationError || locationValidationMessage
                     ? theme.palette.error.main
+                    : activeGpsValidationMessage
+                      ? theme.palette.warning.main
                     : isWithinRadius
                       ? theme.palette.success.main
                       : theme.palette.error.main
@@ -1107,11 +1125,13 @@ const PresensiPage: React.FC = () => {
                 color={
                   !trackingActive
                     ? "warning.main"
-                    : gpsValidationLoading
+                    : isFakeGpsDetectionEnabled && gpsValidationLoading
                       ? "warning.main"
-                      : gpsLooksNatural
+                      : isFakeGpsDetectionEnabled && gpsSuspicious
+                        ? "warning.main"
+                        : gpsLooksNatural
                         ? "success.main"
-                        : "error.main"
+                        : "warning.main"
                 }
               >
                 {!trackingActive
@@ -1119,42 +1139,13 @@ const PresensiPage: React.FC = () => {
                   : !isFakeGpsDetectionEnabled
                     ? "GPS Aktif"
                   : gpsValidationLoading
-                    ? "GPS Tidak Stabil"
-                    : gpsLooksNatural
+                    ? "Memvalidasi kestabilan lokasi..."
+                    : gpsSuspicious
+                      ? "Sinyal lokasi belum stabil"
+                      : gpsLooksNatural
                       ? "GPS Aktif"
-                      : "GPS Tidak Stabil"}
+                      : "Sinyal lokasi belum stabil"}
               </Typography>
-              {isGpsDebugInfoVisible && (
-                <>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    display="block"
-                    mt={0.5}
-                    textAlign="left"
-                  >
-                    Lat: {currentLatitude !== null ? currentLatitude.toFixed(6) : "-"} | Lng: {currentLongitude !== null ? currentLongitude.toFixed(6) : "-"}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    display="block"
-                    mt={0.25}
-                    textAlign="left"
-                  >
-                    Akurasi: {currentAccuracy !== null ? `${currentAccuracy.toFixed(2)} m` : "-"} | Sampel: {gpsSamples.length}/15
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    display="block"
-                    mt={0.25}
-                    textAlign="left"
-                  >
-                    Update terakhir: {gpsLastUpdated ? new Date(gpsLastUpdated).toLocaleTimeString("id-ID") : "-"}
-                  </Typography>
-                </>
-              )}
               <Typography
                 variant="caption"
                 color="text.secondary"
@@ -1164,7 +1155,32 @@ const PresensiPage: React.FC = () => {
               >
                 Toleransi keterlambatan {lateToleranceMinutes} menit
               </Typography>
+              {deviceValidationMessage && (
+                <Typography
+                  variant="caption"
+                  display="block"
+                  mt={0.75}
+                  textAlign="left"
+                  color="warning.main"
+                  fontWeight={600}
+                >
+                  {deviceValidationMessage}
+                </Typography>
+              )}
             </Box>
+          )}
+
+          {isGeofenceEnabled !== true && deviceValidationMessage && (
+            <Typography
+              variant="caption"
+              display="block"
+              mt={1}
+              textAlign="left"
+              color="warning.main"
+              fontWeight={600}
+            >
+              {deviceValidationMessage}
+            </Typography>
           )}
 
           {/* ACTION BUTTON */}
@@ -1259,6 +1275,47 @@ const PresensiPage: React.FC = () => {
         </Button> */}
       </Container>
       <BottomNav />
+
+      <Dialog
+        open={showTechnicalInfoDialog}
+        onClose={() => setShowTechnicalInfoDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <InfoOutlined />
+          Informasi Teknis
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            Detail ini untuk pengecekan teknis lokasi.
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 1 }}>
+            Lat: {currentLatitude !== null ? currentLatitude.toFixed(6) : "-"}
+          </Typography>
+          <Typography variant="body2">
+            Lng: {currentLongitude !== null ? currentLongitude.toFixed(6) : "-"}
+          </Typography>
+          <Typography variant="body2">
+            Akurasi: {currentAccuracy !== null ? `${currentAccuracy.toFixed(2)} m` : "-"}
+          </Typography>
+          <Typography variant="body2">
+            Sampel: {gpsSamples.length}/15
+          </Typography>
+          <Typography variant="body2">
+            Update terakhir: {gpsLastUpdated ? new Date(gpsLastUpdated).toLocaleTimeString("id-ID") : "-"}
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 1 }}>
+            Device: {deviceValidation.deviceTypeLabel}
+          </Typography>
+          <Typography variant="body2">
+            Mobile-like: {String(deviceValidation.isMobileLikeDevice)}
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 1, wordBreak: "break-word" }}>
+            UA: {deviceValidation.uaSummary}
+          </Typography>
+        </DialogContent>
+      </Dialog>
 
       {/* Outside Radius Dialog */}
       <Dialog

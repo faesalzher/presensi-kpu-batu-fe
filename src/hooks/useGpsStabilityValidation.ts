@@ -16,6 +16,7 @@ interface UseGpsStabilityValidationParams {
 interface UseGpsStabilityValidationResult {
   gpsSamples: GpsSample[];
   gpsLooksNatural: boolean;
+  gpsSuspicious: boolean;
   gpsValidationLoading: boolean;
   gpsValidationMessage: string;
   currentLatitude: number | null;
@@ -28,7 +29,9 @@ interface UseGpsStabilityValidationResult {
 }
 
 const DEFAULT_MAX_SAMPLES = 15;
-const DEFAULT_MIN_SAMPLES = 7;
+const DEFAULT_MIN_SAMPLES = 3;
+const IDENTICAL_STREAK_THRESHOLD = 6;
+const VALIDATION_GRACE_MS = 20000;
 
 const useGpsStabilityValidation = ({
   enabled = true,
@@ -39,6 +42,7 @@ const useGpsStabilityValidation = ({
 
   const [gpsSamples, setGpsSamples] = useState<GpsSample[]>([]);
   const [gpsLooksNatural, setGpsLooksNatural] = useState<boolean>(false);
+  const [gpsSuspicious, setGpsSuspicious] = useState<boolean>(false);
   const [gpsValidationLoading, setGpsValidationLoading] = useState<boolean>(true);
   const [gpsValidationMessage, setGpsValidationMessage] = useState<string>(
     "Memvalidasi kestabilan lokasi..."
@@ -100,6 +104,7 @@ const useGpsStabilityValidation = ({
                 latDelta: Math.abs(sample.latitude - previous.latitude),
                 lngDelta: Math.abs(sample.longitude - previous.longitude),
                 accuracyDelta: Math.abs(sample.accuracy - previous.accuracy),
+                timestampDeltaMs: Math.abs(sample.timestamp - previous.timestamp),
               }
             : null;
 
@@ -123,6 +128,7 @@ const useGpsStabilityValidation = ({
         setLocationError(message);
         setGpsValidationLoading(false);
         setGpsLooksNatural(false);
+        setGpsSuspicious(false);
         setGpsValidationMessage("Sinyal lokasi belum stabil. Mohon aktifkan GPS dan coba lagi.");
         setTrackingActive(false);
         console.log("[GPS Tracker] error:", message);
@@ -141,6 +147,7 @@ const useGpsStabilityValidation = ({
   const refreshTracking = useCallback(() => {
     setGpsSamples([]);
     setGpsLooksNatural(false);
+    setGpsSuspicious(false);
     setGpsValidationLoading(true);
     setGpsValidationMessage("Memvalidasi kestabilan lokasi...");
     setLocationError(null);
@@ -154,6 +161,7 @@ const useGpsStabilityValidation = ({
       stopTracking("disabled");
       setGpsSamples([]);
       setGpsLooksNatural(false);
+      setGpsSuspicious(false);
       setGpsValidationLoading(true);
       setGpsValidationMessage("Memvalidasi kestabilan lokasi...");
       setCurrentLatitude(null);
@@ -186,53 +194,100 @@ const useGpsStabilityValidation = ({
   useEffect(() => {
     if (!enabled) return;
 
+    const latestSamples = gpsSamples;
+    const sampleCount = latestSamples.length;
+
+    const timestampDeltas = latestSamples
+      .slice(1)
+      .map((sample, index) => sample.timestamp - latestSamples[index].timestamp);
+
+    const latestTimestampDeltaMs =
+      timestampDeltas.length > 0 ? timestampDeltas[timestampDeltas.length - 1] : null;
+
+    const firstTimestamp = latestSamples[0]?.timestamp ?? null;
+    const latestTimestamp = latestSamples[sampleCount - 1]?.timestamp ?? null;
+    const validationElapsedMs =
+      firstTimestamp !== null && latestTimestamp !== null
+        ? latestTimestamp - firstTimestamp
+        : 0;
+
     if (gpsSamples.length < minSamplesToValidate) {
+      const shouldUseGracefulFallback = sampleCount > 0 && validationElapsedMs >= VALIDATION_GRACE_MS;
+
+      if (shouldUseGracefulFallback) {
+        setGpsValidationLoading(false);
+        setGpsLooksNatural(true);
+        setGpsSuspicious(false);
+        setGpsValidationMessage("");
+
+        console.log("[GPS Validation] sample count:", sampleCount);
+        console.log("[GPS Validation] latest timestamp delta ms:", latestTimestampDeltaMs);
+        console.log("[GPS Validation] suspicious reason:", "fallback_timeout_allow");
+        console.log("[GPS Validation] validation passed:", true);
+        return;
+      }
+
       setGpsValidationLoading(true);
       setGpsLooksNatural(false);
+      setGpsSuspicious(false);
       setGpsValidationMessage("Memvalidasi kestabilan lokasi...");
 
-      console.log("[GPS Validation] latest samples:", gpsSamples);
+      console.log("[GPS Validation] sample count:", sampleCount);
+      console.log("[GPS Validation] latest timestamp delta ms:", latestTimestampDeltaMs);
       console.log("[GPS Validation] current accuracy:", currentAccuracy);
       console.log("[GPS Validation] suspicious reason:", "insufficient_samples");
-      console.log("[GPS Validation] gpsLooksNatural:", false);
+      console.log("[GPS Validation] validation passed:", false);
       return;
     }
 
-    const latest = gpsSamples.slice(-minSamplesToValidate);
-    const first = latest[0];
+    let identicalStreakCount = 1;
+    for (let i = latestSamples.length - 1; i > 0; i -= 1) {
+      const current = latestSamples[i];
+      const previous = latestSamples[i - 1];
 
-    const allLatitudeIdentical = latest.every((sample) => sample.latitude === first.latitude);
-    const allLongitudeIdentical = latest.every((sample) => sample.longitude === first.longitude);
-    const allAccuracyIdentical = latest.every((sample) => sample.accuracy === first.accuracy);
+      const identicalPoint =
+        current.latitude === previous.latitude &&
+        current.longitude === previous.longitude &&
+        current.accuracy === previous.accuracy;
 
-    const suspiciousStaticPattern =
-      allLatitudeIdentical && allLongitudeIdentical && allAccuracyIdentical;
+      if (!identicalPoint) break;
+      identicalStreakCount += 1;
+    }
+
+    const suspiciousStaticPattern = identicalStreakCount >= IDENTICAL_STREAK_THRESHOLD;
 
     if (suspiciousStaticPattern) {
       setGpsValidationLoading(false);
       setGpsLooksNatural(false);
+      setGpsSuspicious(true);
       setGpsValidationMessage("Sinyal lokasi belum stabil. Mohon aktifkan GPS dan coba lagi.");
 
-      console.log("[GPS Validation] latest samples:", latest);
+      console.log("[GPS Validation] sample count:", sampleCount);
+      console.log("[GPS Validation] latest timestamp delta ms:", latestTimestampDeltaMs);
+      console.log("[GPS Validation] identical streak count:", identicalStreakCount);
       console.log("[GPS Validation] current accuracy:", currentAccuracy);
-      console.log("[GPS Validation] suspicious reason:", "identical_lat_lng_accuracy");
-      console.log("[GPS Validation] gpsLooksNatural:", false);
+      console.log("[GPS Validation] suspicious reason:", "long_identical_lat_lng_accuracy_streak");
+      console.log("[GPS Validation] validation passed:", false);
       return;
     }
 
     setGpsValidationLoading(false);
     setGpsLooksNatural(true);
+    setGpsSuspicious(false);
     setGpsValidationMessage("");
 
-    console.log("[GPS Validation] latest samples:", latest);
+    console.log("[GPS Validation] sample count:", sampleCount);
+    console.log("[GPS Validation] latest timestamp delta ms:", latestTimestampDeltaMs);
+    console.log("[GPS Validation] identical streak count:", identicalStreakCount);
     console.log("[GPS Validation] current accuracy:", currentAccuracy);
     console.log("[GPS Validation] suspicious reason:", "none");
-    console.log("[GPS Validation] gpsLooksNatural:", true);
+    console.log("[GPS Validation] validation passed:", true);
   }, [enabled, gpsSamples, currentAccuracy, minSamplesToValidate]);
 
   return {
     gpsSamples,
     gpsLooksNatural,
+    gpsSuspicious,
     gpsValidationLoading,
     gpsValidationMessage,
     currentLatitude,
