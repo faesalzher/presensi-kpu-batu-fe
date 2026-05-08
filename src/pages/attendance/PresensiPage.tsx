@@ -53,7 +53,7 @@ L.Icon.Default.mergeOptions({
 
 const PresensiPage: React.FC = () => {
   const MIN_VALID_ACCURACY = 1;
-  const MAX_VALID_ACCURACY = 150;
+  const MAX_VALID_ACCURACY = 500;
   const parseOnOffSetting = (rawValue: unknown, defaultValue: boolean): boolean => {
     const raw = String(rawValue ?? "").trim().toLowerCase();
     const isOff = raw === "off" || raw === "false" || raw === "0" || raw === "no";
@@ -654,17 +654,16 @@ const PresensiPage: React.FC = () => {
   };
 
   const submitAttendance = async () => {
+    const shouldApplyFakeGpsValidation =
+      isGeofenceEnabled === true && isFakeGpsDetectionEnabled;
+
     // Wajib lokasi untuk MASUK (sesuai requirement)
     if (!isCheckOut && isGeofenceEnabled === null) {
       showNotification("Memuat pengaturan lokasi...", "error");
       return;
     }
 
-    if (
-      isGeofenceEnabled === true &&
-      isFakeGpsDetectionEnabled &&
-      (gpsValidationLoading || !gpsLooksNatural)
-    ) {
+    if (shouldApplyFakeGpsValidation && (gpsValidationLoading || !gpsLooksNatural)) {
       showNotification(
         gpsValidationMessage || "Memvalidasi kestabilan lokasi...",
         "error"
@@ -691,8 +690,9 @@ const PresensiPage: React.FC = () => {
       let latestLocation = userLocation;
       let latestAccuracy = locationAccuracy;
       let latestTimestamp = locationTimestamp;
+      const shouldValidateLocationMetadata = shouldApplyFakeGpsValidation;
 
-      if (navigator.geolocation) {
+      if (shouldValidateLocationMetadata && navigator.geolocation) {
         const latestPosition = await new Promise<GeolocationPosition | null>((resolve) => {
           navigator.geolocation.getCurrentPosition(
             (pos) => resolve(pos),
@@ -726,7 +726,10 @@ const PresensiPage: React.FC = () => {
         !Number.isFinite(latestTimestamp) ||
         Number.isNaN(new Date(latestTimestamp).getTime());
 
-      if (hasInvalidLatestAccuracy || hasInvalidLatestTimestamp) {
+      if (
+        shouldValidateLocationMetadata &&
+        (hasInvalidLatestAccuracy || hasInvalidLatestTimestamp)
+      ) {
         showNotification("Lokasi harus valid.", "error");
         setIsSubmitting(false);
         return;
@@ -832,7 +835,7 @@ const PresensiPage: React.FC = () => {
   }, [isCheckOut, todayAttendance?.lateMinutes, lateMinutesForCheckout]);
 
   const hasInvalidLocationMetadata = React.useMemo(() => {
-    if (isGeofenceEnabled !== true) return false;
+    if (isGeofenceEnabled !== true || !isFakeGpsDetectionEnabled) return false;
 
     const invalidAccuracy =
       locationAccuracy !== null &&
@@ -846,7 +849,7 @@ const PresensiPage: React.FC = () => {
         Number.isNaN(new Date(locationTimestamp).getTime()));
 
     return invalidAccuracy || invalidTimestamp;
-  }, [isGeofenceEnabled, locationAccuracy, locationTimestamp]);
+  }, [isGeofenceEnabled, isFakeGpsDetectionEnabled, locationAccuracy, locationTimestamp]);
 
   const locationValidationMessage = hasInvalidLocationMetadata
     ? "Lokasi harus valid."
