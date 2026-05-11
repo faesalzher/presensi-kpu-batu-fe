@@ -55,6 +55,10 @@ L.Icon.Default.mergeOptions({
 
 const PresensiPage: React.FC = () => {
   const MIN_VALID_ACCURACY = 1;
+  const MIN_GPS_SAMPLES_TO_VALIDATE = 3;
+  const MAX_JUMP_DISTANCE_M = 120;
+  const MAX_JUMP_SPEED_M_PER_SEC = 45;
+  const LOW_CONFIDENCE_ACCURACY_M = 35;
   const parseOnOffSetting = (rawValue: unknown, defaultValue: boolean): boolean => {
     const raw = String(rawValue ?? "").trim().toLowerCase();
     const isOff = raw === "off" || raw === "false" || raw === "0" || raw === "no";
@@ -78,6 +82,7 @@ const PresensiPage: React.FC = () => {
     const [isWithinRadius, setIsWithinRadius] = useState<boolean>(false);
     const [locationError, setLocationError] = useState<string | null>(null);
     const [isRefreshingLocation, setIsRefreshingLocation] = useState<boolean>(false);
+    const [isLocationStabilizing, setIsLocationStabilizing] = useState<boolean>(false);
     const setGeolocationState = (
       location: [number, number] | null,
       accuracy: number | null,
@@ -185,7 +190,6 @@ const PresensiPage: React.FC = () => {
     gpsSamples,
     gpsLooksNatural,
     gpsSuspicious,
-    gpsValidationLoading,
     gpsValidationMessage,
     currentLatitude,
     currentLongitude,
@@ -197,7 +201,7 @@ const PresensiPage: React.FC = () => {
   } = useGpsStabilityValidation({
     enabled: true,
     maxSamples: 15,
-    minSamplesToValidate: 3,
+    minSamplesToValidate: MIN_GPS_SAMPLES_TO_VALIDATE,
   });
 
   useEffect(() => {
@@ -206,16 +210,51 @@ const PresensiPage: React.FC = () => {
       setDistanceToOffice(null);
       setIsWithinRadius(false);
       setLocationError(null);
+      setIsLocationStabilizing(false);
+      lastAcceptedLocationRef.current = null;
+      lastAcceptedTimestampRef.current = null;
       return;
     }
 
     if (gpsWatcherError) {
       setLocationError(gpsWatcherError);
+      setIsLocationStabilizing(false);
       return;
     }
 
     if (currentLatitude !== null && currentLongitude !== null) {
-      setGeolocationState([currentLatitude, currentLongitude], currentAccuracy, gpsLastUpdated);
+      const candidateLocation: [number, number] = [currentLatitude, currentLongitude];
+      const candidateTimestamp = gpsLastUpdated ?? Date.now();
+
+      const previousLocation = lastAcceptedLocationRef.current;
+      const previousTimestamp = lastAcceptedTimestampRef.current;
+
+      if (previousLocation !== null && previousTimestamp !== null) {
+        const jumpDistance = haversine(
+          previousLocation[0],
+          previousLocation[1],
+          candidateLocation[0],
+          candidateLocation[1]
+        );
+        const deltaSec = Math.max((candidateTimestamp - previousTimestamp) / 1000, 1);
+        const speedMps = jumpDistance / deltaSec;
+        const accuracyValue = currentAccuracy ?? Number.POSITIVE_INFINITY;
+
+        const looksLikeWeakSignalJump =
+          jumpDistance > MAX_JUMP_DISTANCE_M &&
+          speedMps > MAX_JUMP_SPEED_M_PER_SEC &&
+          accuracyValue > LOW_CONFIDENCE_ACCURACY_M;
+
+        if (looksLikeWeakSignalJump) {
+          setIsLocationStabilizing(true);
+          return;
+        }
+      }
+
+      lastAcceptedLocationRef.current = candidateLocation;
+      lastAcceptedTimestampRef.current = candidateTimestamp;
+      setIsLocationStabilizing(false);
+      setGeolocationState(candidateLocation, currentAccuracy, gpsLastUpdated);
       setLocationError(null);
     }
   }, [
@@ -225,6 +264,9 @@ const PresensiPage: React.FC = () => {
     currentLongitude,
     currentAccuracy,
     gpsLastUpdated,
+    MAX_JUMP_DISTANCE_M,
+    MAX_JUMP_SPEED_M_PER_SEC,
+    LOW_CONFIDENCE_ACCURACY_M,
   ]);
 
   const refreshLocation = () => {
@@ -320,6 +362,8 @@ const PresensiPage: React.FC = () => {
   // const videoRef = useRef<HTMLVideoElement | null>(null);
   const isMounted = useRef<boolean>(true);
   const refreshRequestedAtRef = useRef<number | null>(null);
+  const lastAcceptedLocationRef = useRef<[number, number] | null>(null);
+  const lastAcceptedTimestampRef = useRef<number | null>(null);
   // // const isInitializing = useRef<boolean>(false);
   // const mapRef = useRef<L.Map | null>(null);
 
@@ -853,6 +897,32 @@ const PresensiPage: React.FC = () => {
     ? "Lokasi harus valid."
     : null;
 
+  const isPrimaryLocationLoading =
+    isGeofenceEnabled === true &&
+    (isRefreshingLocation ||
+      !userLocation ||
+      isLocationStabilizing);
+
+  const showLocationProgress = isPrimaryLocationLoading;
+
+  const isGpsSampleGuardPending =
+    isGeofenceEnabled === true &&
+    isFakeGpsDetectionEnabled &&
+    !gpsSuspicious &&
+    !gpsLooksNatural;
+
+  const sampledCountLabel = Math.min(gpsSamples.length, MIN_GPS_SAMPLES_TO_VALIDATE);
+
+  const locationProgressMessage = isRefreshingLocation
+    ? "Memperbarui lokasi..."
+    : !userLocation
+      ? "Mencari sinyal lokasi..."
+      : isLocationStabilizing
+        ? "Sinyal lemah, menstabilkan lokasi..."
+      : isGpsSampleGuardPending
+        ? `Memvalidasi kestabilan lokasi (${sampledCountLabel}/${MIN_GPS_SAMPLES_TO_VALIDATE})...`
+        : "Memvalidasi kestabilan lokasi...";
+
   const deviceValidation = React.useMemo(() => detectMobileLikeDevice(), []);
   const isAttendanceDeviceAllowed = deviceValidation.isMobileLikeDevice;
   const deviceValidationMessage = isAttendanceDeviceAllowed
@@ -911,6 +981,8 @@ const PresensiPage: React.FC = () => {
     actionLocked ||
     (isCheckOut ? !canCheckOut : !canCheckIn) ||
     (!canCheckIn && !canCheckOut) ||
+    isPrimaryLocationLoading ||
+    isGpsSampleGuardPending ||
     !isAttendanceDeviceAllowed ||
     hasInvalidLocationMetadata ||
     checkInGpsStabilityBlocked ||
@@ -1091,61 +1163,78 @@ const PresensiPage: React.FC = () => {
                   )}
                 </MapContainer>
               </Box>
-              <Typography
-                variant="caption"
-                display="block"
-                mt={1}
-                color={
-                  locationError || locationValidationMessage
-                    ? theme.palette.error.main
+              <Box
+                sx={{
+                  mt: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: showLocationProgress || isGpsSampleGuardPending ? 0.75 : 0,
+                }}
+              >
+                {(showLocationProgress || isGpsSampleGuardPending) && (
+                  <CircularProgress size={12} color="warning" />
+                )}
+                <Typography
+                  variant="caption"
+                  display="block"
+                  color={
+                    locationError || locationValidationMessage
+                      ? theme.palette.error.main
+                      : showLocationProgress || isGpsSampleGuardPending
+                        ? theme.palette.warning.main
+                      : activeGpsValidationMessage
+                        ? theme.palette.warning.main
+                      : isWithinRadius
+                        ? theme.palette.success.main
+                        : theme.palette.error.main
+                  }
+                >
+                  {locationError
+                    ? locationError
+                    : showLocationProgress
+                      ? locationProgressMessage
+                    : isGpsSampleGuardPending
+                      ? `Memvalidasi kestabilan lokasi (${sampledCountLabel}/${MIN_GPS_SAMPLES_TO_VALIDATE})...`
                     : activeGpsValidationMessage
-                      ? theme.palette.warning.main
-                    : isWithinRadius
-                      ? theme.palette.success.main
-                      : theme.palette.error.main
-                }
-              >
-                {locationError
-                  ? locationError
-                  : activeGpsValidationMessage
-                    ? activeGpsValidationMessage
-                  : locationValidationMessage
-                    ? locationValidationMessage
-                  : !userLocation
-                    ? "Mencari lokasi... (aktifkan layanan lokasi untuk MASUK)"
-                    : isWithinRadius
-                      ? `Lokasi valid. Jarak ke kantor: ${distanceToOffice?.toFixed(0)} m`
-                      : `Di luar radius ${radius} m. Jarak: ${distanceToOffice?.toFixed(0)} m`}
-              </Typography>
-              <Typography
-                variant="caption"
-                display="block"
-                mt={0.5}
-                textAlign="left"
-                color={
-                  !trackingActive
-                    ? "warning.main"
-                    : isFakeGpsDetectionEnabled && gpsValidationLoading
+                      ? activeGpsValidationMessage
+                    : locationValidationMessage
+                      ? locationValidationMessage
+                    : !userLocation
+                      ? "Mencari lokasi... (aktifkan layanan lokasi untuk MASUK)"
+                      : isWithinRadius
+                        ? `Lokasi valid. Jarak ke kantor: ${distanceToOffice?.toFixed(0)} m`
+                        : `Di luar radius ${radius} m. Jarak: ${distanceToOffice?.toFixed(0)} m`}
+                </Typography>
+              </Box>
+              {(!showLocationProgress &&
+                !isGpsSampleGuardPending) ||
+                !trackingActive ||
+                !isFakeGpsDetectionEnabled ||
+                gpsSuspicious ? (
+                <Typography
+                  variant="caption"
+                  display="block"
+                  mt={0.5}
+                  textAlign="left"
+                  color={
+                    !trackingActive
                       ? "warning.main"
-                      : isFakeGpsDetectionEnabled && gpsSuspicious
-                        ? "warning.main"
-                        : gpsLooksNatural
-                        ? "success.main"
-                        : "warning.main"
-                }
-              >
-                {!trackingActive
-                  ? "Tracking Dijeda"
-                  : !isFakeGpsDetectionEnabled
-                    ? "GPS Aktif"
-                  : gpsValidationLoading
-                    ? "Memvalidasi kestabilan lokasi..."
-                    : gpsSuspicious
-                      ? "Sinyal lokasi belum stabil"
-                      : gpsLooksNatural
+                        : isFakeGpsDetectionEnabled && gpsSuspicious
+                          ? "warning.main"
+                          : gpsLooksNatural
+                          ? "success.main"
+                          : "warning.main"
+                  }
+                >
+                  {!trackingActive
+                    ? "Tracking Dijeda"
+                    : !isFakeGpsDetectionEnabled
                       ? "GPS Aktif"
-                      : "Sinyal lokasi belum stabil"}
-              </Typography>
+                    : gpsSuspicious
+                        ? "Sinyal lokasi belum stabil"
+                        : "GPS Aktif"}
+                </Typography>
+              ) : null}
               <Typography
                 variant="caption"
                 color="text.secondary"
