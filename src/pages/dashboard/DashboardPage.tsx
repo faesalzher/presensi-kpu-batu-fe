@@ -22,7 +22,9 @@ import {
   Tune
   , NotificationsActive,
   CheckCircle,
-  FactCheck
+  FactCheck,
+  Devices,
+  Shield
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 
@@ -439,6 +441,16 @@ const DashboardPage: React.FC = () => {
       label: "General Setting",
       icon: <Tune color="primary" />,
       onClick: () => navigate("/admin/general-settings"),
+    },
+    {
+      label: "Device Analytics",
+      icon: <Devices color="primary" />,
+      onClick: () => navigate("/admin/device-analytics"),
+    },
+    {
+      label: "Trust Monitoring",
+      icon: <Shield color="primary" />,
+      onClick: () => navigate("/admin/trust-monitoring"),
     },
   ];
 

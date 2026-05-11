@@ -40,7 +40,10 @@ import { CheckInDto, CheckOutDto } from "../../types/attendance";
 import { formatDate, formatTime, getNow } from "../../constant/time.constant";
 import BottomNav from "../../components/BottomNav";
 import useGpsStabilityValidation from "../../hooks/useGpsStabilityValidation";
-import detectMobileLikeDevice from "../../utils/device";
+import detectMobileLikeDevice, {
+  getDeviceAnalytics,
+  getFingerprintSummary,
+} from "../../utils/device";
 
 // Fix Leaflet icon issue in React
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -780,6 +783,7 @@ const PresensiPage: React.FC = () => {
 
       // allow redirect again for this submission
       redirectedRef.current = false;
+      const deviceAnalyticsFields = buildDeviceAnalyticsSubmitFields();
       const payloadTimestamp = new Date(latestTimestamp ?? Date.now()).toISOString();
       if (isCheckOut) {
         const checkOutData: CheckOutDto = {
@@ -788,6 +792,7 @@ const PresensiPage: React.FC = () => {
           accuracy: latestAccuracy ?? 0,
           timestamp: payloadTimestamp,
           notes: "", // Empty string instead of notes
+          ...deviceAnalyticsFields,
         };
         await checkOut(checkOutData);
         showNotification("Check-out successful!", "success");
@@ -798,6 +803,7 @@ const PresensiPage: React.FC = () => {
           accuracy: latestAccuracy ?? 0,
           timestamp: payloadTimestamp,
           notes: "", // Empty string instead of notes
+          ...deviceAnalyticsFields,
         };
         await checkIn(checkInData);
         showNotification("Check-in successful!", "success");
@@ -924,10 +930,31 @@ const PresensiPage: React.FC = () => {
         : "Memvalidasi kestabilan lokasi...";
 
   const deviceValidation = React.useMemo(() => detectMobileLikeDevice(), []);
+  const deviceAnalyticsForDebug = React.useMemo(() => {
+    try {
+      return getDeviceAnalytics();
+    } catch (error) {
+      return null;
+    }
+  }, []);
+
   const isAttendanceDeviceAllowed = deviceValidation.isMobileLikeDevice;
   const deviceValidationMessage = isAttendanceDeviceAllowed
     ? null
     : "Presensi hanya dapat dilakukan melalui perangkat mobile.";
+
+  const buildDeviceAnalyticsSubmitFields = () => {
+    try {
+      const analytics = getDeviceAnalytics();
+      return {
+        deviceAnalyticsJson: JSON.stringify(analytics),
+      };
+    } catch (error) {
+      // Analytics is monitoring-only and should never block attendance.
+      console.warn("[Attendance] failed generating device analytics", error);
+      return {};
+    }
+  };
 
   const activeGpsValidationMessage =
     isFakeGpsDetectionEnabled && gpsSuspicious && gpsValidationMessage
@@ -1395,13 +1422,22 @@ const PresensiPage: React.FC = () => {
             Update terakhir: {gpsLastUpdated ? new Date(gpsLastUpdated).toLocaleTimeString("id-ID") : "-"}
           </Typography>
           <Typography variant="body2" sx={{ mt: 1 }}>
-            Device: {deviceValidation.deviceTypeLabel}
+            Device: {deviceAnalyticsForDebug?.deviceType ?? deviceValidation.deviceTypeLabel}
+          </Typography>
+          <Typography variant="body2">
+            Browser: {deviceAnalyticsForDebug?.browser ?? "Unknown"}
+          </Typography>
+          <Typography variant="body2">
+            Platform: {deviceAnalyticsForDebug?.platform ?? "Unknown"}
+          </Typography>
+          <Typography variant="body2">
+            Fingerprint: {getFingerprintSummary(deviceAnalyticsForDebug?.fingerprint ?? "")}
           </Typography>
           <Typography variant="body2">
             Mobile-like: {String(deviceValidation.isMobileLikeDevice)}
           </Typography>
           <Typography variant="body2" sx={{ mt: 1, wordBreak: "break-word" }}>
-            UA: {deviceValidation.uaSummary}
+            UA: {deviceAnalyticsForDebug?.userAgentSummary ?? deviceValidation.uaSummary}
           </Typography>
         </DialogContent>
       </Dialog>

@@ -53,6 +53,7 @@ export interface CheckInDto {
   timestamp: string;
   provider?: string;
   notes?: string;
+  deviceAnalyticsJson?: string;
 }
 
 export interface CheckOutDto {
@@ -62,6 +63,7 @@ export interface CheckOutDto {
   timestamp: string;
   provider?: string;
   notes?: string;
+  deviceAnalyticsJson?: string;
 }
 
 export interface VerifyAttendanceDto {

@@ -45,6 +45,7 @@ import { SystemProvider } from "./contexts/SystemContext";
 import SchedulerMonitoringPage from "./pages/system/SchedulerMonitoringPage";
 import ManualPushNotificationPage from "./pages/system/ManualPushNotificationPage";
 import GeneralSettingsPage from "./pages/system/GeneralSettingsPage";
+import DeviceAnalyticsPage from "./pages/system/DeviceAnalyticsPage";
 
 function App() {
   return (
@@ -189,6 +190,8 @@ function App() {
                               <Route path="/admin/scheduler" element={<SchedulerMonitoringPage />} />
                               <Route path="/admin/push-notification" element={<ManualPushNotificationPage />} />
                               <Route path="/admin/general-settings" element={<GeneralSettingsPage />} />
+                              <Route path="/admin/device-analytics" element={<DeviceAnalyticsPage />} />
+                              <Route path="/admin/trust-monitoring" element={<DeviceAnalyticsPage />} />
                             </Route>
 
                             {/* Other routes */}
